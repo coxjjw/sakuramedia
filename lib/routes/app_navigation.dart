@@ -18,8 +18,8 @@ import 'package:sakuramedia/features/clips/presentation/desktop_clips_page.dart'
 import 'package:sakuramedia/features/playlists/presentation/desktop_playlists_page.dart';
 import 'package:sakuramedia/features/rankings/presentation/desktop_rankings_page.dart';
 import 'package:sakuramedia/features/rankings/presentation/mobile_rankings_page.dart';
-import 'package:sakuramedia/features/videos/presentation/desktop_video_list_page.dart';
-import 'package:sakuramedia/features/videos/presentation/mobile_pornbox_page.dart';
+import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_list_page.dart';
+import 'package:sakuramedia/features/videos/presentation/pages/mobile/pornbox_page.dart';
 import 'package:sakuramedia/features/workbench/workbench_placeholder_page.dart';
 import 'package:sakuramedia/routes/app_route_paths.dart';
 import 'package:sakuramedia/routes/app_route_spec.dart';

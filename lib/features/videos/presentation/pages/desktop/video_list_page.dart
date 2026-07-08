@@ -15,7 +15,7 @@ import 'package:sakuramedia/features/videos/presentation/create_video_collection
 import 'package:sakuramedia/features/videos/presentation/pick_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/collections/video_collections_overview_controller.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_filter_state.dart';
-import 'package:sakuramedia/features/videos/presentation/video_list_content.dart';
+import 'package:sakuramedia/features/videos/presentation/pages/shared/video_list_content.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/listing/video_list_page_state.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/notifiers/video_mutation_change_notifier.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';

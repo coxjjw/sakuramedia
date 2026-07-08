@@ -28,9 +28,9 @@ import 'package:sakuramedia/features/clip_collections/presentation/mobile_clip_c
 import 'package:sakuramedia/features/clip_collections/presentation/mobile_clip_collection_play_page.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/mobile_clip_collections_page.dart';
 import 'package:sakuramedia/features/external_player/presentation/mobile_external_player_settings_page.dart';
-import 'package:sakuramedia/features/videos/presentation/mobile_video_collection_detail_page.dart';
-import 'package:sakuramedia/features/videos/presentation/mobile_video_collection_play_page.dart';
-import 'package:sakuramedia/features/videos/presentation/mobile_video_collections_page.dart';
+import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_collection_detail_page.dart';
+import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_collection_play_page.dart';
+import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_collections_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_detail_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_player_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/series_movies_page.dart';

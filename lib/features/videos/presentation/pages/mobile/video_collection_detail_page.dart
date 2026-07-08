@@ -10,8 +10,8 @@ import 'package:sakuramedia/features/videos/data/dto/video_item_list_item_dto.da
 import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
 import 'package:sakuramedia/features/shared/presentation/collection_playback_handoff.dart';
 import 'package:sakuramedia/widgets/media_player/collection_playback_mode.dart';
-import 'package:sakuramedia/features/videos/presentation/mobile_video_actions_sheet.dart';
-import 'package:sakuramedia/features/videos/presentation/mobile_video_player_page.dart';
+import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_actions_sheet.dart';
+import 'package:sakuramedia/features/videos/presentation/pages/mobile/video_player_page.dart';
 import 'package:sakuramedia/features/videos/presentation/pick_video_collection_dialog.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/collections/video_collection_detail_controller.dart';
 import 'package:sakuramedia/features/videos/presentation/controllers/notifiers/video_mutation_change_notifier.dart';
