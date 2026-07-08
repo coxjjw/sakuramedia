@@ -229,10 +229,10 @@ void main() {
   test('mobile notice cards use noticeSurface token', () {
     const files = <String>[
       'lib/features/account/presentation/mobile_change_password_page.dart',
-      'lib/features/configuration/presentation/mobile_media_libraries_page.dart',
-      'lib/features/configuration/presentation/mobile_downloaders_page.dart',
-      'lib/features/configuration/presentation/mobile_indexers_page.dart',
-      'lib/features/configuration/presentation/mobile_llm_settings_page.dart',
+      'lib/features/configuration/presentation/pages/mobile/mobile_media_libraries_page.dart',
+      'lib/features/configuration/presentation/pages/mobile/mobile_downloaders_page.dart',
+      'lib/features/configuration/presentation/pages/mobile/mobile_indexers_page.dart',
+      'lib/features/configuration/presentation/pages/mobile/mobile_llm_settings_page.dart',
     ];
 
     for (final path in files) {

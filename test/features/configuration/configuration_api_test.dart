@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/configuration/data/download_client_dto.dart';
-import 'package:sakuramedia/features/configuration/data/indexer_settings_dto.dart';
-import 'package:sakuramedia/features/configuration/data/media_library_dto.dart';
-import 'package:sakuramedia/features/configuration/data/movie_desc_translation_settings_dto.dart';
+import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
+import 'package:sakuramedia/features/configuration/data/dto/indexer_settings_dto.dart';
+import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
+import 'package:sakuramedia/features/configuration/data/dto/movie_desc_translation_settings_dto.dart';
 
 import '../../support/test_api_bundle.dart';
 
