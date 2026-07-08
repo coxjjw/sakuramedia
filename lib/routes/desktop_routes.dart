@@ -13,7 +13,7 @@ import 'package:sakuramedia/features/movies/presentation/pages/desktop/series_mo
 import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_collections_page.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_collection_detail_page.dart';
 import 'package:sakuramedia/features/videos/presentation/pages/desktop/video_collection_play_page.dart';
-import 'package:sakuramedia/features/playlists/presentation/desktop_playlist_detail_page.dart';
+import 'package:sakuramedia/features/playlists/presentation/pages/desktop/playlist_detail_page.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/pages/desktop/clip_collections_page.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/pages/desktop/clip_collection_detail_page.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/pages/desktop/clip_collection_play_page.dart';

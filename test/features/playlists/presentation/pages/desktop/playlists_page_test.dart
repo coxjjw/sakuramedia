@@ -14,11 +14,11 @@ import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/playlists/data/playlist_order_store.dart';
 import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
-import 'package:sakuramedia/features/playlists/presentation/desktop_playlist_detail_page.dart';
-import 'package:sakuramedia/features/playlists/presentation/desktop_playlists_page.dart';
+import 'package:sakuramedia/features/playlists/presentation/pages/desktop/playlist_detail_page.dart';
+import 'package:sakuramedia/features/playlists/presentation/pages/desktop/playlists_page.dart';
 import 'package:sakuramedia/theme.dart';
 
-import '../../../support/test_api_bundle.dart';
+import '../../../../../support/test_api_bundle.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

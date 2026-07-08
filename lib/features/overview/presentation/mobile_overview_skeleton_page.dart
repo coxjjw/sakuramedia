@@ -15,7 +15,7 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
 import 'package:sakuramedia/features/playlists/data/playlist_order_store.dart';
-import 'package:sakuramedia/features/playlists/presentation/playlists_overview_controller.dart';
+import 'package:sakuramedia/features/playlists/presentation/controllers/playlists_overview_controller.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/routes/mobile_routes.dart';
 import 'package:sakuramedia/theme.dart';

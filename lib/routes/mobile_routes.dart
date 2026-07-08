@@ -35,8 +35,8 @@ import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_deta
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_player_page.dart';
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/series_movies_page.dart';
 import 'package:sakuramedia/features/overview/presentation/mobile_system_overview_page.dart';
-import 'package:sakuramedia/features/playlists/presentation/mobile_playlists_page.dart';
-import 'package:sakuramedia/features/playlists/presentation/mobile_playlist_detail_page.dart';
+import 'package:sakuramedia/features/playlists/presentation/pages/mobile/playlists_page.dart';
+import 'package:sakuramedia/features/playlists/presentation/pages/mobile/playlist_detail_page.dart';
 import 'package:sakuramedia/features/search/presentation/mobile_catalog_search_page.dart';
 import 'package:sakuramedia/features/tags/presentation/mobile_tags_page.dart';
 import 'package:sakuramedia/routes/app_route_helpers.dart';
