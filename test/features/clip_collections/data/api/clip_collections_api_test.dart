@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/clip_collections/data/clip_collection_dto.dart';
-import 'package:sakuramedia/features/clip_collections/data/clip_collections_api.dart';
+import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
+import 'package:sakuramedia/features/clip_collections/data/api/clip_collections_api.dart';
 
-import '../../../support/fake_http_client_adapter.dart';
+import '../../../../support/fake_http_client_adapter.dart';
 
 Map<String, dynamic> _collectionJson({int id = 7, String name = '精选合集'}) =>
     <String, dynamic>{

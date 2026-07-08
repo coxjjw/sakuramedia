@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sakuramedia/features/clip_collections/data/clip_collection_dto.dart';
+import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/clip_collections_overview_controller.dart';
 
 ClipCollectionDto _collection(int id, {String name = ''}) => ClipCollectionDto(

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/features/clip_collections/data/clip_collection_dto.dart';
+import 'package:sakuramedia/features/clip_collections/data/dto/clip_collection_dto.dart';
 
 typedef ClipCollectionsFetcher = Future<List<ClipCollectionDto>> Function();
 

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/format/media_timecode.dart';
-import 'package:sakuramedia/features/clip_collections/data/clip_collections_api.dart';
+import 'package:sakuramedia/features/clip_collections/data/api/clip_collections_api.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/add_clips_to_collection_dialog.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/clip_collection_detail_controller.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/create_clip_collection_dialog.dart';
