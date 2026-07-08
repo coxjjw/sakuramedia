@@ -32,7 +32,28 @@ presentation/
     series_import/       # 1 个:series_import_dialog
 ```
 
-**在其它 feature 内 import 时**:DTO 从 `features/movies/data/dto/<子域>/` 拿,`MoviesApi` 从 `features/movies/data/api/` 拿,控制器从 `presentation/controllers/<子域>/` 拿(常见:全局 mutation notifier 走 `controllers/notifiers/`)。不要从 `pages/` 拿(那是页面私域)。**这套 data + controllers 双镜像子域的结构是仓库样板**,新 feature 可以照抄:`data/api/` + `data/dto/{按业务子域}/` + `presentation/controllers/{同样的子域}/`(若单目录少于 5 个文件可以扁平)。
+**在其它 feature 内 import 时**:DTO 从 `features/movies/data/dto/<子域>/` 拿,`MoviesApi` 从 `features/movies/data/api/` 拿,控制器从 `presentation/controllers/<子域>/` 拿(常见:全局 mutation notifier 走 `controllers/notifiers/`)。不要从 `pages/` 拿(那是页面私域)。
+
+## 样板判定规则(什么时候扁平、什么时候分子域)
+
+`data/api/` + `data/dto/` + `presentation/{controllers,pages,widgets,...}/` 这套骨架是仓库样板,但**子域分组的深度按规模变**:
+
+| 目录 | 扁平(在自身根) | 分子域 |
+|---|---|---|
+| `data/dto/` | **默认扁平**(< 5 DTOs 且无自然分组时) | 5 个及以上 DTOs **且**有清晰业务分组 |
+| `presentation/controllers/` | **默认扁平**(2 个及以下,或无自然分组) | 3 个及以上且能分出 **listing / detail / ...** 中至少两个子域 |
+| `presentation/pages/` | **总是分** `{desktop,mobile,shared}/` (三平台差异是硬约束) | 同上,不再细分 |
+| `presentation/widgets/` | **默认扁平**(< 5 个组件时) | 5+ 组件且能分子域 |
+
+**推荐子域名(避免自造)**:`listing / detail / collections / player / imports / thumbnails / notifiers / series_import`(视具体域取用)。`notifiers/` 专门放跨页 mutation 广播的 `ChangeNotifier`,这类物种独立成组即使只有 1 个也可以分出来(它跟其它 controller 语义差异大)。
+
+**已落地的样板案例**(按复杂度):
+- **movies**:最完整版(5 类 controllers 子域、5 类 dto 子域、`actions/`、`widgets/detail/`)
+- **videos**:多 API 版(3 个 API 平级、4 类 controllers 子域、`widgets/{listing,collections,player,imports}/`)
+- **actors**:最简版(1 API、3 DTO 扁平、2 类 controllers)
+- **clip_collections / playlists / clips**:小域(2 controllers 扁平、widgets 扁平)
+
+新 feature 照抄时**先对齐规模最接近的样板**,再按上表调整分组深度。
 
 ## 列表:筛选状态驱动(易踩第一名)
 
