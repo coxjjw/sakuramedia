@@ -1,9 +1,9 @@
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/api_sse_event.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
-import 'package:sakuramedia/features/actors/data/actor_list_item_dto.dart';
-import 'package:sakuramedia/features/actors/data/actor_movie_year_dto.dart';
-import 'package:sakuramedia/features/actors/data/actor_search_stream_update.dart';
+import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
+import 'package:sakuramedia/features/actors/data/dto/actor_movie_year_dto.dart';
+import 'package:sakuramedia/features/actors/data/dto/actor_search_stream_update.dart';
 import 'package:sakuramedia/features/actors/presentation/actor_filter_state.dart';
 import 'package:sakuramedia/features/search/data/catalog_search_stream_stats.dart';
 

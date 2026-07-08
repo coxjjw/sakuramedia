@@ -1,4 +1,4 @@
-import 'package:sakuramedia/features/actors/data/actor_list_item_dto.dart';
+import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 import 'package:sakuramedia/features/search/data/catalog_search_stream_stats.dart';
 
 class ActorSearchStreamUpdate {

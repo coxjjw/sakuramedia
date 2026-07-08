@@ -1,5 +1,5 @@
 import 'package:sakuramedia/app/app_page_state_cache.dart';
-import 'package:sakuramedia/features/actors/data/actors_api.dart';
+import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/actors/presentation/actor_filter_state.dart';
 import 'package:sakuramedia/features/actors/presentation/paged_actor_summary_controller.dart';
 

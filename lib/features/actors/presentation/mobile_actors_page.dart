@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/app/cached_page_state_handle.dart';
 import 'package:sakuramedia/app/app_page_state_cache_keys.dart';
-import 'package:sakuramedia/features/actors/data/actors_api.dart';
+import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/actors/presentation/actor_filter_preset.dart';
 import 'package:sakuramedia/features/actors/presentation/actor_list_page_state.dart';
 import 'package:sakuramedia/features/actors/presentation/actor_filter_state.dart';

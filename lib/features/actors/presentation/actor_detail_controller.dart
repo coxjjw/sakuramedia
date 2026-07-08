@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
-import 'package:sakuramedia/features/actors/data/actor_list_item_dto.dart';
+import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 
 class ActorDetailController extends ChangeNotifier {
   ActorDetailController({
