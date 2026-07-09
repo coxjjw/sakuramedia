@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_board_dto.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_sort.dart';
 import 'package:sakuramedia/features/rankings/data/ranking_source_dto.dart';
+import 'package:sakuramedia/features/rankings/presentation/widgets/ranking_filter_sections.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
 
@@ -172,50 +173,18 @@ class _RankingFilterToolbarState extends State<RankingFilterToolbar> {
                 border: Border.all(color: context.appColors.borderSubtle),
                 boxShadow: context.appShadows.panel,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _FilterSection<RankingSourceDto>(
-                    title: '来源',
-                    options: widget.sources,
-                    selectedValue: widget.selectedSource,
-                    optionKeyBuilder:
-                        (value) =>
-                            Key('rankings-filter-source-${value.sourceKey}'),
-                    labelBuilder: (value) => value.name,
-                    onSelected: widget.onSourceChanged,
-                  ),
-                  SizedBox(height: context.appSpacing.lg),
-                  _FilterSection<RankingBoardDto>(
-                    title: '榜单',
-                    options: widget.boards,
-                    selectedValue: widget.selectedBoard,
-                    optionKeyBuilder:
-                        (value) =>
-                            Key('rankings-filter-board-${value.boardKey}'),
-                    labelBuilder: (value) => value.name,
-                    onSelected: widget.onBoardChanged,
-                  ),
-                  SizedBox(height: context.appSpacing.lg),
-                  _FilterSection<String>(
-                    title: '周期',
-                    options:
-                        widget.selectedBoard?.supportedPeriods ??
-                        const <String>[],
-                    selectedValue: widget.selectedPeriod,
-                    optionKeyBuilder:
-                        (value) => Key('rankings-filter-period-$value'),
-                    labelBuilder: rankingPeriodLabel,
-                    onSelected: widget.onPeriodChanged,
-                  ),
-                  SizedBox(height: context.appSpacing.lg),
-                  _RankingSortSection(
-                    selectedSortField: widget.selectedSortField,
-                    selectedSortDirection: widget.selectedSortDirection,
-                    onSortChanged: widget.onSortChanged,
-                  ),
-                ],
+              child: RankingFilterSectionGroup(
+                sources: widget.sources,
+                selectedSource: widget.selectedSource,
+                boards: widget.boards,
+                selectedBoard: widget.selectedBoard,
+                selectedPeriod: widget.selectedPeriod,
+                onSourceChanged: widget.onSourceChanged,
+                onBoardChanged: widget.onBoardChanged,
+                onPeriodChanged: widget.onPeriodChanged,
+                selectedSortField: widget.selectedSortField,
+                selectedSortDirection: widget.selectedSortDirection,
+                onSortChanged: widget.onSortChanged,
               ),
             ),
           ),
@@ -253,128 +222,3 @@ class _RankingFilterToolbarState extends State<RankingFilterToolbar> {
   }
 }
 
-class _FilterSection<T> extends StatelessWidget {
-  const _FilterSection({
-    required this.title,
-    required this.options,
-    required this.selectedValue,
-    required this.optionKeyBuilder,
-    required this.labelBuilder,
-    required this.onSelected,
-  });
-
-  final String title;
-  final List<T> options;
-  final T? selectedValue;
-  final Key Function(T value) optionKeyBuilder;
-  final String Function(T value) labelBuilder;
-  final ValueChanged<T> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s14,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.primary,
-          ),
-        ),
-        SizedBox(height: context.appSpacing.sm),
-        Wrap(
-          spacing: context.appSpacing.sm,
-          runSpacing: context.appSpacing.sm,
-          children: options
-              .map(
-                (value) => AppTextButton(
-                  key: optionKeyBuilder(value),
-                  label: labelBuilder(value),
-                  size: AppTextButtonSize.xSmall,
-                  isSelected: value == selectedValue,
-                  onPressed: () => onSelected(value),
-                ),
-              )
-              .toList(growable: false),
-        ),
-      ],
-    );
-  }
-}
-
-/// 排序字段 + 升降序方向选择区域。
-class _RankingSortSection extends StatelessWidget {
-  const _RankingSortSection({
-    required this.selectedSortField,
-    required this.selectedSortDirection,
-    required this.onSortChanged,
-  });
-
-  final RankingSortField? selectedSortField;
-  final SortDirection selectedSortDirection;
-  final void Function(RankingSortField? field, SortDirection direction) onSortChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '排序',
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s14,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.primary,
-          ),
-        ),
-        SizedBox(height: context.appSpacing.sm),
-        Wrap(
-          spacing: context.appSpacing.sm,
-          runSpacing: context.appSpacing.sm,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            // 默认排序（不传 sort 参数）
-            AppTextButton(
-              key: const Key('rankings-filter-sort-default'),
-              label: '默认（名次）',
-              size: AppTextButtonSize.xSmall,
-              isSelected: selectedSortField == null,
-              onPressed: () => onSortChanged(null, selectedSortDirection),
-            ),
-            // 按热度排序
-            AppTextButton(
-              key: const Key('rankings-filter-sort-heat'),
-              label: RankingSortField.heat.label,
-              size: AppTextButtonSize.xSmall,
-              isSelected: selectedSortField == RankingSortField.heat,
-              onPressed: () =>
-                  onSortChanged(RankingSortField.heat, selectedSortDirection),
-            ),
-            // 当选中了某个排序字段时，显示升降序切换按钮
-            if (selectedSortField != null)
-              AppTextButton(
-                key: const Key('rankings-filter-sort-direction'),
-                label: selectedSortDirection.label,
-                icon: Icon(
-                  selectedSortDirection == SortDirection.desc
-                      ? Icons.south_rounded
-                      : Icons.north_rounded,
-                ),
-                size: AppTextButtonSize.xSmall,
-                onPressed: () => onSortChanged(
-                  selectedSortField,
-                  selectedSortDirection == SortDirection.desc
-                      ? SortDirection.asc
-                      : SortDirection.desc,
-                ),
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-}

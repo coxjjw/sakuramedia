@@ -3,6 +3,7 @@ import 'package:sakuramedia/features/actors/presentation/controllers/listing/act
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/domain/actors/actor_filter_sections.dart';
 
 class ActorFilterToolbar extends StatefulWidget {
   const ActorFilterToolbar({
@@ -154,40 +155,9 @@ class _ActorFilterToolbarState extends State<ActorFilterToolbar> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _FilterSection<ActorSubscriptionStatus>(
-                    title: '订阅筛选',
-                    options: ActorSubscriptionStatus.values,
-                    selectedValue: widget.filterState.subscriptionStatus,
-                    labelBuilder: (value) => value.label,
-                    onSelected:
-                        (value) => widget.onChanged(
-                          widget.filterState.copyWith(
-                            subscriptionStatus: value,
-                          ),
-                        ),
-                  ),
-                  SizedBox(height: context.appSpacing.lg),
-                  _FilterSection<ActorGender>(
-                    title: '性别筛选',
-                    options: ActorGender.values,
-                    selectedValue: widget.filterState.gender,
-                    labelBuilder: (value) => value.label,
-                    onSelected:
-                        (value) => widget.onChanged(
-                          widget.filterState.copyWith(gender: value),
-                        ),
-                  ),
-                  SizedBox(height: context.appSpacing.lg),
-                  _SortSection(
+                  ActorFilterSectionGroup(
                     filterState: widget.filterState,
-                    onSortFieldChanged:
-                        (value) => widget.onChanged(
-                          widget.filterState.copyWith(sortField: value),
-                        ),
-                    onSortDirectionChanged:
-                        (value) => widget.onChanged(
-                          widget.filterState.copyWith(sortDirection: value),
-                        ),
+                    onChanged: widget.onChanged,
                   ),
                   SizedBox(height: context.appSpacing.lg),
                   Row(
@@ -240,130 +210,3 @@ class _ActorFilterToolbarState extends State<ActorFilterToolbar> {
   }
 }
 
-class _FilterSection<T> extends StatelessWidget {
-  const _FilterSection({
-    required this.title,
-    required this.options,
-    required this.selectedValue,
-    required this.labelBuilder,
-    required this.onSelected,
-  });
-
-  final String title;
-  final List<T> options;
-  final T selectedValue;
-  final String Function(T value) labelBuilder;
-  final ValueChanged<T> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s14,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.primary,
-          ),
-        ),
-        SizedBox(height: context.appSpacing.sm),
-        Wrap(
-          spacing: context.appSpacing.sm,
-          runSpacing: context.appSpacing.sm,
-          children: options
-              .map(
-                (option) => _FilterChipButton(
-                  label: labelBuilder(option),
-                  selected: option == selectedValue,
-                  onTap: () => onSelected(option),
-                ),
-              )
-              .toList(growable: false),
-        ),
-      ],
-    );
-  }
-}
-
-class _SortSection extends StatelessWidget {
-  const _SortSection({
-    required this.filterState,
-    required this.onSortFieldChanged,
-    required this.onSortDirectionChanged,
-  });
-
-  final ActorFilterState filterState;
-  final ValueChanged<ActorSortField> onSortFieldChanged;
-  final ValueChanged<ActorSortDirection> onSortDirectionChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '排序方式',
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s14,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.primary,
-          ),
-        ),
-        SizedBox(height: context.appSpacing.sm),
-        Wrap(
-          spacing: context.appSpacing.sm,
-          runSpacing: context.appSpacing.sm,
-          children: ActorSortField.values
-              .map(
-                (value) => _FilterChipButton(
-                  label: value.label,
-                  selected: value == filterState.sortField,
-                  onTap: () => onSortFieldChanged(value),
-                ),
-              )
-              .toList(growable: false),
-        ),
-        SizedBox(height: context.appSpacing.md),
-        Wrap(
-          spacing: context.appSpacing.sm,
-          runSpacing: context.appSpacing.sm,
-          children: ActorSortDirection.values
-              .map(
-                (value) => _FilterChipButton(
-                  label: value.label,
-                  selected: value == filterState.sortDirection,
-                  onTap: () => onSortDirectionChanged(value),
-                ),
-              )
-              .toList(growable: false),
-        ),
-      ],
-    );
-  }
-}
-
-class _FilterChipButton extends StatelessWidget {
-  const _FilterChipButton({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppTextButton(
-      label: label,
-      size: AppTextButtonSize.xSmall,
-      isSelected: selected,
-      onPressed: onTap,
-    );
-  }
-}
