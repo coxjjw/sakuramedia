@@ -6,7 +6,7 @@ import 'package:sakuramedia/features/activity/data/activity_event_stream_client.
 import 'package:sakuramedia/features/actors/data/actors_api.dart';
 import 'package:sakuramedia/features/auth/data/auth_api.dart';
 import 'package:sakuramedia/features/clips/data/clips_api.dart';
-import 'package:sakuramedia/features/configuration/data/collection_number_features_api.dart';
+import 'package:sakuramedia/features/configuration/data/config_api.dart';
 import 'package:sakuramedia/features/configuration/data/download_clients_api.dart';
 import 'package:sakuramedia/features/configuration/data/indexer_settings_api.dart';
 import 'package:sakuramedia/features/configuration/data/media_libraries_api.dart';
@@ -34,7 +34,7 @@ class TestApiBundle {
     required this.actorsApi,
     required this.authApi,
     required this.clipsApi,
-    required this.collectionNumberFeaturesApi,
+    required this.configApi,
     required this.downloadClientsApi,
     required this.discoveryApi,
     required this.downloadsApi,
@@ -59,7 +59,7 @@ class TestApiBundle {
   final ActorsApi actorsApi;
   final AuthApi authApi;
   final ClipsApi clipsApi;
-  final CollectionNumberFeaturesApi collectionNumberFeaturesApi;
+  final ConfigApi configApi;
   final DownloadClientsApi downloadClientsApi;
   final DiscoveryApi discoveryApi;
   final DownloadsApi downloadsApi;
@@ -109,11 +109,13 @@ Future<TestApiBundle> createTestApiBundle(SessionStore sessionStore) async {
     ),
     activityEventStreamClient: activityEventStreamClient,
     actorsApi: ActorsApi(apiClient: apiClient),
-    authApi: AuthApi(apiClient: apiClient, sessionStore: sessionStore, credentialStore: InMemoryCredentialStore()),
-    clipsApi: ClipsApi(apiClient: apiClient),
-    collectionNumberFeaturesApi: CollectionNumberFeaturesApi(
+    authApi: AuthApi(
       apiClient: apiClient,
+      sessionStore: sessionStore,
+      credentialStore: InMemoryCredentialStore(),
     ),
+    clipsApi: ClipsApi(apiClient: apiClient),
+    configApi: ConfigApi(apiClient: apiClient),
     downloadClientsApi: DownloadClientsApi(apiClient: apiClient),
     discoveryApi: DiscoveryApi(apiClient: apiClient),
     downloadsApi: DownloadsApi(apiClient: apiClient),

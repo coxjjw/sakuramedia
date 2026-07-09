@@ -9,7 +9,6 @@ import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/configuration/data/collection_number_features_api.dart';
 import 'package:sakuramedia/features/movies/data/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_collection_type_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_subscription_change_notifier.dart';
@@ -652,108 +651,6 @@ void main() {
     },
   );
 
-  testWidgets('desktop movies page adds collection feature from context menu', (
-    WidgetTester tester,
-  ) async {
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/movies',
-      body: _moviesJson(
-        total: 1,
-        items: <Map<String, dynamic>>[
-          _movieItem(movieNumber: 'OFJE-888', isSubscribed: false),
-        ],
-      ),
-    );
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/movies/OFJE-888/collection-status',
-      body: <String, dynamic>{
-        'movie_number': 'OFJE-888',
-        'is_collection': false,
-      },
-    );
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/collection-number-features',
-      body: <String, dynamic>{
-        'features': <String>['CJOB-'],
-        'sync_stats': null,
-      },
-    );
-    bundle.adapter.enqueueJson(
-      method: 'PATCH',
-      path: '/collection-number-features',
-      body: <String, dynamic>{
-        'features': <String>['CJOB-', 'OFJE-'],
-        'sync_stats': <String, dynamic>{
-          'total_movies': 100,
-          'matched_count': 12,
-          'updated_to_collection_count': 5,
-          'updated_to_single_count': 0,
-          'unchanged_count': 95,
-        },
-      },
-    );
-
-    await _pumpMoviesPage(tester, sessionStore: sessionStore, bundle: bundle);
-    await tester.pumpAndSettle();
-
-    final center = tester.getCenter(
-      find.byKey(const Key('movie-summary-card-OFJE-888')),
-    );
-    await tester.tapAt(center, buttons: kSecondaryMouseButton);
-    await tester.pumpAndSettle();
-
-    expect(find.text('标记为合集'), findsOneWidget);
-    expect(find.text('将"OFJE-"加入合集特征'), findsOneWidget);
-    final toggleItem = tester.widget<PopupMenuItem<dynamic>>(
-      find.byKey(const Key('movie-collection-feature-menu-toggle-item')),
-    );
-    expect(toggleItem.height, 36);
-    expect(
-      toggleItem.padding,
-      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-    );
-    final toggleLabel = tester.widget<Text>(find.text('标记为合集'));
-    expect(toggleLabel.style?.fontSize, 12);
-    final popupMaterials = tester
-        .widgetList<Material>(find.byType(Material))
-        .where((material) => material.elevation == 12)
-        .toList(growable: false);
-    expect(popupMaterials, isNotEmpty);
-    expect(
-      popupMaterials.first.color,
-      sakuraThemeData.appColors.surfaceElevated,
-    );
-    final popupShape = popupMaterials.first.shape;
-    expect(popupShape, isA<RoundedRectangleBorder>());
-    expect(
-      (popupShape! as RoundedRectangleBorder).side.color,
-      sakuraThemeData.appColors.borderSubtle,
-    );
-
-    await tester.tap(
-      find.byKey(const Key('movie-collection-feature-menu-add-item')),
-    );
-    await tester.pump();
-    await tester.pumpAndSettle();
-
-    final patchRequest = bundle.adapter.requests.singleWhere(
-      (request) =>
-          request.method == 'PATCH' &&
-          request.path == '/collection-number-features',
-    );
-    expect(patchRequest.body['features'], <String>['CJOB-', 'OFJE-']);
-    expect(patchRequest.uri.queryParameters['apply_now'], 'true');
-    expect(
-      bundle.adapter.hitCount('GET', '/movies/OFJE-888/collection-status'),
-      1,
-    );
-    expect(find.text('已将 OFJE- 加入合集特征，并重新统计合集影片'), findsOneWidget);
-    await tester.pump(const Duration(seconds: 3));
-  });
-
   testWidgets('desktop movies page toggles collection type from context menu', (
     WidgetTester tester,
   ) async {
@@ -899,9 +796,6 @@ Future<void> _pumpMoviesPage(
     MultiProvider(
       providers: [
         ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-        Provider<CollectionNumberFeaturesApi>.value(
-          value: bundle.collectionNumberFeaturesApi,
-        ),
         Provider<MoviesApi>.value(value: bundle.moviesApi),
         ChangeNotifierProvider(
           create: (_) => MovieCollectionTypeChangeNotifier(),
@@ -949,9 +843,6 @@ Future<GoRouter> _pumpMoviesRouter(
     MultiProvider(
       providers: [
         ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-        Provider<CollectionNumberFeaturesApi>.value(
-          value: bundle.collectionNumberFeaturesApi,
-        ),
         Provider<MoviesApi>.value(value: bundle.moviesApi),
         ChangeNotifierProvider(
           create: (_) => MovieCollectionTypeChangeNotifier(),

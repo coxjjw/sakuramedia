@@ -10,14 +10,12 @@ import 'package:go_router/go_router.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/configuration/data/collection_number_features_api.dart';
 import 'package:sakuramedia/features/movies/data/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_collection_type_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/movies/presentation/mobile_movies_page.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/actions/app_text_button.dart';
 import 'package:sakuramedia/widgets/movies/movie_summary_card.dart';
 
 import '../../../support/test_api_bundle.dart';
@@ -166,85 +164,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('影片列表加载失败，请稍后重试'), findsOneWidget);
-  });
-
-  testWidgets('mobile movies page adds collection feature from long press', (
-    WidgetTester tester,
-  ) async {
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/movies',
-      body: _moviesJson(
-        total: 1,
-        items: <Map<String, dynamic>>[
-          _movieItem(movieNumber: 'OFJE-888', isSubscribed: false),
-        ],
-      ),
-    );
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/movies/OFJE-888/collection-status',
-      body: <String, dynamic>{
-        'movie_number': 'OFJE-888',
-        'is_collection': false,
-      },
-    );
-    bundle.adapter.enqueueJson(
-      method: 'GET',
-      path: '/collection-number-features',
-      body: <String, dynamic>{
-        'features': <String>['CJOB-'],
-        'sync_stats': null,
-      },
-    );
-    bundle.adapter.enqueueJson(
-      method: 'PATCH',
-      path: '/collection-number-features',
-      body: <String, dynamic>{
-        'features': <String>['CJOB-', 'OFJE-'],
-        'sync_stats': <String, dynamic>{
-          'total_movies': 50,
-          'matched_count': 10,
-          'updated_to_collection_count': 3,
-          'updated_to_single_count': 0,
-          'unchanged_count': 47,
-        },
-      },
-    );
-
-    await _pumpMoviesPage(tester, sessionStore: sessionStore, bundle: bundle);
-    await tester.pumpAndSettle();
-
-    final center = tester.getCenter(
-      find.byKey(const Key('movie-summary-card-OFJE-888')),
-    );
-    final gesture = await tester.startGesture(center);
-    await tester.pump(kLongPressTimeout);
-    await gesture.up();
-    await tester.pumpAndSettle();
-
-    expect(find.text('标记为合集'), findsOneWidget);
-    expect(find.text('将"OFJE-"加入合集特征'), findsOneWidget);
-
-    await tester.tap(
-      find.byKey(const Key('movie-collection-feature-menu-add-item')),
-    );
-    await tester.pump();
-    await tester.pumpAndSettle();
-
-    final patchRequest = bundle.adapter.requests.singleWhere(
-      (request) =>
-          request.method == 'PATCH' &&
-          request.path == '/collection-number-features',
-    );
-    expect(patchRequest.body['features'], <String>['CJOB-', 'OFJE-']);
-    expect(patchRequest.uri.queryParameters['apply_now'], 'true');
-    expect(
-      bundle.adapter.hitCount('GET', '/movies/OFJE-888/collection-status'),
-      1,
-    );
-    expect(find.text('已将 OFJE- 加入合集特征，并重新统计合集影片'), findsOneWidget);
-    await tester.pump(const Duration(seconds: 3));
   });
 
   testWidgets('mobile movies page toggles collection type from long press', (
@@ -567,9 +486,6 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-          Provider<CollectionNumberFeaturesApi>.value(
-            value: bundle.collectionNumberFeaturesApi,
-          ),
           Provider<MoviesApi>.value(value: bundle.moviesApi),
           ChangeNotifierProvider(
             create: (_) => MovieCollectionTypeChangeNotifier(),
@@ -639,9 +555,6 @@ Future<void> _pumpMoviesPage(
     MultiProvider(
       providers: [
         ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
-        Provider<CollectionNumberFeaturesApi>.value(
-          value: bundle.collectionNumberFeaturesApi,
-        ),
         Provider<MoviesApi>.value(value: bundle.moviesApi),
         ChangeNotifierProvider(
           create: (_) => MovieCollectionTypeChangeNotifier(),
@@ -661,36 +574,6 @@ Future<void> _pumpMoviesPage(
 String? _queryValue(TestApiBundle bundle, int requestIndex, String key) {
   final request = bundle.adapter.requests[requestIndex];
   return request.uri.queryParameters[key];
-}
-
-double _buttonHeightForLabel(WidgetTester tester, String label) {
-  final containerFinder = find.ancestor(
-    of: find.text(label).first,
-    matching: find.byType(AnimatedContainer),
-  );
-
-  return tester.getSize(containerFinder.first).height;
-}
-
-Color? _buttonBackgroundColor(WidgetTester tester, Finder finder) {
-  final buttonFinder = find.ancestor(
-    of: finder,
-    matching: find.byType(AppTextButton),
-  );
-  final resolvedFinder =
-      buttonFinder.evaluate().isNotEmpty ? buttonFinder : finder;
-  final button = tester.widget<AppTextButton>(resolvedFinder);
-  final context = tester.element(resolvedFinder);
-  if (button.onPressed == null) {
-    return context.appColors.borderSubtle.withValues(alpha: 0.32);
-  }
-  if (button.isSelected) {
-    return Theme.of(context).colorScheme.primary.withValues(alpha: 0.08);
-  }
-  return switch (button.backgroundStyle) {
-    AppTextButtonBackgroundStyle.transparent => Colors.transparent,
-    AppTextButtonBackgroundStyle.muted => context.appColors.surfaceMuted,
-  };
 }
 
 Map<String, dynamic> _moviesJson({

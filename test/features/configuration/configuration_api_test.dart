@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/configuration/data/collection_number_features_dto.dart';
 import 'package:sakuramedia/features/configuration/data/download_client_dto.dart';
 import 'package:sakuramedia/features/configuration/data/indexer_settings_dto.dart';
 import 'package:sakuramedia/features/configuration/data/media_library_dto.dart';
@@ -492,78 +491,6 @@ void main() {
       expect(bundle.adapter.hitCount('DELETE', '/media-libraries/2'), 1);
     });
 
-    test('collection number features api maps singleton resource', () async {
-      final sessionStore = await _buildLoggedInSessionStore();
-      final bundle = await createTestApiBundle(sessionStore);
-      addTearDown(bundle.dispose);
-
-      bundle.adapter.enqueueJson(
-        method: 'GET',
-        path: '/collection-number-features',
-        body: {
-          'features': ['CJOB', 'DVAJ'],
-          'sync_stats': null,
-        },
-      );
-      bundle.adapter.enqueueJson(
-        method: 'PATCH',
-        path: '/collection-number-features',
-        body: {
-          'features': ['FC2', 'OFJE'],
-          'sync_stats': {
-            'total_movies': 100,
-            'matched_count': 30,
-            'updated_to_collection_count': 6,
-            'updated_to_single_count': 4,
-            'unchanged_count': 90,
-          },
-        },
-      );
-      bundle.adapter.enqueueJson(
-        method: 'PATCH',
-        path: '/collection-number-features',
-        body: {
-          'features': ['FC2'],
-          'sync_stats': null,
-        },
-      );
-
-      final fetched = await bundle.collectionNumberFeaturesApi.getFeatures();
-      final updatedWithSync = await bundle.collectionNumberFeaturesApi
-          .updateFeatures(
-            const UpdateCollectionNumberFeaturesPayload(
-              features: ['FC2', 'OFJE'],
-            ),
-            applyNow: true,
-          );
-      final updatedWithoutSync = await bundle.collectionNumberFeaturesApi
-          .updateFeatures(
-            const UpdateCollectionNumberFeaturesPayload(features: ['FC2']),
-            applyNow: false,
-          );
-
-      expect(fetched.features, ['CJOB', 'DVAJ']);
-      expect(fetched.syncStats, isNull);
-      expect(updatedWithSync.features, ['FC2', 'OFJE']);
-      expect(updatedWithSync.syncStats?.totalMovies, 100);
-      expect(updatedWithSync.syncStats?.updatedToCollectionCount, 6);
-      expect(updatedWithSync.syncStats?.updatedToSingleCount, 4);
-      expect(updatedWithoutSync.features, ['FC2']);
-      expect(updatedWithoutSync.syncStats, isNull);
-
-      final patchRequests = bundle.adapter.requests
-          .where(
-            (request) =>
-                request.method == 'PATCH' &&
-                request.path == '/collection-number-features',
-          )
-          .toList(growable: false);
-      expect(patchRequests[0].body['features'], ['FC2', 'OFJE']);
-      expect(patchRequests[0].uri.queryParameters['apply_now'], 'true');
-      expect(patchRequests[1].body['features'], ['FC2']);
-      expect(patchRequests[1].uri.queryParameters['apply_now'], 'false');
-    });
-
     test('indexer settings api maps singleton resource', () async {
       final sessionStore = await _buildLoggedInSessionStore();
       final bundle = await createTestApiBundle(sessionStore);
@@ -659,34 +586,55 @@ void main() {
     );
 
     test(
-      'movie desc translation settings api maps resource and test endpoint',
+      'movie desc translation settings api reads via /config and keeps /test endpoint',
       () async {
         final sessionStore = await _buildLoggedInSessionStore();
         final bundle = await createTestApiBundle(sessionStore);
         addTearDown(bundle.dispose);
 
+        const initialSection = <String, dynamic>{
+          'enabled': false,
+          'base_url': 'http://llm.internal:8000',
+          'api_key': 'secret-token',
+          'model': 'gpt-4o-mini',
+          'timeout_seconds': 300.0,
+          'connect_timeout_seconds': 3.0,
+        };
+        const updatedSection = <String, dynamic>{
+          'enabled': true,
+          'base_url': 'http://127.0.0.1:8000',
+          'api_key': '',
+          'model': 'gpt-4o-mini',
+          'timeout_seconds': 180.0,
+          'connect_timeout_seconds': 9.0,
+        };
+
         bundle.adapter.enqueueJson(
           method: 'GET',
-          path: '/movie-desc-translation-settings',
+          path: '/config',
           body: <String, dynamic>{
-            'enabled': false,
-            'base_url': 'http://llm.internal:8000',
-            'api_key': 'secret-token',
-            'model': 'gpt-4o-mini',
-            'timeout_seconds': 300.0,
-            'connect_timeout_seconds': 3.0,
+            'values': <String, dynamic>{
+              'movie_info_translation': initialSection,
+              'metadata': <String, dynamic>{'proxy': null},
+            },
+            'effects': <String, dynamic>{'movie_info_translation': 'hot'},
           },
         );
         bundle.adapter.enqueueJson(
           method: 'PATCH',
-          path: '/movie-desc-translation-settings',
+          path: '/config',
           body: <String, dynamic>{
-            'enabled': true,
-            'base_url': 'http://127.0.0.1:8000',
-            'api_key': '',
-            'model': 'gpt-4o-mini',
-            'timeout_seconds': 180.0,
-            'connect_timeout_seconds': 9.0,
+            'values': <String, dynamic>{
+              'movie_info_translation': updatedSection,
+              'metadata': <String, dynamic>{'proxy': null},
+            },
+            'applied': <String>[
+              'movie_info_translation.enabled',
+              'movie_info_translation.base_url',
+              'movie_info_translation.timeout_seconds',
+              'movie_info_translation.connect_timeout_seconds',
+            ],
+            'pending_restart': <dynamic>[],
           },
         );
         bundle.adapter.enqueueJson(
@@ -726,21 +674,76 @@ void main() {
         expect(updated.enabled, isTrue);
         expect(updated.connectTimeoutSeconds, 9);
         expect(ok, isTrue);
+        final patchRequest = bundle.adapter.requests[1];
+        expect(patchRequest.method, 'PATCH');
+        expect(patchRequest.path, '/config');
         expect(
-          bundle.adapter.requests[1].body['base_url'],
+          patchRequest.body['movie_info_translation']['base_url'],
           'http://127.0.0.1:8000',
         );
-        expect(bundle.adapter.requests[2].body['timeout_seconds'], 180.0);
         expect(
-          bundle.adapter.hitCount('PATCH', '/movie-desc-translation-settings'),
-          1,
+          patchRequest.body['movie_info_translation']['timeout_seconds'],
+          180.0,
         );
+        expect(bundle.adapter.hitCount('GET', '/config'), 1);
+        expect(bundle.adapter.hitCount('PATCH', '/config'), 1);
         expect(
           bundle.adapter.hitCount(
             'POST',
             '/movie-desc-translation-settings/test',
           ),
           1,
+        );
+      },
+    );
+
+    test(
+      'movie desc translation settings api throws when /config lacks movie_info_translation',
+      () async {
+        // 目的：section 缺失时 API 层必须抛，让 UI 走 error state + 重试按钮；
+        // 一旦沉默返回默认 DTO，用户会看到「配置全空」的假象，随手保存即把
+        // 服务器上的配置踩踏成空。
+        final sessionStore = await _buildLoggedInSessionStore();
+        final bundle = await createTestApiBundle(sessionStore);
+        addTearDown(bundle.dispose);
+
+        bundle.adapter.enqueueJson(
+          method: 'GET',
+          path: '/config',
+          body: <String, dynamic>{
+            'values': <String, dynamic>{
+              'metadata': <String, dynamic>{'proxy': null},
+            },
+            'effects': <String, dynamic>{'metadata': 'hot'},
+          },
+        );
+
+        await expectLater(
+          bundle.movieDescTranslationSettingsApi.getSettings(),
+          throwsA(isA<FormatException>()),
+        );
+      },
+    );
+
+    test(
+      'movie desc translation settings api throws when /config values is not an object',
+      () async {
+        final sessionStore = await _buildLoggedInSessionStore();
+        final bundle = await createTestApiBundle(sessionStore);
+        addTearDown(bundle.dispose);
+
+        bundle.adapter.enqueueJson(
+          method: 'GET',
+          path: '/config',
+          body: <String, dynamic>{
+            'values': 'not-an-object',
+            'effects': <String, dynamic>{},
+          },
+        );
+
+        await expectLater(
+          bundle.movieDescTranslationSettingsApi.getSettings(),
+          throwsA(isA<FormatException>()),
         );
       },
     );

@@ -16,7 +16,7 @@ import 'package:sakuramedia/features/activity/data/activity_event_stream_client.
 import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
 import 'package:sakuramedia/features/actors/data/actors_api.dart';
 import 'package:sakuramedia/features/auth/data/auth_api.dart';
-import 'package:sakuramedia/features/configuration/data/collection_number_features_api.dart';
+import 'package:sakuramedia/features/configuration/data/config_api.dart';
 import 'package:sakuramedia/features/configuration/data/download_clients_api.dart';
 import 'package:sakuramedia/features/configuration/data/indexer_settings_api.dart';
 import 'package:sakuramedia/features/configuration/data/media_libraries_api.dart';
@@ -173,16 +173,9 @@ class _MyAppState extends State<MyApp> {
         ),
         ChangeNotifierProvider<NotificationCenterController>(
           create:
-              (context) =>
-                  NotificationCenterController(
-                    activityApi: context.read<ActivityApi>(),
-                  )..bindSessionStore(context.read<SessionStore>()),
-        ),
-        Provider<CollectionNumberFeaturesApi>(
-          create:
-              (context) => CollectionNumberFeaturesApi(
-                apiClient: context.read<ApiClient>(),
-              ),
+              (context) => NotificationCenterController(
+                activityApi: context.read<ActivityApi>(),
+              )..bindSessionStore(context.read<SessionStore>()),
         ),
         Provider<ActorsApi>(
           create: (context) => ActorsApi(apiClient: context.read<ApiClient>()),
@@ -216,6 +209,9 @@ class _MyAppState extends State<MyApp> {
                 apiClient: context.read<ApiClient>(),
               ),
         ),
+        Provider<ConfigApi>(
+          create: (context) => ConfigApi(apiClient: context.read<ApiClient>()),
+        ),
         Provider<StatusApi>(
           create: (context) => StatusApi(apiClient: context.read<ApiClient>()),
         ),
@@ -239,12 +235,14 @@ class _MyAppState extends State<MyApp> {
           create: (context) => VideosApi(apiClient: context.read<ApiClient>()),
         ),
         Provider<VideoCollectionsApi>(
-          create: (context) =>
-              VideoCollectionsApi(apiClient: context.read<ApiClient>()),
+          create:
+              (context) =>
+                  VideoCollectionsApi(apiClient: context.read<ApiClient>()),
         ),
         Provider<VideoImportsApi>(
-          create: (context) =>
-              VideoImportsApi(apiClient: context.read<ApiClient>()),
+          create:
+              (context) =>
+                  VideoImportsApi(apiClient: context.read<ApiClient>()),
         ),
         ChangeNotifierProvider(
           create: (_) => MovieCollectionTypeChangeNotifier(),
@@ -252,15 +250,9 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider(
           create: (_) => MovieSubscriptionChangeNotifier(),
         ),
-        ChangeNotifierProvider(
-          create: (_) => VideoMutationChangeNotifier(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => ClipMutationChangeNotifier(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => MoviePlayabilityChangeNotifier(),
-        ),
+        ChangeNotifierProvider(create: (_) => VideoMutationChangeNotifier()),
+        ChangeNotifierProvider(create: (_) => ClipMutationChangeNotifier()),
+        ChangeNotifierProvider(create: (_) => MoviePlayabilityChangeNotifier()),
         // 合集详情页 → 连播页 的一次性成员交接信箱（详情 offer、连播 take），
         // 免去连播页重复全量拉取。无依赖，纯被动存取。
         Provider<CollectionPlaybackHandoff>(

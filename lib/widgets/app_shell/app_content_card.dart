@@ -9,6 +9,7 @@ class AppContentCard extends StatelessWidget {
     this.padding,
     this.titleStyle,
     this.headerBottomSpacing,
+    this.headerTrailing,
   });
 
   final String title;
@@ -16,6 +17,7 @@ class AppContentCard extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final TextStyle? titleStyle;
   final double? headerBottomSpacing;
+  final Widget? headerTrailing;
 
   @override
   Widget build(BuildContext context) {
@@ -31,17 +33,38 @@ class AppContentCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style:
-                titleStyle ??
-                resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s18,
-                  weight: AppTextWeight.semibold,
-                  tone: AppTextTone.primary,
+          if (headerTrailing == null)
+            Text(
+              title,
+              style:
+                  titleStyle ??
+                  resolveAppTextStyle(
+                    context,
+                    size: AppTextSize.s18,
+                    weight: AppTextWeight.semibold,
+                    tone: AppTextTone.primary,
+                  ),
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style:
+                        titleStyle ??
+                        resolveAppTextStyle(
+                          context,
+                          size: AppTextSize.s18,
+                          weight: AppTextWeight.semibold,
+                          tone: AppTextTone.primary,
+                        ),
+                  ),
                 ),
-          ),
+                SizedBox(width: context.appSpacing.md),
+                headerTrailing!,
+              ],
+            ),
           SizedBox(height: headerBottomSpacing ?? context.appSpacing.lg),
           child,
         ],

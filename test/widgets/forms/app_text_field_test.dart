@@ -36,6 +36,50 @@ void main() {
     expect(latestValue, 'jackett');
   });
 
+  testWidgets('keeps text suffix trailing without covering input', (
+    WidgetTester tester,
+  ) async {
+    final controller = TextEditingController(text: '256');
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: sakuraThemeData,
+        home: Material(
+          child: Center(
+            child: SizedBox(
+              width: sakuraThemeData.appLayoutTokens.dialogWidthSm,
+              child: AppTextField(
+                fieldKey: const Key('unit-field'),
+                controller: controller,
+                suffix: Padding(
+                  padding: EdgeInsets.only(
+                    right: sakuraThemeData.appSpacing.md,
+                  ),
+                  child: const Text('MB'),
+                ),
+                tightSuffix: true,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final fieldRect = tester.getRect(find.byKey(const Key('unit-field')));
+    final suffixRect = tester.getRect(find.text('MB'));
+    expect(suffixRect.center.dx, greaterThan(fieldRect.center.dx));
+
+    await tester.tapAt(
+      Offset(fieldRect.left + fieldRect.width / 4, fieldRect.center.dy),
+    );
+    await tester.pump();
+    tester.testTextInput.enterText('512');
+    await tester.pump();
+
+    expect(controller.text, '512');
+  });
+
   testWidgets('supports obscure text and disabled state', (
     WidgetTester tester,
   ) async {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/features/configuration/presentation/desktop_account_security_section.dart';
-import 'package:sakuramedia/features/configuration/presentation/desktop_collection_features_section.dart';
+import 'package:sakuramedia/features/configuration/presentation/desktop_advanced_settings_section.dart';
 import 'package:sakuramedia/features/configuration/presentation/desktop_download_clients_section.dart';
 import 'package:sakuramedia/features/configuration/presentation/desktop_indexer_settings_section.dart';
 import 'package:sakuramedia/features/configuration/presentation/desktop_llm_settings_section.dart';
@@ -8,6 +8,7 @@ import 'package:sakuramedia/features/configuration/presentation/desktop_media_li
 import 'package:sakuramedia/features/configuration/presentation/desktop_playlists_section.dart';
 import 'package:sakuramedia/features/media/presentation/desktop_media_maintenance_page.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/app_shell/app_settings_rail.dart';
 
 class DesktopConfigurationPage extends StatefulWidget {
@@ -20,9 +21,11 @@ class DesktopConfigurationPage extends StatefulWidget {
 
 class _DesktopConfigurationPageState extends State<DesktopConfigurationPage> {
   static const int _defaultSelectedIndex = 1;
+  static const int _advancedSettingsIndex = 6;
 
   int _selectedIndex = _defaultSelectedIndex;
   int _mediaLibrariesRevision = 0;
+  bool _advancedSettingsDirty = false;
 
   // 顺序即右侧 IndexedStack 的索引；itemKey 沿用原 tab key，保持深链/测试兼容。
   static const List<_ConfigurationCategory> _categories = [
@@ -47,11 +50,6 @@ class _DesktopConfigurationPageState extends State<DesktopConfigurationPage> {
       icon: Icons.travel_explore_outlined,
     ),
     _ConfigurationCategory(
-      itemKey: Key('configuration-tab-collection-features'),
-      label: '合集特征',
-      icon: Icons.tag_outlined,
-    ),
-    _ConfigurationCategory(
       itemKey: Key('configuration-tab-llm'),
       label: 'LLM 配置',
       icon: Icons.auto_awesome_outlined,
@@ -62,15 +60,34 @@ class _DesktopConfigurationPageState extends State<DesktopConfigurationPage> {
       icon: Icons.playlist_play_outlined,
     ),
     _ConfigurationCategory(
+      itemKey: Key('configuration-tab-advanced'),
+      label: '高级设置',
+      icon: Icons.tune_outlined,
+    ),
+    _ConfigurationCategory(
       itemKey: Key('configuration-tab-media-maintenance'),
       label: '媒体维护',
       icon: Icons.cleaning_services_outlined,
     ),
   ];
 
-  void _select(int index) {
+  Future<void> _select(int index) async {
     if (_selectedIndex == index) {
       return;
+    }
+    if (_selectedIndex == _advancedSettingsIndex && _advancedSettingsDirty) {
+      final confirmed = await showAppConfirmDialog(
+        context,
+        title: '有未保存的改动',
+        message: '高级设置里还有未保存的改动，确认离开？',
+        confirmLabel: '确认离开',
+        dialogKey: const Key('configuration-advanced-leave-confirm-dialog'),
+        confirmKey: const Key('configuration-advanced-leave-confirm-button'),
+        cancelKey: const Key('configuration-advanced-leave-cancel-button'),
+      );
+      if (!confirmed || !mounted) {
+        return;
+      }
     }
     setState(() {
       _selectedIndex = index;
@@ -80,6 +97,15 @@ class _DesktopConfigurationPageState extends State<DesktopConfigurationPage> {
   void _handleMediaLibrariesChanged() {
     setState(() {
       _mediaLibrariesRevision += 1;
+    });
+  }
+
+  void _handleAdvancedDirtyChanged(bool dirty) {
+    if (_advancedSettingsDirty == dirty) {
+      return;
+    }
+    setState(() {
+      _advancedSettingsDirty = dirty;
     });
   }
 
@@ -145,17 +171,18 @@ class _DesktopConfigurationPageState extends State<DesktopConfigurationPage> {
                       ),
                     ),
                     _ConfigurationTabScrollView(
-                      child: CollectionFeaturesSection(
+                      child: DesktopLlmSettingsSection(
                         active: _selectedIndex == 4,
                       ),
                     ),
                     _ConfigurationTabScrollView(
-                      child: DesktopLlmSettingsSection(
-                        active: _selectedIndex == 5,
-                      ),
+                      child: PlaylistsSection(active: _selectedIndex == 5),
                     ),
                     _ConfigurationTabScrollView(
-                      child: PlaylistsSection(active: _selectedIndex == 6),
+                      child: DesktopAdvancedSettingsSection(
+                        active: _selectedIndex == _advancedSettingsIndex,
+                        onDirtyChanged: _handleAdvancedDirtyChanged,
+                      ),
                     ),
                     // 媒体维护页自带滚动控制器（无限滚动分页），直接铺满区域，
                     // 不再额外包一层滚动视图。

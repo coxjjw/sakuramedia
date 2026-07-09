@@ -23,7 +23,6 @@ import 'package:sakuramedia/features/image_search/data/image_search_result_item_
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_page.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_draft_store.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
-import 'package:sakuramedia/features/configuration/data/collection_number_features_api.dart';
 import 'package:sakuramedia/features/hot_reviews/data/hot_reviews_api.dart';
 import 'package:sakuramedia/features/configuration/data/download_clients_api.dart';
 import 'package:sakuramedia/features/configuration/data/indexer_settings_api.dart';
@@ -3625,9 +3624,6 @@ Future<void> _pumpRouterApp(
     ),
     Provider<RankingsApi>.value(value: bundle.rankingsApi),
     Provider<HotReviewsApi>.value(value: bundle.hotReviewsApi),
-    Provider<CollectionNumberFeaturesApi>.value(
-      value: bundle.collectionNumberFeaturesApi,
-    ),
     Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
     Provider<DownloadsApi>.value(value: bundle.downloadsApi),
     Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
@@ -3940,14 +3936,19 @@ void _enqueueMobileIndexersResponses(TestApiBundle bundle) {
 void _enqueueMobileLlmResponses(TestApiBundle bundle) {
   bundle.adapter.enqueueJson(
     method: 'GET',
-    path: '/movie-desc-translation-settings',
+    path: '/config',
     body: const <String, dynamic>{
-      'enabled': false,
-      'base_url': 'http://llm.internal:8000',
-      'api_key': '',
-      'model': 'gpt-4o-mini',
-      'timeout_seconds': 300.0,
-      'connect_timeout_seconds': 3.0,
+      'values': <String, dynamic>{
+        'movie_info_translation': <String, dynamic>{
+          'enabled': false,
+          'base_url': 'http://llm.internal:8000',
+          'api_key': '',
+          'model': 'gpt-4o-mini',
+          'timeout_seconds': 300.0,
+          'connect_timeout_seconds': 3.0,
+        },
+      },
+      'effects': <String, dynamic>{'movie_info_translation': 'hot'},
     },
   );
 }

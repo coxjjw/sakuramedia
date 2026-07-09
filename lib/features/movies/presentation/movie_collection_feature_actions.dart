@@ -5,8 +5,6 @@ import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
-import 'package:sakuramedia/features/configuration/data/collection_number_features_api.dart';
-import 'package:sakuramedia/features/configuration/data/collection_number_features_dto.dart';
 import 'package:sakuramedia/features/movies/data/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/data/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/movie_collection_type_change_notifier.dart';
@@ -18,7 +16,6 @@ import 'package:sakuramedia/theme.dart';
 enum _MovieCollectionFeatureMenuAction {
   toggleSubscription,
   toggleCollectionType,
-  addFeature,
 }
 
 class _MovieCollectionStatusLookupResult {
@@ -26,25 +23,6 @@ class _MovieCollectionStatusLookupResult {
 
   final MovieCollectionStatusDto? status;
   final String? errorMessage;
-}
-
-String? extractCollectionFeaturePrefix(String movieNumber) {
-  final normalizedMovieNumber = movieNumber.trim().toUpperCase();
-  if (normalizedMovieNumber.isEmpty) {
-    return null;
-  }
-
-  final match = RegExp(r'^(.*?)(\d+)$').firstMatch(normalizedMovieNumber);
-  if (match == null) {
-    return null;
-  }
-
-  final prefix = match.group(1)?.trim();
-  if (prefix == null || prefix.isEmpty) {
-    return null;
-  }
-
-  return prefix;
 }
 
 /// 列表页右键/长按菜单的便捷入口:免去各处重复的
@@ -73,9 +51,7 @@ Future<void> showMovieCollectionFeatureActionMenu({
   required String movieNumber,
   required Offset globalPosition,
   bool? isSubscribed,
-  bool applyNow = true,
 }) async {
-  final feature = extractCollectionFeaturePrefix(movieNumber);
   final moviesApi = context.read<MoviesApi>();
   final statusResult = await _lookupCollectionStatus(
     moviesApi: moviesApi,
@@ -87,7 +63,6 @@ Future<void> showMovieCollectionFeatureActionMenu({
 
   final action = await _showMovieCollectionFeatureMenu(
     context: context,
-    feature: feature,
     isCollection: statusResult.status?.isCollection,
     isSubscribed: isSubscribed,
     globalPosition: globalPosition,
@@ -114,13 +89,6 @@ Future<void> showMovieCollectionFeatureActionMenu({
         movieNumber: movieNumber,
         statusResult: statusResult,
         moviesApi: moviesApi,
-      );
-      return;
-    case _MovieCollectionFeatureMenuAction.addFeature:
-      await _handleAddFeatureAction(
-        context: context,
-        feature: feature,
-        applyNow: applyNow,
       );
       return;
   }
@@ -171,55 +139,6 @@ Future<void> _handleToggleSubscriptionAction({
   }
 
   showMovieSubscriptionFeedback(result);
-}
-
-Future<void> _handleAddFeatureAction({
-  required BuildContext context,
-  required String? feature,
-  required bool applyNow,
-}) async {
-  if (feature == null) {
-    showToast('无法从当前番号提取合集特征');
-    return;
-  }
-
-  final collectionNumberFeaturesApi =
-      context.read<CollectionNumberFeaturesApi>();
-  try {
-    final settings = await collectionNumberFeaturesApi.getFeatures();
-    final normalizedFeature = feature.trim().toUpperCase();
-    final hasFeature = settings.features
-        .map((item) => item.trim().toUpperCase())
-        .contains(normalizedFeature);
-
-    if (hasFeature) {
-      if (context.mounted) {
-        showToast('合集特征中已包含 $normalizedFeature');
-      }
-      return;
-    }
-
-    final nextFeatures = List<String>.from(settings.features)
-      ..add(normalizedFeature);
-    await collectionNumberFeaturesApi.updateFeatures(
-      UpdateCollectionNumberFeaturesPayload(features: nextFeatures),
-      applyNow: applyNow,
-    );
-
-    if (!context.mounted) {
-      return;
-    }
-    showToast(
-      applyNow
-          ? '已将 $normalizedFeature 加入合集特征，并重新统计合集影片'
-          : '已将 $normalizedFeature 加入合集特征',
-    );
-  } catch (error) {
-    if (!context.mounted) {
-      return;
-    }
-    showToast(apiErrorMessage(error, fallback: '保存合集番号特征失败'));
-  }
 }
 
 Future<void> _handleCollectionTypeToggleAction({
@@ -291,7 +210,6 @@ Future<_MovieCollectionStatusLookupResult> _lookupCollectionStatus({
 
 Future<_MovieCollectionFeatureMenuAction?> _showMovieCollectionFeatureMenu({
   required BuildContext context,
-  required String? feature,
   required bool? isCollection,
   required bool? isSubscribed,
   required Offset globalPosition,
@@ -390,42 +308,6 @@ Future<_MovieCollectionFeatureMenuAction?> _showMovieCollectionFeatureMenu({
           ],
         ),
       ),
-      if (feature != null)
-        PopupMenuItem<_MovieCollectionFeatureMenuAction>(
-          enabled: false,
-          height: 1,
-          padding: EdgeInsets.zero,
-          child: Divider(height: 1, thickness: 1, color: colors.borderStrong),
-        ),
-      if (feature != null)
-        PopupMenuItem<_MovieCollectionFeatureMenuAction>(
-          key: const Key('movie-collection-feature-menu-add-item'),
-          value: _MovieCollectionFeatureMenuAction.addFeature,
-          height: menuItemHeight,
-          padding: EdgeInsets.symmetric(
-            horizontal: spacing.sm,
-            vertical: spacing.xs,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.auto_awesome_motion_outlined,
-                size: componentTokens.iconSizeXs,
-                color: context.appTextPalette.secondary,
-              ),
-              SizedBox(width: spacing.sm),
-              Text(
-                '将"$feature"加入合集特征',
-                style: resolveAppTextStyle(
-                  context,
-                  size: AppTextSize.s12,
-                  weight: AppTextWeight.regular,
-                  tone: AppTextTone.primary,
-                ),
-              ),
-            ],
-          ),
-        ),
     ],
   );
 }

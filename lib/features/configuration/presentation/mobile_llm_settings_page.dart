@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
+import 'package:sakuramedia/core/validation/url_validators.dart';
 import 'package:sakuramedia/features/configuration/data/movie_desc_translation_settings_api.dart';
 import 'package:sakuramedia/features/configuration/data/movie_desc_translation_settings_dto.dart';
 import 'package:sakuramedia/features/configuration/presentation/llm_settings_copy.dart';
@@ -366,7 +367,7 @@ class _MobileLlmSettingsPageState extends State<MobileLlmSettingsPage> {
       }
       setState(() {
         _isLoading = false;
-        _errorMessage = apiErrorMessage(error, fallback: 'LLM 配置加载失败，请稍后重试。');
+        _errorMessage = apiErrorMessage(error, fallback: 'LLM 配置加载失败');
       });
     }
   }
@@ -385,7 +386,7 @@ class _MobileLlmSettingsPageState extends State<MobileLlmSettingsPage> {
       if (!mounted) {
         return;
       }
-      showToast(apiErrorMessage(error, fallback: 'LLM 配置加载失败，请稍后重试。'));
+      showToast(apiErrorMessage(error, fallback: 'LLM 配置加载失败'));
     }
   }
 
@@ -527,7 +528,7 @@ class _MobileLlmSettingsPageState extends State<MobileLlmSettingsPage> {
 
   String? _baseUrlError(String? value) {
     final trimmed = value?.trim() ?? '';
-    if (trimmed.isEmpty || !_isValidHttpUrl(trimmed)) {
+    if (trimmed.isEmpty || !isValidHttpUrl(trimmed)) {
       return '请输入合法的 http/https 地址';
     }
     return null;
@@ -741,12 +742,4 @@ class _MobileLlmErrorSection extends StatelessWidget {
       ),
     );
   }
-}
-
-bool _isValidHttpUrl(String value) {
-  final uri = Uri.tryParse(value);
-  return uri != null &&
-      uri.hasScheme &&
-      uri.hasAuthority &&
-      (uri.scheme == 'http' || uri.scheme == 'https');
 }

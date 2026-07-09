@@ -12,6 +12,7 @@ class AppTextField extends StatelessWidget {
     this.helperText,
     this.prefix,
     this.suffix,
+    this.tightSuffix = false,
     this.obscureText = false,
     this.enabled = true,
     this.validator,
@@ -34,6 +35,7 @@ class AppTextField extends StatelessWidget {
   final String? helperText;
   final Widget? prefix;
   final Widget? suffix;
+  final bool tightSuffix;
   final bool obscureText;
   final bool enabled;
   final FormFieldValidator<String>? validator;
@@ -132,6 +134,12 @@ class AppTextField extends StatelessWidget {
               ),
       prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
       suffixIcon: suffix,
+      // 默认沿用 Flutter 的 48×48 min（保证 AppIconButton 等 icon 型 suffix 的触控热区）；
+      // 只有 tightSuffix=true 的文本型 suffix（例如单位「MB」「分钟」）才收紧到 0×0，让文本贴边。
+      suffixIconConstraints:
+          suffix != null && tightSuffix
+              ? const BoxConstraints(minWidth: 0, minHeight: 0)
+              : null,
       border: border(colors.borderSubtle),
       enabledBorder: border(colors.borderSubtle),
       focusedBorder: border(colors.borderSubtle),

@@ -10,7 +10,8 @@ import 'package:sakuramedia/features/account/data/account_api.dart';
 import 'package:sakuramedia/core/session/credential_store.dart';
 import 'package:sakuramedia/features/auth/data/auth_api.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
-import 'package:sakuramedia/features/configuration/data/collection_number_features_api.dart';
+import 'package:sakuramedia/features/configuration/data/config_api.dart';
+import 'package:sakuramedia/features/configuration/data/config_dto.dart';
 import 'package:sakuramedia/features/configuration/data/download_clients_api.dart';
 import 'package:sakuramedia/features/configuration/data/indexer_settings_api.dart';
 import 'package:sakuramedia/features/configuration/data/media_libraries_api.dart';
@@ -56,9 +57,9 @@ void main() {
           'configuration-tab-media-libraries',
           'configuration-tab-downloads',
           'configuration-tab-indexers',
-          'configuration-tab-collection-features',
           'configuration-tab-llm',
           'configuration-tab-playlists',
+          'configuration-tab-advanced',
           'configuration-tab-media-maintenance',
         ];
         var previousTop = double.negativeInfinity;
@@ -115,11 +116,7 @@ void main() {
 
       expect(bundle.adapter.hitCount('GET', '/download-clients'), 0);
       expect(bundle.adapter.hitCount('GET', '/media-libraries'), 1);
-      expect(bundle.adapter.hitCount('GET', '/collection-number-features'), 0);
-      expect(
-        bundle.adapter.hitCount('GET', '/movie-desc-translation-settings'),
-        0,
-      );
+      expect(bundle.adapter.hitCount('GET', '/config'), 0);
       expect(bundle.adapter.hitCount('GET', '/indexer-settings'), 0);
       expect(bundle.adapter.hitCount('GET', '/playlists'), 0);
       expect(find.text('还没有媒体库'), findsOneWidget);
@@ -132,27 +129,6 @@ void main() {
       expect(find.text('还没有下载器配置'), findsOneWidget);
     });
 
-    testWidgets('loads collection number features lazily', (
-      WidgetTester tester,
-    ) async {
-      _enqueueCollectionNumberFeatures(bundle, features: const ['FC2', 'OFJE']);
-      _enqueueMediaLibraries(bundle);
-
-      await _pumpPage(tester, bundle, sessionStore: sessionStore);
-
-      expect(bundle.adapter.hitCount('GET', '/collection-number-features'), 0);
-      await tester.tap(
-        find.byKey(const Key('configuration-tab-collection-features')),
-      );
-      await tester.pumpAndSettle();
-
-      final field = tester.widget<TextFormField>(
-        find.byKey(const Key('configuration-collection-features-field')),
-      );
-      expect(field.controller?.text, 'FC2\nOFJE');
-      expect(bundle.adapter.hitCount('GET', '/collection-number-features'), 1);
-    });
-
     testWidgets('loads llm settings section lazily', (
       WidgetTester tester,
     ) async {
@@ -160,10 +136,7 @@ void main() {
 
       await _pumpPage(tester, bundle, sessionStore: sessionStore);
 
-      expect(
-        bundle.adapter.hitCount('GET', '/movie-desc-translation-settings'),
-        0,
-      );
+      expect(bundle.adapter.hitCount('GET', '/config'), 0);
       await tester.tap(find.byKey(const Key('configuration-tab-llm')));
       await tester.pumpAndSettle();
 
@@ -187,12 +160,55 @@ void main() {
         find.text(LlmSettingsCopy.sharedEndpointDescription),
         findsOneWidget,
       );
-      expect(
-        bundle.adapter.hitCount('GET', '/movie-desc-translation-settings'),
-        1,
-      );
+      expect(bundle.adapter.hitCount('GET', '/config'), 1);
       expect(find.text(LlmSettingsCopy.baseUrlHelperText), findsOneWidget);
       expect(find.text(LlmSettingsCopy.modelHintText), findsOneWidget);
+    });
+
+    testWidgets('confirms before leaving dirty advanced settings tab', (
+      WidgetTester tester,
+    ) async {
+      _enqueueMediaLibraries(bundle, includeLlmSettings: false);
+      _enqueueAdvancedConfig(bundle);
+      _enqueuePlaylists(bundle, playlists: const []);
+
+      await _pumpPage(tester, bundle, sessionStore: sessionStore);
+      await _openConfigurationTab(
+        tester,
+        const Key('configuration-tab-advanced'),
+      );
+
+      await tester.enterText(
+        find.byKey(
+          const Key('configuration-advanced-collection-duration-field'),
+        ),
+        '301',
+      );
+      await tester.tap(find.byKey(const Key('configuration-tab-playlists')));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('configuration-advanced-leave-confirm-dialog')),
+        findsOneWidget,
+      );
+      expect(bundle.adapter.hitCount('GET', '/playlists'), 0);
+
+      await tester.tap(
+        find.byKey(const Key('configuration-advanced-leave-cancel-button')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('高级设置'), findsWidgets);
+      expect(bundle.adapter.hitCount('GET', '/playlists'), 0);
+
+      await tester.tap(find.byKey(const Key('configuration-tab-playlists')));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('configuration-advanced-leave-confirm-button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(bundle.adapter.hitCount('GET', '/playlists'), 1);
+      expect(find.text('还没有自定义播放列表'), findsOneWidget);
     });
 
     testWidgets('shows llm example config hints when draft is empty', (
@@ -214,14 +230,16 @@ void main() {
       _enqueueMediaLibraries(bundle);
       bundle.adapter.enqueueJson(
         method: 'PATCH',
-        path: '/movie-desc-translation-settings',
-        body: _buildMovieDescTranslationSettingsJson(
-          enabled: true,
-          baseUrl: 'http://127.0.0.1:8000',
-          apiKey: 'secret-token',
-          model: 'gpt-4.1-mini',
-          timeoutSeconds: 120,
-          connectTimeoutSeconds: 5,
+        path: '/config',
+        body: _buildConfigPatchResponseJson(
+          section: _buildMovieDescTranslationSettingsJson(
+            enabled: true,
+            baseUrl: 'http://127.0.0.1:8000',
+            apiKey: 'secret-token',
+            model: 'gpt-4.1-mini',
+            timeoutSeconds: 120,
+            connectTimeoutSeconds: 5,
+          ),
         ),
       );
 
@@ -262,14 +280,14 @@ void main() {
       await tester.pumpAndSettle();
 
       final patchRequest = bundle.adapter.requests.firstWhere(
-        (request) =>
-            request.method == 'PATCH' &&
-            request.path == '/movie-desc-translation-settings',
+        (request) => request.method == 'PATCH' && request.path == '/config',
       );
-      expect(patchRequest.body['enabled'], isTrue);
-      expect(patchRequest.body['base_url'], 'http://127.0.0.1:8000');
-      expect(patchRequest.body['model'], 'gpt-4.1-mini');
-      expect(patchRequest.body['timeout_seconds'], 120.0);
+      final patchSection =
+          patchRequest.body['movie_info_translation'] as Map<String, dynamic>;
+      expect(patchSection['enabled'], isTrue);
+      expect(patchSection['base_url'], 'http://127.0.0.1:8000');
+      expect(patchSection['model'], 'gpt-4.1-mini');
+      expect(patchSection['timeout_seconds'], 120.0);
       expect(find.text('已启用'), findsWidgets);
       await tester.pump(const Duration(seconds: 3));
     });
@@ -309,10 +327,7 @@ void main() {
         ),
         1,
       );
-      expect(
-        bundle.adapter.hitCount('PATCH', '/movie-desc-translation-settings'),
-        0,
-      );
+      expect(bundle.adapter.hitCount('PATCH', '/config'), 0);
       expect(find.text('测试通过'), findsWidgets);
       await tester.pump(const Duration(seconds: 3));
     });
@@ -351,10 +366,7 @@ void main() {
       expect(find.text('请输入模型名称'), findsOneWidget);
       expect(find.text('请求超时必须是正数'), findsOneWidget);
       expect(find.text('连接超时必须是正数'), findsOneWidget);
-      expect(
-        bundle.adapter.hitCount('PATCH', '/movie-desc-translation-settings'),
-        0,
-      );
+      expect(bundle.adapter.hitCount('PATCH', '/config'), 0);
     });
 
     testWidgets('failed llm test updates recent test state', (
@@ -399,13 +411,13 @@ void main() {
     ) async {
       bundle.adapter.enqueueResponder(
         method: 'GET',
-        path: '/movie-desc-translation-settings',
+        path: '/config',
         responder: (_, __) async {
           return ResponseBody.fromString(
             jsonEncode({
               'error': <String, dynamic>{
                 'code': 'server_error',
-                'message': 'LLM 配置加载失败，请稍后重试。',
+                'message': 'LLM 配置加载失败',
               },
             }),
             500,
@@ -425,7 +437,7 @@ void main() {
         find.byKey(const Key('configuration-llm-error-state')),
         findsOneWidget,
       );
-      expect(find.text('LLM 配置加载失败，请稍后重试。'), findsOneWidget);
+      expect(find.text('LLM 配置加载失败'), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('configuration-llm-retry-button')));
       await tester.pump();
@@ -444,7 +456,7 @@ void main() {
       _enqueueMediaLibraries(bundle);
       bundle.adapter.enqueueResponder(
         method: 'PATCH',
-        path: '/movie-desc-translation-settings',
+        path: '/config',
         responder: (_, __) async {
           return ResponseBody.fromString(
             jsonEncode({
@@ -484,225 +496,6 @@ void main() {
       );
       expect(field.controller?.text, 'http://127.0.0.1:9000');
       expect(find.text('Base URL 不合法'), findsOneWidget);
-      await tester.pump(const Duration(seconds: 3));
-    });
-
-    testWidgets(
-      'collection feature action controls are right aligned and fixed width',
-      (WidgetTester tester) async {
-        _enqueueCollectionNumberFeatures(bundle, features: const ['FC2']);
-        _enqueueMediaLibraries(bundle);
-
-        await _pumpPage(tester, bundle, sessionStore: sessionStore);
-        await _openConfigurationTab(
-          tester,
-          const Key('configuration-tab-collection-features'),
-        );
-        await tester.ensureVisible(
-          find.byKey(
-            const Key('configuration-collection-features-save-button'),
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        final selectRect = tester.getRect(
-          find.byKey(const Key('configuration-collection-apply-now-field')),
-        );
-        final buttonRect = tester.getRect(
-          find.byKey(
-            const Key('configuration-collection-features-save-button'),
-          ),
-        );
-        final fieldRect = tester.getRect(
-          find.byKey(const Key('configuration-collection-features-field')),
-        );
-
-        expect(selectRect.width, buttonRect.width);
-        expect(
-          selectRect.height,
-          moreOrLessEquals(buttonRect.height, epsilon: 0.1),
-        );
-        expect(selectRect.width, lessThan(fieldRect.width));
-        expect(
-          (fieldRect.right - buttonRect.right).abs(),
-          lessThanOrEqualTo(1),
-        );
-      },
-    );
-
-    testWidgets('saves collection number features with apply_now false', (
-      WidgetTester tester,
-    ) async {
-      _enqueueCollectionNumberFeatures(bundle, features: const ['FC2']);
-      _enqueueMediaLibraries(bundle);
-      bundle.adapter.enqueueJson(
-        method: 'PATCH',
-        path: '/collection-number-features',
-        body: {
-          'features': ['OFJE', 'FC2'],
-          'sync_stats': null,
-        },
-      );
-
-      await _pumpPage(tester, bundle, sessionStore: sessionStore);
-      await _openConfigurationTab(
-        tester,
-        const Key('configuration-tab-collection-features'),
-      );
-
-      await tester.ensureVisible(
-        find.byKey(const Key('configuration-collection-features-field')),
-      );
-      await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byKey(const Key('configuration-collection-features-field')),
-        ' ofje \nFC2\n',
-      );
-      await tester.ensureVisible(
-        find.byKey(const Key('configuration-collection-apply-now-field')),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(
-        find.byKey(const Key('configuration-collection-apply-now-field')),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('仅保存特征配置').last);
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(
-        find.byKey(const Key('configuration-collection-features-save-button')),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(
-        find.byKey(const Key('configuration-collection-features-save-button')),
-      );
-      await tester.pumpAndSettle();
-
-      final patchRequest = bundle.adapter.requests.firstWhere(
-        (request) =>
-            request.method == 'PATCH' &&
-            request.path == '/collection-number-features',
-      );
-      expect(patchRequest.body['features'], ['ofje', 'FC2']);
-      expect(patchRequest.uri.queryParameters['apply_now'], 'false');
-
-      final field = tester.widget<TextFormField>(
-        find.byKey(const Key('configuration-collection-features-field')),
-      );
-      expect(field.controller?.text, 'OFJE\nFC2');
-      expect(find.text('最近一次即时重算结果'), findsNothing);
-      await tester.pump(const Duration(seconds: 3));
-    });
-
-    testWidgets('saves collection number features with sync stats', (
-      WidgetTester tester,
-    ) async {
-      _enqueueCollectionNumberFeatures(bundle, features: const ['FC2']);
-      _enqueueMediaLibraries(bundle);
-      bundle.adapter.enqueueJson(
-        method: 'PATCH',
-        path: '/collection-number-features',
-        body: {
-          'features': ['FC2', 'OFJE'],
-          'sync_stats': {
-            'total_movies': 100,
-            'matched_count': 20,
-            'updated_to_collection_count': 5,
-            'updated_to_single_count': 3,
-            'unchanged_count': 92,
-          },
-        },
-      );
-
-      await _pumpPage(tester, bundle, sessionStore: sessionStore);
-      await _openConfigurationTab(
-        tester,
-        const Key('configuration-tab-collection-features'),
-      );
-
-      await tester.ensureVisible(
-        find.byKey(const Key('configuration-collection-features-field')),
-      );
-      await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byKey(const Key('configuration-collection-features-field')),
-        'FC2\nOFJE',
-      );
-      await tester.ensureVisible(
-        find.byKey(const Key('configuration-collection-features-save-button')),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(
-        find.byKey(const Key('configuration-collection-features-save-button')),
-      );
-      await tester.pumpAndSettle();
-
-      final patchRequest = bundle.adapter.requests.firstWhere(
-        (request) =>
-            request.method == 'PATCH' &&
-            request.path == '/collection-number-features',
-      );
-      expect(patchRequest.uri.queryParameters['apply_now'], 'true');
-      expect(find.text('最近一次即时重算结果'), findsOneWidget);
-      expect(find.text('影片总数: 100'), findsOneWidget);
-      expect(find.text('更新为合集: 5'), findsOneWidget);
-      await tester.pump(const Duration(seconds: 3));
-    });
-
-    testWidgets('keeps input when saving collection features fails', (
-      WidgetTester tester,
-    ) async {
-      _enqueueCollectionNumberFeatures(bundle, features: const ['FC2']);
-      _enqueueMediaLibraries(bundle);
-      bundle.adapter.enqueueResponder(
-        method: 'PATCH',
-        path: '/collection-number-features',
-        responder: (options, requestBody) async {
-          return ResponseBody.fromString(
-            jsonEncode({
-              'error': {
-                'code': 'invalid_collection_number_feature',
-                'message': '特征值不合法',
-              },
-            }),
-            422,
-            headers: const {
-              Headers.contentTypeHeader: [Headers.jsonContentType],
-            },
-          );
-        },
-      );
-
-      await _pumpPage(tester, bundle, sessionStore: sessionStore);
-      await _openConfigurationTab(
-        tester,
-        const Key('configuration-tab-collection-features'),
-      );
-
-      await tester.ensureVisible(
-        find.byKey(const Key('configuration-collection-features-field')),
-      );
-      await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byKey(const Key('configuration-collection-features-field')),
-        'FC2\n??',
-      );
-      await tester.ensureVisible(
-        find.byKey(const Key('configuration-collection-features-save-button')),
-      );
-      await tester.pumpAndSettle();
-      await tester.tap(
-        find.byKey(const Key('configuration-collection-features-save-button')),
-      );
-      await tester.pumpAndSettle();
-
-      final field = tester.widget<TextFormField>(
-        find.byKey(const Key('configuration-collection-features-field')),
-      );
-      expect(field.controller?.text, 'FC2\n??');
-      expect(
-        bundle.adapter.hitCount('PATCH', '/collection-number-features'),
-        1,
-      );
       await tester.pump(const Duration(seconds: 3));
     });
 
@@ -2408,9 +2201,7 @@ void main() {
           Provider<AccountApi>.value(value: bundle.accountApi),
           Provider<CredentialStore>.value(value: InMemoryCredentialStore()),
           Provider<AuthApi>.value(value: bundle.authApi),
-          Provider<CollectionNumberFeaturesApi>.value(
-            value: bundle.collectionNumberFeaturesApi,
-          ),
+          Provider<ConfigApi>.value(value: bundle.configApi),
           Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
           Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
           Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
@@ -2485,9 +2276,7 @@ Future<void> _pumpPage(
         Provider<AccountApi>.value(value: bundle.accountApi),
         Provider<CredentialStore>.value(value: InMemoryCredentialStore()),
         Provider<AuthApi>.value(value: bundle.authApi),
-        Provider<CollectionNumberFeaturesApi>.value(
-          value: bundle.collectionNumberFeaturesApi,
-        ),
+        Provider<ConfigApi>.value(value: bundle.configApi),
         Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
         Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
         Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
@@ -2597,6 +2386,14 @@ void _enqueuePlaylists(
   );
 }
 
+void _enqueueAdvancedConfig(TestApiBundle bundle) {
+  bundle.adapter.enqueueJson(
+    method: 'GET',
+    path: '/config',
+    body: _buildAdvancedConfigResponseJson(),
+  );
+}
+
 void _enqueueMediaLibraries(
   TestApiBundle bundle, {
   bool includeLlmSettings = true,
@@ -2615,22 +2412,44 @@ void _enqueueMediaLibraries(
     path: '/media-libraries',
     body: libraries,
   );
-  _enqueueCollectionNumberFeatures(bundle);
   if (includeLlmSettings) {
     _enqueueMovieDescTranslationSettings(bundle);
   }
 }
 
-void _enqueueCollectionNumberFeatures(
-  TestApiBundle bundle, {
-  List<String> features = const ['CJOB', 'DVAJ'],
-  Map<String, Object?>? syncStats,
-}) {
-  bundle.adapter.enqueueJson(
-    method: 'GET',
-    path: '/collection-number-features',
-    body: {'features': features, 'sync_stats': syncStats},
-  );
+Map<String, dynamic> _buildAdvancedConfigResponseJson() {
+  return <String, dynamic>{
+    'values': <String, dynamic>{
+      'media': <String, dynamic>{
+        'others_number_features': <String>['OFJE', 'CJOB'],
+        'collection_duration_threshold_minutes': 300,
+        'inner_sub_tags': <String>['中字', '-C'],
+        'blueray_tags': <String>['蓝光', '4K'],
+        'uncensored_tags': <String>['uncensored', '-UC'],
+        'uncensored_prefix': <String>['PT-', 'S2M'],
+        'allowed_min_video_file_size': 268435456,
+      },
+      'metadata': <String, dynamic>{
+        'javdb_host': 'jdforrepam.com',
+        'javdb_username': '',
+        'javdb_password': '',
+        'proxy': '',
+      },
+      'scheduler': <String, dynamic>{
+        for (final key in AdvancedSchedulerConfigDto.cronKeys)
+          '${key}_cron': '0 2 * * *',
+      },
+      'downloads': <String, dynamic>{'small_file_cleanup_threshold_mb': 256},
+      'logging': <String, dynamic>{'level': 'INFO'},
+    },
+    'effects': <String, dynamic>{
+      'media': 'hot',
+      'metadata': 'hot',
+      'scheduler': 'restart_scheduler',
+      'downloads': 'restart_scheduler',
+      'logging': 'restart_api',
+    },
+  };
 }
 
 void _enqueueMovieDescTranslationSettings(
@@ -2644,16 +2463,39 @@ void _enqueueMovieDescTranslationSettings(
 }) {
   bundle.adapter.enqueueJson(
     method: 'GET',
-    path: '/movie-desc-translation-settings',
-    body: _buildMovieDescTranslationSettingsJson(
-      enabled: enabled,
-      baseUrl: baseUrl,
-      apiKey: apiKey,
-      model: model,
-      timeoutSeconds: timeoutSeconds,
-      connectTimeoutSeconds: connectTimeoutSeconds,
+    path: '/config',
+    body: _buildConfigResponseJson(
+      section: _buildMovieDescTranslationSettingsJson(
+        enabled: enabled,
+        baseUrl: baseUrl,
+        apiKey: apiKey,
+        model: model,
+        timeoutSeconds: timeoutSeconds,
+        connectTimeoutSeconds: connectTimeoutSeconds,
+      ),
     ),
   );
+}
+
+/// 构造 `GET /config` 响应壳，`section` 落到 `values.movie_info_translation`。
+Map<String, dynamic> _buildConfigResponseJson({
+  required Map<String, dynamic> section,
+}) {
+  return <String, dynamic>{
+    'values': <String, dynamic>{'movie_info_translation': section},
+    'effects': <String, dynamic>{'movie_info_translation': 'hot'},
+  };
+}
+
+/// 构造 `PATCH /config` 响应壳，`section` 是最新的 `movie_info_translation`。
+Map<String, dynamic> _buildConfigPatchResponseJson({
+  required Map<String, dynamic> section,
+}) {
+  return <String, dynamic>{
+    'values': <String, dynamic>{'movie_info_translation': section},
+    'applied': <String>['movie_info_translation'],
+    'pending_restart': <dynamic>[],
+  };
 }
 
 Map<String, dynamic> _buildMovieDescTranslationSettingsJson({

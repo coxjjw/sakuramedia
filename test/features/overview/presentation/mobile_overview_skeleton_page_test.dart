@@ -18,7 +18,6 @@ import 'package:sakuramedia/features/clips/data/clips_api.dart';
 import 'package:sakuramedia/features/clips/presentation/clip_mutation_change_notifier.dart';
 import 'package:sakuramedia/core/session/credential_store.dart';
 import 'package:sakuramedia/features/auth/data/auth_api.dart';
-import 'package:sakuramedia/features/configuration/data/collection_number_features_api.dart';
 import 'package:sakuramedia/features/configuration/data/download_clients_api.dart';
 import 'package:sakuramedia/features/configuration/data/indexer_settings_api.dart';
 import 'package:sakuramedia/features/configuration/data/media_libraries_api.dart';
@@ -1753,9 +1752,6 @@ Widget _buildTestApp({
       Provider<ActorsApi>.value(value: bundle.actorsApi),
       Provider<CredentialStore>.value(value: InMemoryCredentialStore()),
       Provider<AuthApi>.value(value: bundle.authApi),
-      Provider<CollectionNumberFeaturesApi>.value(
-        value: bundle.collectionNumberFeaturesApi,
-      ),
       Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
       Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
       Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
@@ -1805,9 +1801,6 @@ Widget _buildRouterApp({
       Provider<ActorsApi>.value(value: bundle.actorsApi),
       Provider<CredentialStore>.value(value: InMemoryCredentialStore()),
       Provider<AuthApi>.value(value: bundle.authApi),
-      Provider<CollectionNumberFeaturesApi>.value(
-        value: bundle.collectionNumberFeaturesApi,
-      ),
       Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
       Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
       Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
@@ -2029,14 +2022,19 @@ Map<String, dynamic> _imageSearchStatusJson() {
 void _enqueueLlmSettings(TestApiBundle bundle) {
   bundle.adapter.enqueueJson(
     method: 'GET',
-    path: '/movie-desc-translation-settings',
+    path: '/config',
     body: const <String, dynamic>{
-      'enabled': false,
-      'base_url': 'http://llm.internal:8000',
-      'api_key': '',
-      'model': 'gpt-4o-mini',
-      'timeout_seconds': 300.0,
-      'connect_timeout_seconds': 3.0,
+      'values': <String, dynamic>{
+        'movie_info_translation': <String, dynamic>{
+          'enabled': false,
+          'base_url': 'http://llm.internal:8000',
+          'api_key': '',
+          'model': 'gpt-4o-mini',
+          'timeout_seconds': 300.0,
+          'connect_timeout_seconds': 3.0,
+        },
+      },
+      'effects': <String, dynamic>{'movie_info_translation': 'hot'},
     },
   );
 }

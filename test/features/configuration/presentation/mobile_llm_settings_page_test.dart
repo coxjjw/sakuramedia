@@ -70,13 +70,13 @@ void main() {
   ) async {
     _bundle.adapter.enqueueResponder(
       method: 'GET',
-      path: '/movie-desc-translation-settings',
+      path: '/config',
       responder: (_, __) async {
         return ResponseBody.fromString(
           jsonEncode({
             'error': <String, dynamic>{
               'code': 'server_error',
-              'message': 'LLM 配置加载失败，请稍后重试。',
+              'message': 'LLM 配置加载失败',
             },
           }),
           500,
@@ -91,7 +91,7 @@ void main() {
     await _pumpPage(tester);
 
     expect(find.byKey(const Key('mobile-llm-error-state')), findsOneWidget);
-    expect(find.text('LLM 配置加载失败，请稍后重试。'), findsOneWidget);
+    expect(find.text('LLM 配置加载失败'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('mobile-llm-retry-button')));
     await tester.pump();
@@ -106,14 +106,16 @@ void main() {
     _enqueueSettings(_bundle);
     _bundle.adapter.enqueueJson(
       method: 'PATCH',
-      path: '/movie-desc-translation-settings',
-      body: _buildSettingsJson(
-        enabled: true,
-        baseUrl: 'http://127.0.0.1:8000',
-        apiKey: 'secret-token',
-        model: 'gpt-4.1-mini',
-        timeoutSeconds: 120,
-        connectTimeoutSeconds: 5,
+      path: '/config',
+      body: _buildConfigPatchResponseJson(
+        section: _buildSettingsJson(
+          enabled: true,
+          baseUrl: 'http://127.0.0.1:8000',
+          apiKey: 'secret-token',
+          model: 'gpt-4.1-mini',
+          timeoutSeconds: 120,
+          connectTimeoutSeconds: 5,
+        ),
       ),
     );
 
@@ -146,12 +148,13 @@ void main() {
 
     final patchRequest = _bundle.adapter.requests.firstWhere(
       (request) =>
-          request.method == 'PATCH' &&
-          request.path == '/movie-desc-translation-settings',
+          request.method == 'PATCH' && request.path == '/config',
     );
-    expect(patchRequest.body['enabled'], isTrue);
-    expect(patchRequest.body['model'], 'gpt-4.1-mini');
-    expect(patchRequest.body['timeout_seconds'], 120.0);
+    final patchSection =
+        patchRequest.body['movie_info_translation'] as Map<String, dynamic>;
+    expect(patchSection['enabled'], isTrue);
+    expect(patchSection['model'], 'gpt-4.1-mini');
+    expect(patchSection['timeout_seconds'], 120.0);
     expect(find.text('已启用'), findsWidgets);
     await tester.pump(const Duration(seconds: 3));
   });
@@ -188,7 +191,7 @@ void main() {
       1,
     );
     expect(
-      _bundle.adapter.hitCount('PATCH', '/movie-desc-translation-settings'),
+      _bundle.adapter.hitCount('PATCH', '/config'),
       0,
     );
     expect(find.text('测试通过'), findsWidgets);
@@ -226,7 +229,7 @@ void main() {
       expect(find.text('请求超时必须是正数'), findsOneWidget);
       expect(find.text('连接超时必须是正数'), findsOneWidget);
       expect(
-        _bundle.adapter.hitCount('PATCH', '/movie-desc-translation-settings'),
+        _bundle.adapter.hitCount('PATCH', '/config'),
         0,
       );
     },
@@ -258,7 +261,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('http://llm.internal:8000'), findsOneWidget);
-    expect(find.text('LLM 配置加载失败，请稍后重试。'), findsOneWidget);
+    expect(find.text('LLM 配置加载失败'), findsOneWidget);
     await tester.pump(const Duration(seconds: 3));
   });
 
@@ -329,16 +332,31 @@ void _enqueueSettings(
 }) {
   bundle.adapter.enqueueJson(
     method: 'GET',
-    path: '/movie-desc-translation-settings',
-    body: _buildSettingsJson(
-      enabled: enabled,
-      baseUrl: baseUrl,
-      apiKey: apiKey,
-      model: model,
-      timeoutSeconds: timeoutSeconds,
-      connectTimeoutSeconds: connectTimeoutSeconds,
-    ),
+    path: '/config',
+    body: <String, dynamic>{
+      'values': <String, dynamic>{
+        'movie_info_translation': _buildSettingsJson(
+          enabled: enabled,
+          baseUrl: baseUrl,
+          apiKey: apiKey,
+          model: model,
+          timeoutSeconds: timeoutSeconds,
+          connectTimeoutSeconds: connectTimeoutSeconds,
+        ),
+      },
+      'effects': <String, dynamic>{'movie_info_translation': 'hot'},
+    },
   );
+}
+
+Map<String, dynamic> _buildConfigPatchResponseJson({
+  required Map<String, dynamic> section,
+}) {
+  return <String, dynamic>{
+    'values': <String, dynamic>{'movie_info_translation': section},
+    'applied': <String>['movie_info_translation'],
+    'pending_restart': <dynamic>[],
+  };
 }
 
 Map<String, dynamic> _buildSettingsJson({
