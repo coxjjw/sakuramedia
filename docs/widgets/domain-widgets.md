@@ -92,10 +92,10 @@
 - **required**: `keyPrefix` · `startSeconds` · `endSeconds` · `durationSeconds` · `canCreate` · `onCreate` · `onClear`
 - **何时用**: 影片播放页缩略图圈选场景。
 
-### ClipPlayerDialog + showClipPlayerDialog
+### showClipPlayerDialog
 - **路径**: `lib/widgets/domain/clips/clip_player_dialog.dart`
 - **签名**: `Future<void> showClipPlayerDialog(BuildContext context, { required String streamUrl, required String title })`
-- **用途**: 切片快播弹窗(`AppDesktopDialog` 包壳 + `ThemedVideoPlayer` 播放器)。
+- **用途**: 切片快播弹窗。薄壳, 底层用 [QuickPlayDialog](#quickplaydialog) 承载(resolver 为同步 baseUrl 拼接)。
 - **何时用**: 任何"点小切片弹出播放"入口。**别自己 wrap `showDialog + Video`**。
 
 ---

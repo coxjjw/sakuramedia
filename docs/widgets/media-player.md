@@ -23,6 +23,14 @@
 - **路径**: `lib/widgets/domain/movies/player/movie_player_surface_controller.dart`
 - **用途**: `MoviePlayerSurface` 的外部控制句柄(seek / play / pause / 请求缩略图之类)。业务侧持有并传给 surface。
 
+### QuickPlayDialog + showVideoQuickPlayDialog
+- **路径**: `lib/widgets/domain/media/quick_play_dialog.dart`
+- **用途**: 桌面「点小图 → 弹小窗立刻播」的轻量播放弹窗——`AppDesktopDialog` 外壳 + `ThemedVideoPlayer` 播放器 + 空态 / 加载态。切片、视频列表卡、时刻缩略图共用。
+- **QuickPlayDialog required**: `title` · `fallbackTitle`(标题为空时兜底) · `videoKey`(测试锚点) · `resolvePlayUrl(context)`(切片同步取 stream_url; 视频 async `GET /videos/{id}` 取首个可播源) · `noPlayableMessage`(resolver 返 null / 空时的空态文案)
+- **可选**: `errorFallback`(resolver throw 时兜底)
+- **`showVideoQuickPlayDialog(context, videoId, title)`**: 视频列表 / 时刻卡专用便捷函数,包好 videos_api + session_store 拉详情逻辑。切片走 [showClipPlayerDialog](./domain-widgets.md#showclipplayerdialog)。
+- **别自己写**: `showDialog + Player() + VideoController + AppDesktopDialog` 那套骨架——一律走它。
+
 ## 二、缩略图 / 关键帧
 
 ### MovieMediaThumbnailGrid
