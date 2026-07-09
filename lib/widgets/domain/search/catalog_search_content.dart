@@ -3,6 +3,7 @@ import 'package:sakuramedia/features/actors/data/dto/actor_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/search/presentation/catalog_search_controller.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/domain/actors/actor_summary_grid.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
@@ -104,11 +105,8 @@ class CatalogSearchContent extends StatelessWidget {
         if (!controller.isOnlineSearchActive &&
             controller.movieResults.isEmpty &&
             onFallbackToOnlineSearch != null) {
-          return AppEmptyState(
-            icon: Icons.travel_explore,
-            message: '本地库未找到匹配影片，可尝试联网搜索',
-            retryLabel: '联网搜索',
-            onRetry: onFallbackToOnlineSearch,
+          return _CatalogSearchOnlineFallback(
+            onPressed: onFallbackToOnlineSearch!,
           );
         }
         return MovieSummaryGrid(
@@ -152,6 +150,53 @@ class _CatalogSearchLoadingIndicator extends StatelessWidget {
           width: 24,
           height: 24,
           child: CircularProgressIndicator.adaptive(strokeWidth: 2.4),
+        ),
+      ),
+    );
+  }
+}
+
+class _CatalogSearchOnlineFallback extends StatelessWidget {
+  const _CatalogSearchOnlineFallback({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final spacing = context.appSpacing;
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: spacing.lg,
+        vertical: spacing.xxl,
+      ),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.travel_explore,
+              size: context.appComponentTokens.iconSize4xl,
+              color: resolveAppTextToneColor(context, AppTextTone.secondary),
+            ),
+            SizedBox(height: spacing.md),
+            Text(
+              '本地库未找到匹配影片',
+              textAlign: TextAlign.center,
+              style: resolveAppTextStyle(
+                context,
+                size: AppTextSize.s14,
+                weight: AppTextWeight.regular,
+                tone: AppTextTone.secondary,
+              ),
+            ),
+            SizedBox(height: spacing.lg),
+            AppButton(
+              key: const Key('catalog-search-online-fallback'),
+              variant: AppButtonVariant.primary,
+              label: '从外部数据源获取',
+              onPressed: onPressed,
+            ),
+          ],
         ),
       ),
     );
