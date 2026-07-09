@@ -21,16 +21,16 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
-import 'package:sakuramedia/widgets/media_player/collection_filmstrip_controller.dart';
-import 'package:sakuramedia/widgets/media_player/collection_play_split_layout.dart';
-import 'package:sakuramedia/widgets/media_player/collection_playback_mode.dart';
-import 'package:sakuramedia/widgets/media_player/collection_playback_page_mixin.dart';
-import 'package:sakuramedia/widgets/media_player/episode_selector_overlay.dart';
-import 'package:sakuramedia/widgets/media_player/merged_position_indicator.dart';
-import 'package:sakuramedia/widgets/media_player/movie_media_thumbnail_grid.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_back_overlay.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_surface.dart';
-import 'package:sakuramedia/widgets/media_player/themed_video_player.dart';
+import 'package:sakuramedia/widgets/domain/collections/playback/collection_filmstrip_controller.dart';
+import 'package:sakuramedia/widgets/domain/collections/playback/collection_play_split_layout.dart';
+import 'package:sakuramedia/widgets/domain/collections/playback/collection_playback_mode.dart';
+import 'package:sakuramedia/widgets/domain/collections/playback/collection_playback_page_mixin.dart';
+import 'package:sakuramedia/widgets/domain/collections/playback/episode_selector_overlay.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/merged_position_indicator.dart';
+import 'package:sakuramedia/widgets/domain/media/movie_media_thumbnail_grid.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_surface.dart';
+import 'package:sakuramedia/widgets/base/media/video/themed_video_player.dart';
 
 /// 视频合集连播独立页面：media_kit 播放器（原生 Playlist 自动连播）占满画面，
 /// 底部控制条「选集」按钮唤出右侧滑出的剧集面板（当前高亮 / 点击跳转）。

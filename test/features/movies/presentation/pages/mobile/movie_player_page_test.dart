@@ -10,7 +10,7 @@ import 'package:sakuramedia/features/movies/presentation/pages/desktop/movie_pla
 import 'package:sakuramedia/features/movies/presentation/pages/mobile/movie_player_page.dart';
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_back_overlay.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
 
 import '../../../../../support/test_api_bundle.dart';
 

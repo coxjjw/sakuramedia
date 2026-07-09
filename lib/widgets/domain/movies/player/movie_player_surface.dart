@@ -10,12 +10,13 @@ import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/player/movie_player_subtitle_state.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_back_overlay.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_playback_info.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_speed_button.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_subtitle_button.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_surface_controller.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_surface_readiness.dart';
+import 'package:sakuramedia/widgets/base/media/video/video_controls_theme.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_playback_info.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_speed_button.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_subtitle_button.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_surface_controller.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_surface_readiness.dart';
 
 class MoviePlayerSurface extends StatefulWidget {
   const MoviePlayerSurface({
@@ -172,84 +173,6 @@ class MoviePlayerSurfaceOpenCoordinator {
     debugPrint('[player-debug] surface_open_step=ready');
     markReady();
   }
-}
-
-@visibleForTesting
-Widget buildMoviePlayerMobileVideoControls(VideoState state) {
-  return MaterialVideoControls(state);
-}
-
-@visibleForTesting
-Widget buildMoviePlayerDesktopVideoControls(VideoState state) {
-  return MaterialDesktopVideoControls(state);
-}
-
-Widget Function(VideoState state) resolveMoviePlayerVideoControlsBuilder({
-  required bool useTouchOptimizedControls,
-}) {
-  return useTouchOptimizedControls
-      ? buildMoviePlayerMobileVideoControls
-      : buildMoviePlayerDesktopVideoControls;
-}
-
-MaterialVideoControlsThemeData buildMoviePlayerMobileControlsThemeData({
-  required ThemeData theme,
-  required List<Widget> topControls,
-  required List<Widget> bottomControls,
-  bool displaySeekBar = true,
-}) {
-  final overlayTokens = theme.appOverlayTokens;
-  return MaterialVideoControlsThemeData(
-    horizontalGestureSensitivity: 3000,
-    seekOnDoubleTap: true,
-    seekBarMargin: EdgeInsets.fromLTRB(
-      overlayTokens.playerSeekBarHorizontalInset,
-      0,
-      overlayTokens.playerSeekBarHorizontalInset,
-      overlayTokens.playerSeekBarBottomInset,
-    ),
-    seekGesture: true,
-    volumeGesture: true,
-    speedUpOnLongPress: true,
-    brightnessGesture: true,
-    seekBarThumbColor: theme.colorScheme.primary,
-    seekBarPositionColor: theme.colorScheme.primary,
-    seekBarHeight: 6,
-    seekBarThumbSize: 14,
-    displaySeekBar: displaySeekBar,
-    topButtonBar: topControls,
-    topButtonBarMargin: EdgeInsets.fromLTRB(
-      overlayTokens.playerControlBarHorizontalInset,
-      overlayTokens.playerControlBarTopInset,
-      overlayTokens.playerControlBarHorizontalInset,
-      0,
-    ),
-    bottomButtonBar: bottomControls,
-  );
-}
-
-MaterialDesktopVideoControlsThemeData buildMoviePlayerDesktopControlsThemeData({
-  required ThemeData theme,
-  required List<Widget> topControls,
-  required List<Widget> bottomControls,
-  bool displaySeekBar = true,
-}) {
-  final overlayTokens = theme.appOverlayTokens;
-  return MaterialDesktopVideoControlsThemeData(
-    seekBarThumbColor: theme.colorScheme.primary,
-    seekBarPositionColor: theme.colorScheme.primary,
-    seekBarHeight: 6,
-    seekBarThumbSize: 14,
-    displaySeekBar: displaySeekBar,
-    topButtonBar: topControls,
-    topButtonBarMargin: EdgeInsets.fromLTRB(
-      overlayTokens.playerControlBarHorizontalInset,
-      overlayTokens.playerControlBarTopInset,
-      overlayTokens.playerControlBarHorizontalInset,
-      0,
-    ),
-    bottomButtonBar: bottomControls,
-  );
 }
 
 enum MoviePlayerMobileDrawerType { speed, subtitle }

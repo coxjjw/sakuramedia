@@ -7,7 +7,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/media_player/themed_video_player.dart';
+import 'package:sakuramedia/widgets/base/media/video/themed_video_player.dart';
 
 /// 轻量切片播放弹层：用 media_kit 直接播放切片的签名 `stream_url`。
 ///

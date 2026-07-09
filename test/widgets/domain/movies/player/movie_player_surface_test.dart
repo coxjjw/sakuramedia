@@ -4,12 +4,13 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/player/movie_player_subtitle_state.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_back_overlay.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_playback_info.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_speed_button.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_subtitle_button.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_surface.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_surface_readiness.dart';
+import 'package:sakuramedia/widgets/base/media/video/video_controls_theme.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_playback_info.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_speed_button.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_subtitle_button.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_surface.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_surface_readiness.dart';
 
 void main() {
   group('MoviePlayerSurfaceReadiness', () {

@@ -18,9 +18,9 @@ import 'package:sakuramedia/features/movies/presentation/controllers/player/movi
 import 'package:sakuramedia/routes/app_navigation.dart';
 import 'package:sakuramedia/routes/desktop_image_search_route_state.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_back_overlay.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_surface_controller.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_surface_readiness.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_surface_controller.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_surface_readiness.dart';
 
 import '../../../../../support/test_api_bundle.dart';
 

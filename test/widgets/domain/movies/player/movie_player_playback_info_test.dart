@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_playback_info.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_playback_info.dart';
 
 void main() {
   group('MoviePlayerPlaybackInfoSnapshot builder', () {

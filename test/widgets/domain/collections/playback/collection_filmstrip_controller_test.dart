@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
-import 'package:sakuramedia/widgets/media_player/collection_filmstrip_controller.dart';
+import 'package:sakuramedia/widgets/domain/collections/playback/collection_filmstrip_controller.dart';
 
 MovieImageDto _img(int id) => MovieImageDto(
   id: id,

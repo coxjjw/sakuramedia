@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_surface.dart';
+import 'package:sakuramedia/widgets/base/media/video/video_controls_theme.dart';
 
 /// 「层级二」播放器统一入口：把裸 [Video] 外面的三层控制主题嵌套
 /// （[MaterialVideoControlsTheme] + [MaterialDesktopVideoControlsTheme] + 控件 builder）
 /// 收敛成一个无业务状态的展示组件，供所有「无字幕/无进度上报」的轻量播放场景复用
 /// （快播弹窗、单切片/单视频全屏、切片/视频合集连播）。
 ///
-/// 直接复用 [movie_player_surface] 里已有的主题构建函数，不重写主题逻辑：
+/// 直接复用 [video_controls_theme] 里的主题构建函数，不重写主题逻辑：
 /// - [buildMoviePlayerMobileControlsThemeData] / [buildMoviePlayerDesktopControlsThemeData]
 /// - [resolveMoviePlayerVideoControlsBuilder]（`useTouchOptimizedControls` 决定
 ///   点击唤出 vs 鼠标 hover 唤出控制条）。
+///
+/// 该主题原本定义在 `movie_player_surface.dart`，为断开 base→domain 反向依赖，
+/// 已抽到 `base/media/video/video_controls_theme.dart`（供 base 层的 ThemedVideoPlayer
+/// 与 domain 层的 MoviePlayerSurface 共用）。
 ///
 /// 顶/底控制条由调用方按场景传入（合集有上一首/下一首、单片/弹窗没有），
 /// 本组件只负责把它们装进统一主题并渲染 [Video]。

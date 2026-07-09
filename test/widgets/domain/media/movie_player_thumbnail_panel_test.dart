@@ -6,7 +6,7 @@ import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_thumbnail_panel.dart';
+import 'package:sakuramedia/widgets/domain/media/movie_player_thumbnail_panel.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

@@ -1,6 +1,6 @@
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/features/videos/data/dto/video_collection_dto.dart';
-import 'package:sakuramedia/widgets/media_player/collection_playback_mode.dart';
+import 'package:sakuramedia/widgets/domain/collections/playback/collection_playback_mode.dart';
 
 /// 合集详情页 → 连播页 的一次性「交接信箱」。
 ///

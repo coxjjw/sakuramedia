@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:sakuramedia/widgets/media_player/collection_filmstrip_controller.dart';
-import 'package:sakuramedia/widgets/media_player/collection_playback_mode.dart';
-import 'package:sakuramedia/widgets/media_player/movie_media_thumbnail_grid.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_thumbnail_panel.dart';
+import 'package:sakuramedia/widgets/domain/collections/playback/collection_filmstrip_controller.dart';
+import 'package:sakuramedia/widgets/domain/collections/playback/collection_playback_mode.dart';
+import 'package:sakuramedia/widgets/domain/media/movie_media_thumbnail_grid.dart';
+import 'package:sakuramedia/widgets/domain/media/movie_player_thumbnail_panel.dart';
 
 /// 合集连播底栏：含上一首 / 下一首 + 全屏左侧的「选集」按钮。按平台选对应控件
 /// 变体——移动用触摸版、桌面用 Desktop 版（多一个音量按钮）。

@@ -9,7 +9,7 @@ import 'package:sakuramedia/features/videos/data/api/videos_api.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
-import 'package:sakuramedia/widgets/media_player/themed_video_player.dart';
+import 'package:sakuramedia/widgets/base/media/video/themed_video_player.dart';
 
 /// 列表卡片「播放」icon 的轻量弹窗播放器：拉一次详情取默认（首个可播）媒体源，
 /// 用 media_kit 直接播放，无缩略图/字幕/进度上报。完整观看仍走详情页的独立播放页。

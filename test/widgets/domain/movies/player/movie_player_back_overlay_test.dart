@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/theme.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_back_overlay.dart';
-import 'package:sakuramedia/widgets/media_player/movie_player_surface_readiness.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_surface_readiness.dart';
 
 void main() {
   group('MoviePlayerBackButton', () {
