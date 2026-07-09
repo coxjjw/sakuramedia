@@ -58,10 +58,15 @@
 
 ### CollectionPlaybackPageMixin
 - **路径**: `lib/widgets/domain/collections/playback/collection_playback_page_mixin.dart`
-- **用途**: 合集连播页 State mixin——**共享**播放器登记(`attachPlayback`)、`dispose`、跨集 seek 补偿(`seekToFrame`/待办 `_pendingSeek`)、右面板构建(`buildFilmstripPanel`)。
-- **何时用**: 新增合集连播场景一定要 `with` 它,别自己复制播放器登记 / 跨集 seek。
+- **用途**: 合集连播页 State mixin——**共享**播放器登记(`attachPlayback`)、`dispose`、跨集 seek 补偿(`seekToFrame`/待办 `_pendingSeek`)、右面板构建(`buildFilmstripPanel`)、「选集」浮层开合状态(`isEpisodePanelOpen` / `openEpisodePanel` / `closeEpisodePanel`)。
+- **何时用**: 新增合集连播场景一定要 `with` 它,别自己复制播放器登记 / 跨集 seek / 选集浮层开合。
 - **注意**: `updatePosition` / 同集判定都用播放器**实时** `player.state.playlist.index`(非滞后的 `currentIndex`,position 流可能先于 playlist 流到);`seekToFrame` 覆盖待办时会先取消旧的一次性监听(防旧 offset 误 seek)。
 - **`buildFilmstripPanel(onThumbnailMenuRequested:)`**: 桌面 video 合集页传菜单回调 → 右键 / 长按帧"添加时刻"(仅 pornbox 帧携真实 media/thumbnail id 时可用);切片合集页不传 → 无菜单。
+
+### CollectionEpisodeQueueItem
+- **路径**: `lib/widgets/domain/collections/playback/collection_episode_queue_item.dart`
+- **用途**: 合集连播「选集」浮层内的一项(88 宽 16:9 封面 + 标题 + 副信息 + 当前集高亮 icon)。切片 / 视频两页公用。
+- **required**: `itemKey` · `coverUrl`(可空) · `coverStyle: cover|containOnMuted`(切片 cover, pornbox contain 加灰底) · `title` · `subtitle`(切片时长 / video「第 N 集」) · `isCurrent` · `onTap`
 
 ### CollectionFilmstripController
 - **路径**: `lib/widgets/domain/collections/playback/collection_filmstrip_controller.dart`
