@@ -226,18 +226,17 @@ void main() {
     expect(source, isNot(contains('movieDetailMetaRowIconSize')));
   });
 
-  test('mobile notice cards use noticeSurface token', () {
-    // AppMobileNoticeCard 组件本身负责 noticeSurface 与去掉旧硬编码。
+  test('notice cards use noticeSurface token', () {
+    // AppNoticeCard 组件本身负责 noticeSurface 与去掉旧硬编码。
     final noticeCardSource =
-        File('lib/widgets/app_shell/app_mobile_notice_card.dart')
-            .readAsStringSync();
+        File('lib/widgets/app_shell/app_notice_card.dart').readAsStringSync();
     expect(noticeCardSource, contains('colors.noticeSurface'));
     expect(
       noticeCardSource,
       isNot(contains('primaryContainer.withValues(alpha: 0.42)')),
     );
 
-    // 复用页面走 AppMobileNoticeCard 即可，不再要求每个页面自己写 noticeSurface。
+    // 复用页面走 AppNoticeCard 即可，不再要求每个页面自己写 noticeSurface。
     const consumers = <String>[
       'lib/features/account/presentation/mobile_change_password_page.dart',
       'lib/features/account/presentation/mobile_change_username_page.dart',
@@ -251,8 +250,8 @@ void main() {
       final source = File(path).readAsStringSync();
       expect(
         source,
-        contains('AppMobileNoticeCard'),
-        reason: 'Expected $path to reuse AppMobileNoticeCard',
+        contains('AppNoticeCard'),
+        reason: 'Expected $path to reuse AppNoticeCard',
       );
     }
   });

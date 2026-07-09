@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
+import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
@@ -27,7 +27,7 @@ import 'package:sakuramedia/widgets/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/app_shell/app_badge.dart';
 import 'package:sakuramedia/widgets/app_shell/app_info_block.dart';
-import 'package:sakuramedia/widgets/app_shell/app_mobile_notice_card.dart';
+import 'package:sakuramedia/widgets/app_shell/app_notice_card.dart';
 import 'package:sakuramedia/widgets/feedback/app_mobile_section_error.dart';
 import 'package:sakuramedia/widgets/feedback/app_mobile_skeleton.dart';
 import 'package:sakuramedia/widgets/navigation/app_tab_bar.dart';
@@ -190,22 +190,22 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                AppMobileNoticeCard(
+                AppNoticeCard(
                   key: const Key('mobile-downloaders-overview-card'),
                   title: '下载器负责接收索引器推送的资源请求，并依赖媒体库路径映射完成落库。',
                   description: '建议先确认媒体库路径，再补全 qBittorrent 保存路径与本地访问路径。',
                   stats: [
-                    AppMobileNoticeStat(
+                    AppNoticeStat(
                       label: '已配置下载器数',
                       value: '${_clients.length}',
                       valueSize: AppTextSize.s18,
                     ),
-                    AppMobileNoticeStat(
+                    AppNoticeStat(
                       label: '关联媒体库数',
                       value: '$_linkedLibraryCount',
                       valueSize: AppTextSize.s18,
                     ),
-                    AppMobileNoticeStat(
+                    AppNoticeStat(
                       label: '已保存密码数',
                       value: '$_savedPasswordCount',
                       valueSize: AppTextSize.s18,
@@ -438,7 +438,7 @@ class _MobileDownloadersPageState extends State<MobileDownloadersPage>
         ),
         SizedBox(height: spacing.sm),
         Text(
-          '更新时间: ${_formatUpdatedAt(client.updatedAt)}',
+          '更新时间: ${formatUpdatedAtLabel(client.updatedAt) ?? '未知'}',
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,
@@ -1245,7 +1245,7 @@ class _MobileDownloaderDetailDrawerState
           SizedBox(height: spacing.sm),
           AppInfoBlock(
             label: '更新时间',
-            value: _formatUpdatedAt(client.updatedAt),
+            value: formatUpdatedAtLabel(client.updatedAt) ?? '未知',
           ),
           SizedBox(height: spacing.lg),
           Text(
@@ -1318,9 +1318,3 @@ class _MobileDownloaderDetailDrawerState
   }
 }
 
-String _formatUpdatedAt(DateTime? value) {
-  if (value == null) {
-    return '未知';
-  }
-  return DateFormat('yyyy-MM-dd HH:mm').format(value.toLocal());
-}

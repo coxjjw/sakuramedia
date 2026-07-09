@@ -7,7 +7,7 @@ import 'package:sakuramedia/features/auth/data/auth_api.dart';
 import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/actions/app_button.dart';
-import 'package:sakuramedia/widgets/app_shell/app_mobile_notice_card.dart';
+import 'package:sakuramedia/widgets/app_shell/app_notice_card.dart';
 import 'package:sakuramedia/widgets/forms/app_password_field.dart';
 
 class MobileChangePasswordPage extends StatefulWidget {
@@ -173,7 +173,7 @@ class _MobileChangePasswordPageState extends State<MobileChangePasswordPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const AppMobileNoticeCard(
+                    const AppNoticeCard(
                       key: Key('mobile-password-notice-card'),
                       leadingIcon: Icons.info_outline_rounded,
                       description: '修改密码后将立即退出当前登录，需要使用新密码重新登录。',

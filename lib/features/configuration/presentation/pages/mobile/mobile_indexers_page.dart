@@ -21,7 +21,7 @@ import 'package:sakuramedia/widgets/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/app_shell/app_badge.dart';
 import 'package:sakuramedia/widgets/app_shell/app_info_block.dart';
-import 'package:sakuramedia/widgets/app_shell/app_mobile_notice_card.dart';
+import 'package:sakuramedia/widgets/app_shell/app_notice_card.dart';
 import 'package:sakuramedia/widgets/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/feedback/app_mobile_section_error.dart';
 import 'package:sakuramedia/widgets/feedback/app_mobile_skeleton.dart';
@@ -148,21 +148,21 @@ class _MobileIndexersPageState extends State<MobileIndexersPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AppMobileNoticeCard(
+        AppNoticeCard(
           key: const Key('mobile-indexers-overview-card'),
           title: 'Jackett 负责统一管理索引器入口，并把资源请求投递到对应下载器。',
           description: '先确认 API Key，再补齐每个索引器和下载器的绑定关系。',
           stats: [
-            const AppMobileNoticeStat(label: '接入类型', value: 'Jackett'),
-            AppMobileNoticeStat(
+            const AppNoticeStat(label: '接入类型', value: 'Jackett'),
+            AppNoticeStat(
               label: 'API Key 状态',
               value: _apiKeyController.text.trim().isNotEmpty ? '已配置' : '待配置',
             ),
-            AppMobileNoticeStat(
+            AppNoticeStat(
               label: '索引器数',
               value: '${_indexers.length}',
             ),
-            AppMobileNoticeStat(
+            AppNoticeStat(
               label: '已绑定下载器',
               value: '$_boundIndexerCount',
             ),

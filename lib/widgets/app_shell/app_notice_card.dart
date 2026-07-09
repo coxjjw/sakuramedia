@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/app_shell/app_stat_tile.dart';
 
-/// 移动端页面顶部的「说明 / 概览」卡片。
+/// 页面顶部的「说明 / 概览」卡片，双端(桌面 + 移动)通用。
 ///
 /// 覆盖两种常见形态：
-/// - **overview 系**（configuration 三个 mobile 页、playlists、llm 概览）：
+/// - **overview 系**（configuration 三个 mobile 页、playlists、llm 概览、桌面 playlists 顶部）：
 ///   `title` + `description` +（可选）`leadingIcon` +（可选）1–4 个统计块；圆角 `lg`。
 /// - **提示条系**（account 改密页两处的 `_NoticeCard`）：只有 `leadingIcon` + `description`；
 ///   圆角自动缩小为 `md`。
@@ -14,19 +14,19 @@ import 'package:sakuramedia/widgets/app_shell/app_stat_tile.dart';
 /// - 是否有 `title` **或** 非空 `stats` 之一 → 使用 `lgBorder`；否则 → `mdBorder`。
 /// - `stats.length >= 4` → 自动排 2×2 grid；1–3 项 → 单排横列。
 /// - 背景恒 `noticeSurface` + border=`borderSubtle`。
-class AppMobileNoticeCard extends StatelessWidget {
-  const AppMobileNoticeCard({
+class AppNoticeCard extends StatelessWidget {
+  const AppNoticeCard({
     super.key,
     this.leadingIcon,
     this.title,
     required this.description,
-    this.stats = const <AppMobileNoticeStat>[],
+    this.stats = const <AppNoticeStat>[],
   });
 
   final IconData? leadingIcon;
   final String? title;
   final String description;
-  final List<AppMobileNoticeStat> stats;
+  final List<AppNoticeStat> stats;
 
   @override
   Widget build(BuildContext context) {
@@ -111,9 +111,9 @@ class AppMobileNoticeCard extends StatelessWidget {
   }
 }
 
-/// 供 [AppMobileNoticeCard.stats] 使用的统计项数据。
-class AppMobileNoticeStat {
-  const AppMobileNoticeStat({
+/// 供 [AppNoticeCard.stats] 使用的统计项数据。
+class AppNoticeStat {
+  const AppNoticeStat({
     required this.label,
     required this.value,
     this.valueSize = AppTextSize.s16,
@@ -127,7 +127,7 @@ class AppMobileNoticeStat {
 class _NoticeStatsGrid extends StatelessWidget {
   const _NoticeStatsGrid({required this.stats});
 
-  final List<AppMobileNoticeStat> stats;
+  final List<AppNoticeStat> stats;
 
   @override
   Widget build(BuildContext context) {

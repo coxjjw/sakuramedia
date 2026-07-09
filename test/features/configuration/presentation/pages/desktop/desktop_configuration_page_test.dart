@@ -545,7 +545,10 @@ void main() {
         (item) => item.method == 'GET' && item.path == '/playlists',
       );
       expect(request.uri.queryParameters['include_system'], 'false');
-      expect(find.text('我的收藏'), findsOneWidget);
+      expect(
+        find.byKey(const Key('desktop-playlist-management-card-2')),
+        findsOneWidget,
+      );
       expect(find.text('最近播放'), findsNothing);
     });
 
@@ -613,7 +616,10 @@ void main() {
       );
       expect(request.body['name'], '稍后再看');
       expect(request.body['description'], 'Need watch later');
-      expect(find.text('稍后再看'), findsOneWidget);
+      expect(
+        find.byKey(const Key('desktop-playlist-management-card-3')),
+        findsOneWidget,
+      );
       await tester.pump(const Duration(seconds: 3));
     });
 
@@ -676,7 +682,7 @@ void main() {
 
       await tester.tap(find.byKey(const Key('configuration-tab-playlists')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('playlist-edit-2')));
+      await tester.tap(find.byKey(const Key('desktop-playlist-edit-2')));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const Key('configuration-playlist-name-field')),
@@ -694,7 +700,10 @@ void main() {
       );
       expect(request.body['name'], '收藏补完');
       expect(request.body['description'], 'Updated');
-      expect(find.text('收藏补完'), findsOneWidget);
+      expect(
+        find.byKey(const Key('desktop-playlist-management-card-2')),
+        findsOneWidget,
+      );
       await tester.pump(const Duration(seconds: 3));
     });
 
@@ -730,7 +739,7 @@ void main() {
 
       await tester.tap(find.byKey(const Key('configuration-tab-playlists')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('playlist-delete-2')));
+      await tester.tap(find.byKey(const Key('desktop-playlist-delete-2')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('删除').last);
       await tester.pumpAndSettle();
@@ -2384,6 +2393,24 @@ void _enqueuePlaylists(
     path: '/playlists',
     body: playlists,
   );
+  // 桌面 playlists section 用 PlaylistsOverviewController 时会为每个
+  // movieCount>0 的 playlist 拉取首张影片作封面预览。
+  for (final playlist in playlists) {
+    final id = playlist['id'];
+    final movieCount = playlist['movie_count'];
+    if (id is int && movieCount is int && movieCount > 0) {
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/playlists/$id/movies',
+        body: <String, dynamic>{
+          'items': const <Map<String, dynamic>>[],
+          'page': 1,
+          'page_size': 1,
+          'total': 0,
+        },
+      );
+    }
+  }
 }
 
 void _enqueueAdvancedConfig(TestApiBundle bundle) {

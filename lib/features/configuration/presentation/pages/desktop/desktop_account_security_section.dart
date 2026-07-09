@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
+import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/account/data/account_api.dart';
 import 'package:sakuramedia/features/account/data/account_dto.dart';
@@ -447,11 +447,11 @@ class _AccountProfileSummary extends StatelessWidget {
         _AccountProfilePill(label: '当前用户名', value: account.username),
         _AccountProfilePill(
           label: '创建时间',
-          value: _formatAccountDate(account.createdAt),
+          value: formatUpdatedAtLabel(account.createdAt) ?? '未知',
         ),
         _AccountProfilePill(
           label: '上次登录',
-          value: _formatAccountDate(account.lastLoginAt),
+          value: formatUpdatedAtLabel(account.lastLoginAt) ?? '未知',
         ),
       ],
     );
@@ -504,9 +504,3 @@ class _AccountProfilePill extends StatelessWidget {
   }
 }
 
-String _formatAccountDate(DateTime? value) {
-  if (value == null) {
-    return '未知';
-  }
-  return DateFormat('yyyy-MM-dd HH:mm').format(value.toLocal());
-}

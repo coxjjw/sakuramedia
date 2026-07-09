@@ -11,7 +11,7 @@ import 'package:sakuramedia/widgets/actions/app_button.dart';
 import 'package:sakuramedia/widgets/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/app_shell/app_badge.dart';
 import 'package:sakuramedia/widgets/app_shell/app_empty_state.dart';
-import 'package:sakuramedia/widgets/app_shell/app_mobile_notice_card.dart';
+import 'package:sakuramedia/widgets/app_shell/app_notice_card.dart';
 import 'package:sakuramedia/widgets/feedback/app_mobile_skeleton.dart';
 
 class MobileLlmSettingsPage extends StatefulWidget {
@@ -128,20 +128,20 @@ class _MobileLlmSettingsPageState extends State<MobileLlmSettingsPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AppMobileNoticeCard(
+        AppNoticeCard(
           key: const Key('mobile-llm-overview-card'),
           title: '先确认服务地址和模型，再决定是否启用，并可直接用当前草稿发起测试。',
           description: LlmSettingsCopy.sharedEndpointDescription,
           stats: [
-            AppMobileNoticeStat(
+            AppNoticeStat(
               label: '启用状态',
               value: _controller.enabled ? '已启用' : '已停用',
             ),
-            AppMobileNoticeStat(
+            AppNoticeStat(
               label: '配置完整度',
               value: _controller.hasCompleteConfig ? '可保存' : '待补齐',
             ),
-            AppMobileNoticeStat(
+            AppNoticeStat(
               label: '最近测试',
               value: _controller.testStateLabel,
             ),

@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
+import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/activity/data/activity_notification_dto.dart';
 import 'package:sakuramedia/features/activity/presentation/notification_card.dart';
@@ -42,7 +42,6 @@ class _MobileNotificationsPageState extends State<MobileNotificationsPage>
   late final NotificationCenterController _controller;
   late final TabController _segmentController;
   final ScrollController _scrollController = ScrollController();
-  final DateFormat _dateFormat = DateFormat('yyyy-MM-dd HH:mm');
 
   _NotificationSegment _segment = _NotificationSegment.all;
   Set<int> _unreadSnapshotIds = <int>{};
@@ -254,7 +253,6 @@ class _MobileNotificationsPageState extends State<MobileNotificationsPage>
             child: RepaintBoundary(
               child: MobileNotificationCard(
                 notification: item,
-                dateFormat: _dateFormat,
                 isUnread: _unreadSnapshotIds.contains(item.id),
               ),
             ),
@@ -309,12 +307,10 @@ class MobileNotificationCard extends StatelessWidget {
   const MobileNotificationCard({
     super.key,
     required this.notification,
-    required this.dateFormat,
     required this.isUnread,
   });
 
   final ActivityNotificationDto notification;
-  final DateFormat dateFormat;
   final bool isUnread;
 
   @override
@@ -368,7 +364,7 @@ class MobileNotificationCard extends StatelessWidget {
                     ),
                     const Spacer(),
                     Text(
-                      _formatDate(notification.createdAt, dateFormat),
+                      formatUpdatedAtLabel(notification.createdAt) ?? '时间未知',
                       style: resolveAppTextStyle(
                         context,
                         size: AppTextSize.s12,
@@ -448,9 +444,3 @@ class _MobileNotificationSkeleton extends StatelessWidget {
   }
 }
 
-String _formatDate(DateTime? value, DateFormat formatter) {
-  if (value == null) {
-    return '时间未知';
-  }
-  return formatter.format(value.toLocal());
-}

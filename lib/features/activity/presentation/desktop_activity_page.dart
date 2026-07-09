@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
+import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/activity/data/activity_api.dart';
@@ -36,7 +36,6 @@ class _DesktopActivityPageState extends State<DesktopActivityPage>
   late final ResourceTaskCenterController _resourceTaskController;
   late final TabController _tabController;
   late final ScrollController _pageScrollController;
-  final DateFormat _dateFormat = DateFormat('yyyy-MM-dd HH:mm');
   bool _isViewportWorkScheduled = false;
 
   @override
@@ -194,7 +193,6 @@ class _DesktopActivityPageState extends State<DesktopActivityPage>
       ActivityTab.resourceTasks => buildResourceTaskSlivers(
         context: context,
         controller: _resourceTaskController,
-        dateFormat: _dateFormat,
       ),
     };
   }
@@ -226,7 +224,6 @@ class _DesktopActivityPageState extends State<DesktopActivityPage>
                       RepaintBoundary(
                         child: _TaskRunCard(
                           taskRun: _controller.activeTaskRuns[index],
-                          dateFormat: _dateFormat,
                           highlighted:
                               _controller.highlightedTaskRunId ==
                               _controller.activeTaskRuns[index].id,
@@ -242,7 +239,6 @@ class _DesktopActivityPageState extends State<DesktopActivityPage>
             ],
             _ExecutableJobsSection(
               controller: _controller,
-              dateFormat: _dateFormat,
               onTriggerJob: _triggerJob,
             ),
             SizedBox(height: context.appSpacing.xl),
@@ -289,7 +285,6 @@ class _DesktopActivityPageState extends State<DesktopActivityPage>
             child: RepaintBoundary(
               child: _TaskRunCard(
                 taskRun: item,
-                dateFormat: _dateFormat,
                 highlighted: _controller.highlightedTaskRunId == item.id,
               ),
             ),
@@ -366,7 +361,6 @@ class _DesktopActivityPageState extends State<DesktopActivityPage>
                             ? buildResourceTaskDetailOverlay(
                               context: context,
                               controller: _resourceTaskController,
-                              dateFormat: _dateFormat,
                             )
                             : const SizedBox.shrink(),
                   ),
@@ -525,12 +519,10 @@ class _ConnectionBanner extends StatelessWidget {
 class _ExecutableJobsSection extends StatefulWidget {
   const _ExecutableJobsSection({
     required this.controller,
-    required this.dateFormat,
     required this.onTriggerJob,
   });
 
   final ActivityCenterController controller;
-  final DateFormat dateFormat;
   final ValueChanged<JobMetadataDto> onTriggerJob;
 
   @override
@@ -627,7 +619,6 @@ class _ExecutableJobsSectionState extends State<_ExecutableJobsSection> {
         for (var index = 0; index < controller.jobs.length; index++) ...[
           _ExecutableJobCard(
             job: controller.jobs[index],
-            dateFormat: widget.dateFormat,
             isTriggering: controller.isTriggeringJob(
               controller.jobs[index].taskKey,
             ),
@@ -712,13 +703,11 @@ class _ExecutableJobsHeader extends StatelessWidget {
 class _ExecutableJobCard extends StatelessWidget {
   const _ExecutableJobCard({
     required this.job,
-    required this.dateFormat,
     required this.isTriggering,
     required this.onTrigger,
   });
 
   final JobMetadataDto job;
-  final DateFormat dateFormat;
   final bool isTriggering;
   final VoidCallback onTrigger;
 
@@ -770,7 +759,7 @@ class _ExecutableJobCard extends StatelessWidget {
                     Text(
                       lastTaskRun == null
                           ? '暂无运行记录'
-                          : '最近运行：${_taskTimeSummary(lastTaskRun, dateFormat)}',
+                          : '最近运行：${_taskTimeSummary(lastTaskRun)}',
                       style: resolveAppTextStyle(
                         context,
                         size: AppTextSize.s12,
@@ -976,12 +965,10 @@ class _FilterRefreshIndicator extends StatelessWidget {
 class _TaskRunCard extends StatelessWidget {
   const _TaskRunCard({
     required this.taskRun,
-    required this.dateFormat,
     required this.highlighted,
   });
 
   final TaskRunDto taskRun;
-  final DateFormat dateFormat;
   final bool highlighted;
 
   @override
@@ -1065,7 +1052,7 @@ class _TaskRunCard extends StatelessWidget {
                 tone: AppBadgeTone.neutral,
               ),
               Text(
-                _taskTimeSummary(taskRun, dateFormat),
+                _taskTimeSummary(taskRun),
                 style: resolveAppTextStyle(
                   context,
                   size: AppTextSize.s12,
@@ -1093,21 +1080,14 @@ class _TaskRunCard extends StatelessWidget {
   }
 }
 
-String _formatDate(DateTime? value, DateFormat formatter) {
-  if (value == null) {
-    return '时间未知';
-  }
-  return formatter.format(value.toLocal());
-}
-
-String _taskTimeSummary(TaskRunDto item, DateFormat formatter) {
+String _taskTimeSummary(TaskRunDto item) {
   if (item.finishedAt != null) {
-    return '完成于 ${_formatDate(item.finishedAt, formatter)}';
+    return '完成于 ${formatUpdatedAtLabel(item.finishedAt) ?? '时间未知'}';
   }
   if (item.startedAt != null) {
-    return '开始于 ${_formatDate(item.startedAt, formatter)}';
+    return '开始于 ${formatUpdatedAtLabel(item.startedAt) ?? '时间未知'}';
   }
-  return '创建于 ${_formatDate(item.createdAt, formatter)}';
+  return '创建于 ${formatUpdatedAtLabel(item.createdAt) ?? '时间未知'}';
 }
 
 AppBadgeTone _taskStateTone(String state) {

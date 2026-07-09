@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
+import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/features/account/data/account_api.dart';
 import 'package:sakuramedia/features/account/data/account_dto.dart';
 import 'package:sakuramedia/features/account/presentation/account_profile_controller.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/actions/app_button.dart';
 import 'package:sakuramedia/widgets/app_shell/app_empty_state.dart';
-import 'package:sakuramedia/widgets/app_shell/app_mobile_notice_card.dart';
+import 'package:sakuramedia/widgets/app_shell/app_notice_card.dart';
 import 'package:sakuramedia/widgets/forms/app_text_field.dart';
 
 class MobileChangeUsernamePage extends StatefulWidget {
@@ -190,7 +190,7 @@ class _MobileChangeUsernamePageState extends State<MobileChangeUsernamePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const AppMobileNoticeCard(
+          const AppNoticeCard(
             key: Key('mobile-username-notice-card'),
             leadingIcon: Icons.info_outline_rounded,
             description: '用户名会用于登录和账号识别，保存后当前登录态保持不变。',
@@ -300,12 +300,12 @@ class _AccountSummaryCard extends StatelessWidget {
         SizedBox(height: spacing.sm),
         _AccountInfoRow(
           label: '创建时间',
-          value: _formatAccountDate(account.createdAt),
+          value: formatUpdatedAtLabel(account.createdAt) ?? '未知',
         ),
         SizedBox(height: spacing.sm),
         _AccountInfoRow(
           label: '上次登录',
-          value: _formatAccountDate(account.lastLoginAt),
+          value: formatUpdatedAtLabel(account.lastLoginAt) ?? '未知',
         ),
       ],
     );
@@ -392,9 +392,3 @@ class _SkeletonBlock extends StatelessWidget {
   }
 }
 
-String _formatAccountDate(DateTime? value) {
-  if (value == null) {
-    return '未知';
-  }
-  return DateFormat('yyyy-MM-dd HH:mm').format(value.toLocal());
-}

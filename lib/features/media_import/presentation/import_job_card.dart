@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/features/activity/data/task_run_dto.dart';
 import 'package:sakuramedia/features/media_import/data/failure_reason_descriptions.dart';
 import 'package:sakuramedia/features/media_import/data/import_job_dto.dart';
@@ -20,7 +20,6 @@ class ImportJobCard extends StatelessWidget {
     required this.detail,
     required this.isDetailLoading,
     required this.detailError,
-    required this.dateFormat,
     required this.onToggle,
     required this.onRetryAll,
     required this.onRetryFile,
@@ -35,7 +34,6 @@ class ImportJobCard extends StatelessWidget {
   final ImportJobCardDetailData? detail;
   final bool isDetailLoading;
   final String? detailError;
-  final DateFormat dateFormat;
   final VoidCallback onToggle;
   final VoidCallback onRetryAll;
   final void Function(String path) onRetryFile;
@@ -211,12 +209,10 @@ class ImportJobCard extends StatelessWidget {
   }
 
   String _timeText() {
-    final created = job.createdAt;
-    final finished = job.finishedAt;
-    final createdText =
-        created == null ? '未知' : dateFormat.format(created.toLocal());
-    if (finished != null) {
-      return '创建于 $createdText · 完成于 ${dateFormat.format(finished.toLocal())}';
+    final createdText = formatUpdatedAtLabel(job.createdAt) ?? '未知';
+    final finishedText = formatUpdatedAtLabel(job.finishedAt);
+    if (finishedText != null) {
+      return '创建于 $createdText · 完成于 $finishedText';
     }
     return '创建于 $createdText';
   }

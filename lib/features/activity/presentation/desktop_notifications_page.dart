@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/features/activity/presentation/notification_card.dart';
 import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
@@ -25,7 +24,6 @@ class _DesktopNotificationsPageState extends State<DesktopNotificationsPage> {
   static const double _loadMoreTriggerOffset = 300;
 
   late final NotificationCenterController _controller;
-  final DateFormat _dateFormat = DateFormat('yyyy-MM-dd HH:mm');
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -175,10 +173,7 @@ class _DesktopNotificationsPageState extends State<DesktopNotificationsPage> {
               bottom: isLast ? 0 : context.appSpacing.md,
             ),
             child: RepaintBoundary(
-              child: NotificationCard(
-                notification: item,
-                dateFormat: _dateFormat,
-              ),
+              child: NotificationCard(notification: item),
             ),
           );
         }, childCount: _controller.notifications.length),

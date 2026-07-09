@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
+import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
@@ -14,7 +14,7 @@ import 'package:sakuramedia/widgets/actions/app_button.dart';
 import 'package:sakuramedia/widgets/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/app_adaptive_refresh_scroll_view.dart';
 import 'package:sakuramedia/widgets/app_bottom_drawer.dart';
-import 'package:sakuramedia/widgets/app_shell/app_mobile_notice_card.dart';
+import 'package:sakuramedia/widgets/app_shell/app_notice_card.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/mobile/mobile_config_empty_card.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/config_delete_helpers.dart';
 import 'package:sakuramedia/widgets/feedback/app_mobile_section_error.dart';
@@ -203,7 +203,7 @@ class _MobileMediaLibrariesPageState extends State<MobileMediaLibrariesPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const AppMobileNoticeCard(
+                        const AppNoticeCard(
                           key: Key('mobile-media-libraries-notice-card'),
                           leadingIcon: Icons.folder_open_outlined,
                           title: '媒体库存储路径',
@@ -335,7 +335,7 @@ class _MobileMediaLibrariesPageState extends State<MobileMediaLibrariesPage> {
         ),
         SizedBox(height: spacing.xs),
         Text(
-          '更新时间: ${_formatUpdatedAt(library.updatedAt)}',
+          '更新时间: ${formatUpdatedAtLabel(library.updatedAt) ?? '未知'}',
           style: resolveAppTextStyle(
             context,
             size: AppTextSize.s12,
@@ -693,9 +693,3 @@ class _MobileDrawerActionRow extends StatelessWidget {
   }
 }
 
-String _formatUpdatedAt(DateTime? value) {
-  if (value == null) {
-    return '未知';
-  }
-  return DateFormat('yyyy-MM-dd HH:mm').format(value.toLocal());
-}

@@ -1,19 +1,21 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
-import 'package:sakuramedia/core/network/api_error_message.dart';
-import 'package:sakuramedia/features/configuration/presentation/controllers/section_loader_mixin.dart';
 import 'package:sakuramedia/features/configuration/presentation/widgets/shared/config_delete_helpers.dart';
 import 'package:sakuramedia/features/playlists/data/api/playlists_api.dart';
 import 'package:sakuramedia/features/playlists/data/dto/playlist_dto.dart';
+import 'package:sakuramedia/features/playlists/presentation/controllers/playlists_overview_controller.dart';
 import 'package:sakuramedia/features/playlists/presentation/widgets/create_playlist_dialog.dart';
+import 'package:sakuramedia/features/playlists/presentation/widgets/edit_playlist_dialog.dart';
+import 'package:sakuramedia/routes/app_navigation_actions.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/actions/app_button.dart';
-import 'package:sakuramedia/widgets/actions/app_inline_action_button.dart';
-import 'package:sakuramedia/widgets/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/app_shell/app_empty_state.dart';
-import 'package:sakuramedia/widgets/app_shell/app_settings_group.dart';
-import 'package:sakuramedia/widgets/forms/app_text_field.dart';
+import 'package:sakuramedia/widgets/app_shell/app_notice_card.dart';
+import 'package:sakuramedia/widgets/feedback/app_section_skeleton.dart';
+import 'package:sakuramedia/widgets/playlists/playlist_management_card.dart';
 
 class PlaylistsSection extends StatefulWidget {
   const PlaylistsSection({super.key, required this.active});
@@ -24,39 +26,47 @@ class PlaylistsSection extends StatefulWidget {
   State<PlaylistsSection> createState() => _PlaylistsSectionState();
 }
 
-class _PlaylistsSectionState extends State<PlaylistsSection>
-    with SectionLoaderMixin<List<PlaylistDto>, PlaylistsSection> {
-  List<PlaylistDto> _playlists = const <PlaylistDto>[];
-
-  @override
-  bool get isSectionActive => widget.active;
-
-  @override
-  Future<List<PlaylistDto>> fetchSectionData() =>
-      context.read<PlaylistsApi>().getPlaylists(includeSystem: false);
-
-  @override
-  void applySectionData(List<PlaylistDto> data) {
-    _playlists = data
-        .where((playlist) => !playlist.isSystem)
-        .toList(growable: false);
-  }
-
-  @override
-  String get sectionLoadErrorFallback => '播放列表加载失败，请稍后重试。';
-
-  Future<void> _loadPlaylists() => loadSectionData();
+class _PlaylistsSectionState extends State<PlaylistsSection> {
+  late final PlaylistsOverviewController _controller;
+  bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
-    tryLoadIfActive();
+    final api = context.read<PlaylistsApi>();
+    _controller = PlaylistsOverviewController(
+      fetchPlaylists: ({bool includeSystem = true}) =>
+          api.getPlaylists(includeSystem: false),
+      fetchPlaylistCoverUrl: (playlistId) async {
+        final page = await api.getPlaylistMovies(
+          playlistId: playlistId,
+          pageSize: 1,
+        );
+        return page.items.firstOrNull?.coverImage?.bestAvailableUrl;
+      },
+      createPlaylist: api.createPlaylist,
+    );
+    _tryLoadIfActive();
   }
 
   @override
   void didUpdateWidget(covariant PlaylistsSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    tryLoadIfActive();
+    _tryLoadIfActive();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _tryLoadIfActive() {
+    if (!widget.active || _initialized) {
+      return;
+    }
+    _initialized = true;
+    unawaited(_controller.load());
   }
 
   Future<void> _createPlaylist() async {
@@ -64,36 +74,25 @@ class _PlaylistsSectionState extends State<PlaylistsSection>
     if (!mounted || created == null) {
       return;
     }
-
+    _controller.insertPlaylist(created);
     showToast('播放列表已创建');
-    await _loadPlaylists();
+    unawaited(_syncInBackground());
   }
 
   Future<void> _editPlaylist(PlaylistDto playlist) async {
     if (!playlist.isMutable) {
       return;
     }
-
-    final payload = await showDialog<UpdatePlaylistPayload>(
-      context: context,
-      builder:
-          (dialogContext) =>
-              PlaylistDialog(title: '编辑播放列表', initialPlaylist: playlist),
+    final updated = await showEditPlaylistDialog(
+      context,
+      playlist: playlist,
+      presentation: EditPlaylistDialogPresentation.dialog,
     );
-    if (!mounted || payload == null) {
+    if (!mounted || updated == null) {
       return;
     }
-
-    try {
-      await context.read<PlaylistsApi>().updatePlaylist(
-        playlistId: playlist.id,
-        payload: payload,
-      );
-      showToast('播放列表已更新');
-      await _loadPlaylists();
-    } catch (error) {
-      showToast(apiErrorMessage(error, fallback: '更新播放列表失败'));
-    }
+    _controller.replacePlaylist(updated);
+    unawaited(_syncInBackground());
   }
 
   Future<void> _deletePlaylist(PlaylistDto playlist) async {
@@ -110,206 +109,147 @@ class _PlaylistsSectionState extends State<PlaylistsSection>
       failureFallback: '删除播放列表失败',
     );
     if (ok && mounted) {
-      await _loadPlaylists();
+      _controller.removePlaylist(playlist.id);
+      unawaited(_syncInBackground());
+    }
+  }
+
+  void _viewPlaylist(PlaylistDto playlist) {
+    context.pushDesktopPlaylistDetail(playlistId: playlist.id);
+  }
+
+  Future<void> _syncInBackground() async {
+    try {
+      await _controller.refresh();
+    } catch (_) {
+      // 对账失败静默：本地已乐观更新，下一次进入时自然刷新。
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return buildSectionStates(
-      errorTitle: '播放列表加载失败',
-      buildLoaded: _buildLoaded,
-    );
-  }
-
-  Widget _buildLoaded(BuildContext context) {
+    if (!_initialized && !widget.active) {
+      return const SizedBox.shrink();
+    }
     final spacing = context.appSpacing;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (_playlists.isEmpty)
-          const AppEmptyState(message: '还没有自定义播放列表')
-        else
-          AppSettingsGroup(
-            dividerIndent: spacing.lg + spacing.xxl + spacing.md,
-            children: [
-              for (final playlist in _playlists)
-                AppSettingCell(
-                  key: Key('playlist-card-${playlist.id}'),
-                  icon: Icons.playlist_play_outlined,
-                  title: playlist.name,
-                  subtitle: _playlistSubtitle(playlist),
-                  trailing: _playlistTrailing(context, playlist),
-                ),
-            ],
-          ),
-        SizedBox(height: spacing.lg),
-        AppSettingsGroup(
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            AppSettingCell(
-              key: const Key('configuration-playlist-create-button'),
-              icon: Icons.add_rounded,
-              iconColor: Theme.of(context).colorScheme.primary,
-              title: '新建播放列表',
-              titleTone: AppTextTone.accent,
-              titleWeight: AppTextWeight.medium,
-              trailing: const AppSettingCellChevron(),
-              onTap: _createPlaylist,
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  String _playlistSubtitle(PlaylistDto playlist) {
-    final description = playlist.description.trim();
-    if (description.isNotEmpty) {
-      return '$description · ${playlist.movieCount} 部';
-    }
-    return '${playlist.movieCount} 部影片';
-  }
-
-  Widget? _playlistTrailing(BuildContext context, PlaylistDto playlist) {
-    if (!playlist.isMutable && !playlist.isDeletable) {
-      return null;
-    }
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (playlist.isMutable)
-          AppInlineActionButton(
-            key: Key('playlist-edit-${playlist.id}'),
-            icon: Icons.edit_outlined,
-            onTap: () => _editPlaylist(playlist),
-          ),
-        if (playlist.isMutable && playlist.isDeletable)
-          SizedBox(width: context.appSpacing.xs),
-        if (playlist.isDeletable)
-          AppInlineActionButton(
-            key: Key('playlist-delete-${playlist.id}'),
-            icon: Icons.delete_outline,
-            onTap: () => _deletePlaylist(playlist),
-          ),
-      ],
-    );
-  }
-}
-
-class PlaylistDialog extends StatefulWidget {
-  const PlaylistDialog({super.key, required this.title, required this.initialPlaylist});
-
-  final String title;
-  final PlaylistDto initialPlaylist;
-
-  @override
-  State<PlaylistDialog> createState() => _PlaylistDialogState();
-}
-
-class _PlaylistDialogState extends State<PlaylistDialog> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
-  late final TextEditingController _nameController;
-  late final TextEditingController _descriptionController;
-
-  @override
-  void initState() {
-    super.initState();
-    _nameController = TextEditingController(text: widget.initialPlaylist.name);
-    _descriptionController = TextEditingController(
-      text: widget.initialPlaylist.description,
-    );
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-    Navigator.of(context).pop(
-      UpdatePlaylistPayload(
-        name: _nameController.text.trim(),
-        description: _descriptionController.text.trim(),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
-    final fieldLabelStyle = resolveAppTextStyle(
-      context,
-      size: AppTextSize.s12,
-      weight: AppTextWeight.regular,
-      tone: AppTextTone.secondary,
-    );
-
-    return AppDesktopDialog(
-      width: context.appComponentTokens.playlistDialogWidth,
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.title,
-              style: resolveAppTextStyle(
-                context,
-                size: AppTextSize.s18,
-                weight: AppTextWeight.semibold,
-                tone: AppTextTone.primary,
-              ),
-            ),
-            SizedBox(height: spacing.xl),
-            Text('名称', style: fieldLabelStyle),
-            SizedBox(height: spacing.sm),
-            AppTextField(
-              fieldKey: const Key('configuration-playlist-name-field'),
-              controller: _nameController,
-              hintText: '例如：稍后再看',
-              validator:
-                  (value) =>
-                      value == null || value.trim().isEmpty
-                          ? '请输入播放列表名称'
-                          : null,
-            ),
-            SizedBox(height: spacing.lg),
-            Text('描述', style: fieldLabelStyle),
-            SizedBox(height: spacing.sm),
-            AppTextField(
-              fieldKey: const Key('configuration-playlist-description-field'),
-              controller: _descriptionController,
-              hintText: '描述可选',
-            ),
-            SizedBox(height: spacing.xl),
             Row(
               children: [
                 Expanded(
-                  child: AppButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    label: '取消',
+                  child: Text(
+                    '自定义播放列表',
+                    style: resolveAppTextStyle(
+                      context,
+                      size: AppTextSize.s12,
+                      weight: AppTextWeight.regular,
+                      tone: AppTextTone.muted,
+                    ),
                   ),
                 ),
-                SizedBox(width: context.appSpacing.md),
-                Expanded(
-                  child: AppButton(
-                    onPressed: _submit,
-                    label: '保存',
-                    variant: AppButtonVariant.primary,
-                  ),
+                AppButton(
+                  key: const Key('configuration-playlist-create-button'),
+                  onPressed: _createPlaylist,
+                  icon: const Icon(Icons.add_rounded),
+                  label: '新建播放列表',
+                  size: AppButtonSize.small,
+                  variant: AppButtonVariant.primary,
                 ),
               ],
             ),
+            SizedBox(height: spacing.md),
+            _buildNoticeCard(context),
+            SizedBox(height: spacing.md),
+            _buildContent(context),
           ],
+        );
+      },
+    );
+  }
+
+  Widget _buildNoticeCard(BuildContext context) {
+    final customPlaylists =
+        _controller.playlists.where((item) => !item.isSystem).toList();
+    final movieCount = customPlaylists.fold<int>(
+      0,
+      (total, item) => total + item.movieCount,
+    );
+    return AppNoticeCard(
+      leadingIcon: Icons.playlist_play_rounded,
+      title: '自定义播放列表管理',
+      description: '这里集中维护可手动管理的播放列表，可继续进入详情查看片单内容。',
+      stats: [
+        AppNoticeStat(
+          label: '自定义播放列表数',
+          value: '${customPlaylists.length}',
+          valueSize: AppTextSize.s18,
         ),
-      ),
+        AppNoticeStat(
+          label: '收录影片总数',
+          value: '$movieCount',
+          valueSize: AppTextSize.s18,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    if (_controller.isLoading && _controller.playlists.isEmpty) {
+      return const AppSectionSkeleton(lineCount: 4);
+    }
+    if (_controller.errorMessage != null && _controller.playlists.isEmpty) {
+      return AppEmptyState(
+        message: _controller.errorMessage!,
+        onRetry: () => unawaited(_controller.load()),
+        retryLabel: '重试',
+      );
+    }
+    final playlists =
+        _controller.playlists.where((item) => !item.isSystem).toList();
+    if (playlists.isEmpty) {
+      return const AppEmptyState(message: '还没有自定义播放列表');
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final spacing = context.appSpacing;
+        const targetWidth = 420.0;
+        final available = constraints.maxWidth;
+        final columns = available < targetWidth * 1.6
+            ? 1
+            : ((available + spacing.md) / (targetWidth + spacing.md))
+                .floor()
+                .clamp(1, 3);
+        final cardWidth = columns == 1
+            ? available
+            : (available - spacing.md * (columns - 1)) / columns;
+        return Wrap(
+          spacing: spacing.md,
+          runSpacing: spacing.md,
+          children: [
+            for (final playlist in playlists)
+              SizedBox(
+                width: cardWidth,
+                child: PlaylistManagementCard(
+                  playlist: playlist,
+                  coverImageUrl: _controller.coverUrlFor(playlist.id),
+                  layout: PlaylistCardLayout.dense,
+                  keyPrefix: 'desktop-playlist',
+                  onViewTap: () => _viewPlaylist(playlist),
+                  onEditTap: playlist.isMutable
+                      ? () => _editPlaylist(playlist)
+                      : null,
+                  onDeleteTap: playlist.isDeletable
+                      ? () => _deletePlaylist(playlist)
+                      : null,
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

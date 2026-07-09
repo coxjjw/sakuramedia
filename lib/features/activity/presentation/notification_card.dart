@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/features/activity/data/activity_notification_dto.dart';
 import 'package:sakuramedia/features/activity/presentation/notification_center_controller.dart';
 import 'package:sakuramedia/theme.dart';
@@ -12,11 +12,9 @@ class NotificationCard extends StatelessWidget {
   const NotificationCard({
     super.key,
     required this.notification,
-    required this.dateFormat,
   });
 
   final ActivityNotificationDto notification;
-  final DateFormat dateFormat;
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +79,7 @@ class NotificationCard extends StatelessWidget {
                   tone: notificationCategoryTone(notification.category),
                 ),
                 Text(
-                  _formatDate(notification.createdAt, dateFormat),
+                  formatUpdatedAtLabel(notification.createdAt) ?? '时间未知',
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s12,
@@ -189,12 +187,6 @@ class _FilterRefreshIndicator extends StatelessWidget {
   }
 }
 
-String _formatDate(DateTime? value, DateFormat formatter) {
-  if (value == null) {
-    return '时间未知';
-  }
-  return formatter.format(value.toLocal());
-}
 
 AppBadgeTone notificationCategoryTone(String category) {
   return switch (category) {

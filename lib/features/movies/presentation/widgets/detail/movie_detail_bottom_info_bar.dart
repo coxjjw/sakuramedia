@@ -18,20 +18,20 @@ class MovieDetailBottomInfoBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = variant == MovieDetailBottomInfoBarVariant.mobileFullWidth;
     final borderRadius =
-        variant == MovieDetailBottomInfoBarVariant.desktopCard
-            ? context.appRadius.xsBorder
-            : BorderRadius.zero;
+        isMobile
+            ? BorderRadius.vertical(top: context.appRadius.smBorder.topLeft)
+            : context.appRadius.xsBorder;
     final decoration =
-        variant == MovieDetailBottomInfoBarVariant.desktopCard
+        isMobile
             ? BoxDecoration(
-              borderRadius: context.appRadius.smBorder,
-              border: Border.all(color: context.appColors.borderSubtle),
+              borderRadius: borderRadius,
+              boxShadow: context.appShadows.card,
             )
             : BoxDecoration(
-              border: Border(
-                top: BorderSide(color: context.appColors.borderSubtle),
-              ),
+              borderRadius: context.appRadius.smBorder,
+              border: Border.all(color: context.appColors.borderSubtle),
             );
 
     return Material(
@@ -51,9 +51,22 @@ class MovieDetailBottomInfoBar extends StatelessWidget {
             vertical: 0,
           ),
           decoration: decoration,
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: MovieDetailStatRow(items: items),
+          child: Row(
+            children: [
+              Expanded(child: MovieDetailStatRow(items: items)),
+              SizedBox(width: context.appSpacing.sm),
+              Container(
+                width: 1,
+                height: context.appComponentTokens.iconSizeXs,
+                color: context.appColors.borderSubtle,
+              ),
+              SizedBox(width: context.appSpacing.sm),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: context.appComponentTokens.iconSizeSm,
+                color: context.appTextPalette.muted,
+              ),
+            ],
           ),
         ),
       ),

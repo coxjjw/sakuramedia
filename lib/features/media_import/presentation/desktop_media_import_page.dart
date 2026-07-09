@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/features/activity/data/activity_api.dart';
@@ -38,7 +37,6 @@ class _DesktopMediaImportPageState extends State<DesktopMediaImportPage>
   late final Listenable _mergedListenable;
 
   final ScrollController _scrollController = ScrollController();
-  final DateFormat _dateFormat = DateFormat('yyyy-MM-dd HH:mm');
   final Set<int> _expandedJav = <int>{};
   final Set<int> _expandedPorn = <int>{};
 
@@ -286,7 +284,6 @@ class _DesktopMediaImportPageState extends State<DesktopMediaImportPage>
                 detail: controller.detailFor(job.id),
                 isDetailLoading: controller.isDetailLoading(job.id),
                 detailError: controller.detailError(job.id),
-                dateFormat: _dateFormat,
                 onToggle: () => _toggleExpanded(controller, job.id),
                 onRetryAll: () => _retryAll(controller, job.id),
                 onRetryFile: (path) =>

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/features/activity/data/resource_task_definition_dto.dart';
 import 'package:sakuramedia/features/activity/data/resource_task_record_dto.dart';
 import 'package:sakuramedia/features/activity/presentation/resource_task_center_controller.dart';
@@ -20,7 +20,6 @@ import 'package:sakuramedia/widgets/forms/app_text_field.dart';
 List<Widget> buildResourceTaskSlivers({
   required BuildContext context,
   required ResourceTaskCenterController controller,
-  required DateFormat dateFormat,
 }) {
   if (controller.isInitialLoading) {
     return const <Widget>[
@@ -109,7 +108,6 @@ List<Widget> buildResourceTaskSlivers({
           child: RepaintBoundary(
             child: _ResourceTaskRecordTile(
               record: record,
-              dateFormat: dateFormat,
               isSelected:
                   controller.selectedRecord?.recordKey == record.recordKey,
               onTap: () => controller.openDetail(record),
@@ -144,7 +142,6 @@ List<Widget> buildResourceTaskSlivers({
 Widget buildResourceTaskDetailOverlay({
   required BuildContext context,
   required ResourceTaskCenterController controller,
-  required DateFormat dateFormat,
 }) {
   final record = controller.selectedRecord;
   if (record == null) {
@@ -152,7 +149,6 @@ Widget buildResourceTaskDetailOverlay({
   }
   return _ResourceTaskDetailDrawer(
     record: record,
-    dateFormat: dateFormat,
     onClose: controller.closeDetail,
   );
 }
@@ -504,13 +500,11 @@ class _FilterLoadingDot extends StatelessWidget {
 class _ResourceTaskRecordTile extends StatelessWidget {
   const _ResourceTaskRecordTile({
     required this.record,
-    required this.dateFormat,
     required this.isSelected,
     required this.onTap,
   });
 
   final ResourceTaskRecordDto record;
-  final DateFormat dateFormat;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -530,10 +524,9 @@ class _ResourceTaskRecordTile extends StatelessWidget {
             ? resource.title!
             : null;
     final lastAttempted = record.lastAttemptedAt;
+    final lastAttemptedLabel = formatUpdatedAtLabel(lastAttempted);
     final timeLabel =
-        lastAttempted != null
-            ? '最近尝试 ${dateFormat.format(lastAttempted.toLocal())}'
-            : '尚未执行';
+        lastAttemptedLabel != null ? '最近尝试 $lastAttemptedLabel' : '尚未执行';
 
     return Material(
       color: Colors.transparent,
@@ -670,12 +663,10 @@ class _ResourceTaskRecordTile extends StatelessWidget {
 class _ResourceTaskDetailDrawer extends StatelessWidget {
   const _ResourceTaskDetailDrawer({
     required this.record,
-    required this.dateFormat,
     required this.onClose,
   });
 
   final ResourceTaskRecordDto record;
-  final DateFormat dateFormat;
   final VoidCallback onClose;
 
   @override
@@ -786,21 +777,22 @@ class _ResourceTaskDetailDrawer extends StatelessWidget {
                               rows: <_DetailRow>[
                                 _DetailRow(
                                   '最近尝试',
-                                  _formatDate(
-                                    record.lastAttemptedAt,
-                                    dateFormat,
-                                  ),
+                                  formatUpdatedAtLabel(
+                                        record.lastAttemptedAt,
+                                      ) ??
+                                      '—',
                                 ),
                                 _DetailRow(
                                   '最近成功',
-                                  _formatDate(
-                                    record.lastSucceededAt,
-                                    dateFormat,
-                                  ),
+                                  formatUpdatedAtLabel(
+                                        record.lastSucceededAt,
+                                      ) ??
+                                      '—',
                                 ),
                                 _DetailRow(
                                   '最近失败',
-                                  _formatDate(record.lastErrorAt, dateFormat),
+                                  formatUpdatedAtLabel(record.lastErrorAt) ??
+                                      '—',
                                 ),
                                 _DetailRow(
                                   '触发来源',
@@ -817,11 +809,13 @@ class _ResourceTaskDetailDrawer extends StatelessWidget {
                                   ),
                                 _DetailRow(
                                   '创建时间',
-                                  _formatDate(record.createdAt, dateFormat),
+                                  formatUpdatedAtLabel(record.createdAt) ??
+                                      '—',
                                 ),
                                 _DetailRow(
                                   '更新时间',
-                                  _formatDate(record.updatedAt, dateFormat),
+                                  formatUpdatedAtLabel(record.updatedAt) ??
+                                      '—',
                                 ),
                               ],
                             ),
@@ -953,13 +947,6 @@ class _DetailRowTile extends StatelessWidget {
       ],
     );
   }
-}
-
-String _formatDate(DateTime? value, DateFormat formatter) {
-  if (value == null) {
-    return '—';
-  }
-  return formatter.format(value.toLocal());
 }
 
 String _labelForResourceTaskState(String state) {

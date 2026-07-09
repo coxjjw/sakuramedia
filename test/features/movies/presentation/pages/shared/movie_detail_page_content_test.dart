@@ -43,7 +43,13 @@ void main() {
     await tester.pump();
 
     expect(tapCount, 1);
-    expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('movie-detail-series-link')),
+        matching: find.byIcon(Icons.chevron_right_rounded),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('movie detail page content keeps series text plain without id', (
@@ -77,7 +83,6 @@ void main() {
 
     expect(find.text('系列 · Attackers'), findsOneWidget);
     expect(find.byKey(const Key('movie-detail-series-link')), findsNothing);
-    expect(find.byIcon(Icons.chevron_right_rounded), findsNothing);
   });
 
   testWidgets(

@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
+import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/media/data/invalid_media_dto.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
@@ -32,7 +32,6 @@ class DesktopMediaMaintenancePage extends StatefulWidget {
 class _DesktopMediaMaintenancePageState
     extends State<DesktopMediaMaintenancePage> {
   late final InvalidMediaController _controller;
-  final DateFormat _dateFormat = DateFormat('yyyy-MM-dd HH:mm');
 
   @override
   void initState() {
@@ -135,7 +134,7 @@ class _DesktopMediaMaintenancePageState
               padding: EdgeInsets.only(bottom: context.appSpacing.md),
               child: _InvalidMediaCard(
                 item: item,
-                updatedAtText: _formatUpdatedAt(item.updatedAt),
+                updatedAtText: formatUpdatedAtLabel(item.updatedAt) ?? '更新时间未知',
                 isChecking: _controller.checkingMediaId == item.id,
                 isDeleting: _controller.deletingMediaId == item.id,
                 canCheck: !isCheckingAnyMedia && !isDeletingAnyMedia,
@@ -150,13 +149,6 @@ class _DesktopMediaMaintenancePageState
           )
           .toList(growable: false),
     );
-  }
-
-  String _formatUpdatedAt(DateTime? value) {
-    if (value == null) {
-      return '更新时间未知';
-    }
-    return _dateFormat.format(value.toLocal());
   }
 
   Future<void> _checkMedia(InvalidMediaDto item) async {
