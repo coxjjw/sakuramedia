@@ -2121,6 +2121,12 @@ void main() {
           Provider<ActorsApi>.value(value: bundle.actorsApi),
           Provider<StatusApi>.value(value: bundle.statusApi),
           Provider<MoviesApi>.value(value: bundle.moviesApi),
+          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
+          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
+          Provider<MovieDescTranslationSettingsApi>.value(
+            value: bundle.movieDescTranslationSettingsApi,
+          ),
           Provider<ClipsApi>.value(value: bundle.clipsApi),
           ChangeNotifierProvider<ClipMutationChangeNotifier>(
             create: (_) => ClipMutationChangeNotifier(),
@@ -2161,6 +2167,12 @@ void main() {
           Provider<ActorsApi>.value(value: bundle.actorsApi),
           Provider<StatusApi>.value(value: bundle.statusApi),
           Provider<MoviesApi>.value(value: bundle.moviesApi),
+          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
+          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
+          Provider<MovieDescTranslationSettingsApi>.value(
+            value: bundle.movieDescTranslationSettingsApi,
+          ),
           Provider<ClipsApi>.value(value: bundle.clipsApi),
           ChangeNotifierProvider<ClipMutationChangeNotifier>(
             create: (_) => ClipMutationChangeNotifier(),
@@ -2199,6 +2211,12 @@ void main() {
           Provider<ActorsApi>.value(value: bundle.actorsApi),
           Provider<StatusApi>.value(value: bundle.statusApi),
           Provider<MoviesApi>.value(value: bundle.moviesApi),
+          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
+          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
+          Provider<MovieDescTranslationSettingsApi>.value(
+            value: bundle.movieDescTranslationSettingsApi,
+          ),
           Provider<ClipsApi>.value(value: bundle.clipsApi),
           ChangeNotifierProvider<ClipMutationChangeNotifier>(
             create: (_) => ClipMutationChangeNotifier(),
@@ -2239,6 +2257,12 @@ void main() {
           Provider<ActorsApi>.value(value: bundle.actorsApi),
           Provider<StatusApi>.value(value: bundle.statusApi),
           Provider<MoviesApi>.value(value: bundle.moviesApi),
+          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
+          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
+          Provider<MovieDescTranslationSettingsApi>.value(
+            value: bundle.movieDescTranslationSettingsApi,
+          ),
           Provider<ClipsApi>.value(value: bundle.clipsApi),
           ChangeNotifierProvider<ClipMutationChangeNotifier>(
             create: (_) => ClipMutationChangeNotifier(),
@@ -2550,6 +2574,12 @@ void main() {
           Provider<ActorsApi>.value(value: bundle.actorsApi),
           Provider<StatusApi>.value(value: bundle.statusApi),
           Provider<MoviesApi>.value(value: bundle.moviesApi),
+          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
+          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
+          Provider<MovieDescTranslationSettingsApi>.value(
+            value: bundle.movieDescTranslationSettingsApi,
+          ),
           Provider<ClipsApi>.value(value: bundle.clipsApi),
           ChangeNotifierProvider<ClipMutationChangeNotifier>(
             create: (_) => ClipMutationChangeNotifier(),
@@ -2604,6 +2634,12 @@ void main() {
           Provider<ActorsApi>.value(value: bundle.actorsApi),
           Provider<StatusApi>.value(value: bundle.statusApi),
           Provider<MoviesApi>.value(value: bundle.moviesApi),
+          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
+          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
+          Provider<MovieDescTranslationSettingsApi>.value(
+            value: bundle.movieDescTranslationSettingsApi,
+          ),
           Provider<ClipsApi>.value(value: bundle.clipsApi),
           ChangeNotifierProvider<ClipMutationChangeNotifier>(
             create: (_) => ClipMutationChangeNotifier(),
@@ -2681,6 +2717,12 @@ void main() {
           Provider<ActorsApi>.value(value: bundle.actorsApi),
           Provider<StatusApi>.value(value: bundle.statusApi),
           Provider<MoviesApi>.value(value: bundle.moviesApi),
+          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
+          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
+          Provider<MovieDescTranslationSettingsApi>.value(
+            value: bundle.movieDescTranslationSettingsApi,
+          ),
           Provider<ClipsApi>.value(value: bundle.clipsApi),
           ChangeNotifierProvider<ClipMutationChangeNotifier>(
             create: (_) => ClipMutationChangeNotifier(),
@@ -2838,6 +2880,12 @@ void main() {
           Provider<ActorsApi>.value(value: bundle.actorsApi),
           Provider<StatusApi>.value(value: bundle.statusApi),
           Provider<MoviesApi>.value(value: bundle.moviesApi),
+          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
+          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
+          Provider<MovieDescTranslationSettingsApi>.value(
+            value: bundle.movieDescTranslationSettingsApi,
+          ),
           Provider<ClipsApi>.value(value: bundle.clipsApi),
           ChangeNotifierProvider<ClipMutationChangeNotifier>(
             create: (_) => ClipMutationChangeNotifier(),
@@ -2888,6 +2936,12 @@ void main() {
           Provider<ActorsApi>.value(value: bundle.actorsApi),
           Provider<StatusApi>.value(value: bundle.statusApi),
           Provider<MoviesApi>.value(value: bundle.moviesApi),
+          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
+          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
+          Provider<MovieDescTranslationSettingsApi>.value(
+            value: bundle.movieDescTranslationSettingsApi,
+          ),
           Provider<ClipsApi>.value(value: bundle.clipsApi),
           ChangeNotifierProvider<ClipMutationChangeNotifier>(
             create: (_) => ClipMutationChangeNotifier(),
@@ -2980,6 +3034,12 @@ void main() {
           Provider<ActorsApi>.value(value: bundle.actorsApi),
           Provider<StatusApi>.value(value: bundle.statusApi),
           Provider<MoviesApi>.value(value: bundle.moviesApi),
+          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
+          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
+          Provider<MovieDescTranslationSettingsApi>.value(
+            value: bundle.movieDescTranslationSettingsApi,
+          ),
           Provider<ClipsApi>.value(value: bundle.clipsApi),
           ChangeNotifierProvider<ClipMutationChangeNotifier>(
             create: (_) => ClipMutationChangeNotifier(),
@@ -3559,6 +3619,12 @@ void main() {
           Provider<CredentialStore>(create: (_) => CredentialStore()),
           Provider<StatusApi>.value(value: bundle.statusApi),
           Provider<MoviesApi>.value(value: bundle.moviesApi),
+          Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+          Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
+          Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
+          Provider<MovieDescTranslationSettingsApi>.value(
+            value: bundle.movieDescTranslationSettingsApi,
+          ),
           Provider<ClipsApi>.value(value: bundle.clipsApi),
           ChangeNotifierProvider<ClipMutationChangeNotifier>(
             create: (_) => ClipMutationChangeNotifier(),

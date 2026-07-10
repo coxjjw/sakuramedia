@@ -32,6 +32,14 @@ DesktopTopBarConfig resolveDesktopTopBarConfig({
     );
   }
 
+  if (currentPath == desktopSystemDiagnosticsPath) {
+    return const DesktopTopBarConfig(
+      title: '组件诊断',
+      fallbackPath: desktopOverviewPath,
+      isBackEnabled: true,
+    );
+  }
+
   if (currentPath == desktopDiscoverMoviesPath) {
     return const DesktopTopBarConfig(
       title: '推荐影片',

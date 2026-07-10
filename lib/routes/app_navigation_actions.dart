@@ -63,6 +63,11 @@ extension AppNavigationActions on BuildContext {
     DesktopMovieDetailRouteData(movieNumber: movieNumber).push(this);
   }
 
+  void pushDesktopSystemDiagnostics() {
+    GoRouter.optionURLReflectsImperativeAPIs = true;
+    const DesktopSystemDiagnosticsRouteData().push(this);
+  }
+
   void pushDesktopMovieSeries({
     required int seriesId,
     String? seriesName,

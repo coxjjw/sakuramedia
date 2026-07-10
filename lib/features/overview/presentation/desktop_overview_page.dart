@@ -15,6 +15,7 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/overview_stats_strip.dart';
+import 'package:sakuramedia/features/system_diagnostics/presentation/widgets/system_diagnostics_strip.dart';
 
 class DesktopOverviewPage extends StatefulWidget {
   const DesktopOverviewPage({super.key});
@@ -190,6 +191,8 @@ class _DesktopOverviewPageState extends State<DesktopOverviewPage> {
           key: const Key('overview-page'),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SystemDiagnosticsStrip(),
+            SizedBox(height: context.appSpacing.md),
             OverviewStatsStrip(
               items: stats,
               isLoading: systemInfo.isLoadingStatus,
