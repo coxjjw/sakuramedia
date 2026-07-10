@@ -38,6 +38,41 @@ jobs:
         working-directory: wiki
         run: npm run docs:build
 
+      - name: Package wiki archive
+        working-directory: wiki
+        run: |
+          mkdir -p .vitepress/dist/downloads
+          BUILD_TIME=$(date -u '+%Y-%m-%d %H:%M UTC')
+          SHORT_SHA=${GITHUB_SHA::7}
+          cat > README.md <<EOF
+          # SakuraMedia Wiki 离线包
+
+          - 打包时间: ${BUILD_TIME}
+          - 提交版本: ${SHORT_SHA}
+          - 在线最新版: https://tinypinglite.github.io/sakuramedia/
+          - 项目仓库: https://github.com/tinypinglite/sakuramedia
+
+          此包为 Wiki 内容的一次性快照，Wiki 会持续更新，建议定期回上方链接获取最新内容。
+
+          ## 目录说明
+
+          - \`faq.md\`: 常见问题
+          - \`guide/\`: 部署与使用指南（快速开始、飞牛 NAS 部署、Docker、配置、切片等）
+          - \`public/\`: 图片与品牌资源
+
+          ## 阅读建议
+
+          Markdown 文件可用任何编辑器/预览工具查看，推荐 Typora、Obsidian、VS Code 等。
+
+          文档内部链接（如 \`/guide/xxx\`）指向在线站点路径，离线阅读时可能无法直接跳转，建议对照在线版一起看。
+          EOF
+
+          zip -r .vitepress/dist/downloads/sakuramedia-wiki.zip \
+            README.md faq.md guide public
+          rm README.md
+          echo "Archive size:"
+          ls -lh .vitepress/dist/downloads/sakuramedia-wiki.zip
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 

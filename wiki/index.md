@@ -18,6 +18,9 @@ hero:
     - theme: alt
       text: 电报群
       link: https://t.me/+xIsN2OZvbM4wYzIx
+    - theme: alt
+      text: 下载离线 Wiki
+      link: https://tinypinglite.github.io/sakuramedia/downloads/sakuramedia-wiki.zip
 
 features:
   - title: 影片发现与观影
