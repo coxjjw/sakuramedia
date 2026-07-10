@@ -103,7 +103,7 @@ void main() {
     await _pumpActorsPage(tester, sessionStore: sessionStore, bundle: bundle);
     await tester.pumpAndSettle();
 
-    expect(find.text('暂无女优数据'), findsOneWidget);
+    expect(find.text('暂无女优，去搜索看看吧'), findsOneWidget);
   });
 
   testWidgets('desktop actors page shows error state', (

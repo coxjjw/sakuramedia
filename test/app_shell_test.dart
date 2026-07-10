@@ -3,6 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/app/app_state.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
+import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api.dart';
+import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
+import 'package:sakuramedia/features/configuration/data/api/movie_desc_translation_settings_api.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/status/data/status_api.dart';
@@ -25,6 +29,10 @@ void main() {
         sessionStore: sessionStore,
         statusApi: bundle.statusApi,
         moviesApi: bundle.moviesApi,
+        mediaLibrariesApi: bundle.mediaLibrariesApi,
+        downloadClientsApi: bundle.downloadClientsApi,
+        indexerSettingsApi: bundle.indexerSettingsApi,
+        movieDescTranslationSettingsApi: bundle.movieDescTranslationSettingsApi,
       );
       await tester.pumpAndSettle();
 
@@ -61,6 +69,10 @@ Future<void> _pumpDesktopApp(
   required SessionStore sessionStore,
   required StatusApi statusApi,
   required MoviesApi moviesApi,
+  required MediaLibrariesApi mediaLibrariesApi,
+  required DownloadClientsApi downloadClientsApi,
+  required IndexerSettingsApi indexerSettingsApi,
+  required MovieDescTranslationSettingsApi movieDescTranslationSettingsApi,
 }) async {
   final router = buildDesktopRouter(sessionStore: sessionStore);
   await tester.pumpWidget(
@@ -73,6 +85,12 @@ Future<void> _pumpDesktopApp(
         ),
         Provider<StatusApi>.value(value: statusApi),
         Provider<MoviesApi>.value(value: moviesApi),
+        Provider<MediaLibrariesApi>.value(value: mediaLibrariesApi),
+        Provider<DownloadClientsApi>.value(value: downloadClientsApi),
+        Provider<IndexerSettingsApi>.value(value: indexerSettingsApi),
+        Provider<MovieDescTranslationSettingsApi>.value(
+          value: movieDescTranslationSettingsApi,
+        ),
       ],
       child: MaterialApp.router(theme: sakuraThemeData, routerConfig: router),
     ),

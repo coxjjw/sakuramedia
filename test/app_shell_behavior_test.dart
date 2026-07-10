@@ -13,6 +13,10 @@ import 'package:sakuramedia/core/session/credential_store.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/actors/data/api/actors_api.dart';
 import 'package:sakuramedia/features/auth/data/auth_api.dart';
+import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
+import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api.dart';
+import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
+import 'package:sakuramedia/features/configuration/data/api/movie_desc_translation_settings_api.dart';
 import 'package:sakuramedia/features/image_search/data/image_search_api.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_draft_store.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
@@ -631,6 +635,12 @@ Future<void> _pumpDesktopApp(
           create: (_) => AppVersionInfoController(statusApi: statusApi),
         ),
         Provider<MoviesApi>.value(value: moviesApi),
+        Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+        Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
+        Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
+        Provider<MovieDescTranslationSettingsApi>.value(
+          value: bundle.movieDescTranslationSettingsApi,
+        ),
         Provider<ImageSearchApi>(
           create: (_) => ImageSearchApi(apiClient: bundle.apiClient),
         ),
@@ -668,6 +678,12 @@ Future<GoRouter> _pumpDesktopAppWithRouter(
         ),
         Provider<MoviesApi>.value(value: moviesApi),
         Provider<ActorsApi>.value(value: actorsApi),
+        Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+        Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
+        Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
+        Provider<MovieDescTranslationSettingsApi>.value(
+          value: bundle.movieDescTranslationSettingsApi,
+        ),
         Provider<ImageSearchApi>(
           create: (_) => ImageSearchApi(apiClient: bundle.apiClient),
         ),

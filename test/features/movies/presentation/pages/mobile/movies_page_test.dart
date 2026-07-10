@@ -145,7 +145,7 @@ void main() {
     await _pumpMoviesPage(tester, sessionStore: sessionStore, bundle: bundle);
     await tester.pumpAndSettle();
 
-    expect(find.text('暂无影片数据'), findsOneWidget);
+    expect(find.text('暂无影片，去搜索看看吧'), findsOneWidget);
   });
 
   testWidgets('mobile movies page shows error state', (

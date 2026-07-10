@@ -359,7 +359,7 @@ void main() {
     await _pumpOverviewPage(tester, sessionStore: sessionStore, bundle: bundle);
     await tester.pumpAndSettle();
 
-    expect(find.text('暂无最新入库影片'), findsOneWidget);
+    expect(find.text('暂无入库影片，去搜索看看吧'), findsOneWidget);
   });
 
   testWidgets('desktop overview shows latest movies error state', (

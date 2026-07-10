@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -268,7 +267,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(CachedNetworkImage), findsWidgets);
+      expect(find.byType(MaskedImage), findsWidgets);
 
       final gesture = await tester.startGesture(
         tester.getCenter(find.byKey(const Key('movie-media-thumbnail-grid'))),
@@ -276,14 +275,14 @@ void main() {
       await gesture.moveBy(const Offset(0, -220));
       await tester.pump();
 
-      expect(find.byType(CachedNetworkImage), findsWidgets);
+      expect(find.byType(MaskedImage), findsWidgets);
 
       await gesture.up();
       await tester.pump(const Duration(milliseconds: 50));
-      expect(find.byType(CachedNetworkImage), findsWidgets);
+      expect(find.byType(MaskedImage), findsWidgets);
 
       await tester.pump(const Duration(milliseconds: 100));
-      expect(find.byType(CachedNetworkImage), findsWidgets);
+      expect(find.byType(MaskedImage), findsWidgets);
     },
   );
 
@@ -303,7 +302,7 @@ void main() {
 
       final unseenImage = find.descendant(
         of: unseenTile,
-        matching: find.byType(CachedNetworkImage),
+        matching: find.byType(MaskedImage),
       );
 
       // 全程按住手指（活动滚动中）滑动；新滚入视口的缩略图应在手指离开前就加载。
@@ -362,7 +361,7 @@ void main() {
       expect(
         find.descendant(
           of: resizedVisibleTile,
-          matching: find.byType(CachedNetworkImage),
+          matching: find.byType(MaskedImage),
         ),
         findsOneWidget,
       );
@@ -381,13 +380,10 @@ void main() {
       await tester.pumpAndSettle();
 
       final visibleTile = find.byKey(const Key('movie-media-thumb-0'));
-      final firstImage = tester.widget<CachedNetworkImage>(
-        find.descendant(
-          of: visibleTile,
-          matching: find.byType(CachedNetworkImage),
-        ),
+      final firstImage = tester.widget<MaskedImage>(
+        find.descendant(of: visibleTile, matching: find.byType(MaskedImage)),
       );
-      expect(firstImage.imageUrl, contains('first-0'));
+      expect(firstImage.url, contains('first-0'));
 
       // 数据集换新（不同 id）后，可见瓦片应重建并指向新 url，不残留旧图。
       await _pumpGrid(
@@ -398,14 +394,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final secondImage = tester.widget<CachedNetworkImage>(
-        find.descendant(
-          of: visibleTile,
-          matching: find.byType(CachedNetworkImage),
-        ),
+      final secondImage = tester.widget<MaskedImage>(
+        find.descendant(of: visibleTile, matching: find.byType(MaskedImage)),
       );
-      expect(secondImage.imageUrl, contains('second-0'));
-      expect(secondImage.imageUrl, isNot(contains('first-0')));
+      expect(secondImage.url, contains('second-0'));
+      expect(secondImage.url, isNot(contains('first-0')));
     },
   );
 
@@ -431,7 +424,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('movie-media-thumb-50')), findsOneWidget);
-    expect(find.byType(CachedNetworkImage), findsWidgets);
+    expect(find.byType(MaskedImage), findsWidgets);
   });
 
   testWidgets(
