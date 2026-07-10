@@ -68,7 +68,7 @@ outline: [2, 4]
 - 缩略图生成默认最多 4 并发 ffmpeg 截帧，任务跑起来时 CPU 会被吃满
 - **建议配置：4 核 8 G 起步；核显 / 独显能让 joytag 推理更快，见[进阶部署](/guide/docker#openvino-方案)**
 - 存储磁盘：
-  - `joytag` 模型文件 **≈ 1.5 GB**（`model_vit_768.onnx`）
+  - `joytag` 模型文件 **≈ 300 MB**（`model_vit_768.onnx`）
   - `qdrant` 图片向量库 **≈ 3~4 GB / 百万张缩略图**
   - 缩略图 JPEG 缓存本身也会占一大块，跟你的可播放媒体规模成正比（默认每 10 秒一帧）
 
