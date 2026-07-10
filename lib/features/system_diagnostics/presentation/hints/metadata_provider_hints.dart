@@ -6,8 +6,8 @@ import 'package:sakuramedia/features/system_diagnostics/presentation/hints/diagn
 /// 配置字段（受 IP/UA 限制），所以 fixTarget 只在 JavDB 相关分支给。
 const Map<String, DiagnosticHint> javdbHints = <String, DiagnosticHint>{
   'account-required': DiagnosticHint(
-    cause: 'JavDB 拒绝了当前账号（多半是没配 cookie / 账号密码，或者被临时封了）。',
-    fixHint: '打开「高级设置」→ JavDB，重新填 cookie 或账号密码；如果被封需要换 IP / 隔天再试。',
+    cause: 'JavDB 拒绝了当前账号',
+    fixHint: '在「高级设置」中确认账号密码有效；确保后端容器能访问 javdb.com。',
     impact: '影片详情里的女优信息、评分、评论获取不到；订阅新片也会漏。',
     fixTarget: DiagnosticFixTarget.configurationTab(6),
   ),
