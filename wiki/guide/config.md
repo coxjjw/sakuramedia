@@ -311,6 +311,10 @@ activity_notification_read_retention_days = 3
 
 这一组控制下载链路里的小文件清理行为。
 
+::: tip 走[轻量部署](/guide/lightweight-deploy)可以完全忽略这一节
+你没启用 qBittorrent 下载器时，这里的所有字段都不会生效，保持默认即可。
+:::
+
 ```toml
 [downloads]
 small_file_cleanup_threshold_mb = 256

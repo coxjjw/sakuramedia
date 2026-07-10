@@ -322,6 +322,10 @@ docker exec --user app -w /app sakuramedia python -m src.start.commands aps scan
 
 ## 外部服务测试命令
 
+::: tip 日常排障优先用界面里的「组件诊断」
+翻译模型、JavDB、DMM 的连通性，在「总览」页顶部的「组件诊断」里都能一键检测（桌面端和 Web 端都有），失败项还会给出修复提示。下面这组 CLI 命令适合脚本集成、自动化检查，或在后端容器里深入排障。
+:::
+
 这一组命令更适合联调和排障。
 
 - 不会初始化数据库

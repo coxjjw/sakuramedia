@@ -19,6 +19,7 @@ export default defineConfig({
           text: '指南',
           items: [
             { text: '快速开始', link: '/guide/quick-start' },
+            { text: '轻量部署（不用自动下载）', link: '/guide/lightweight-deploy' },
             { text: '配置说明', link: '/guide/config' },
             { text: '后台任务', link: '/guide/tasks' },
             { text: '收藏思路', link: '/guide/collection-strategy' },
