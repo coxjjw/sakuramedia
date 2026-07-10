@@ -23,6 +23,7 @@ const String desktopActivityPath = '/desktop/system/activity';
 const String desktopNotificationsPath = '/desktop/system/notifications';
 const String desktopConfigurationPath = '/desktop/system/configuration';
 const String desktopMediaImportPath = '/desktop/system/media-import';
+const String desktopSystemDiagnosticsPath = '/desktop/system/diagnostics';
 
 const String mobileOverviewPath = '/mobile/overview';
 const String mobileDiscoverMoviesPath = '$mobileOverviewPath/discover/movies';

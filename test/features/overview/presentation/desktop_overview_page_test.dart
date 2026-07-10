@@ -8,6 +8,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/configuration/data/api/download_clients_api.dart';
+import 'package:sakuramedia/features/configuration/data/api/indexer_settings_api.dart';
+import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
+import 'package:sakuramedia/features/configuration/data/api/movie_desc_translation_settings_api.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/notifiers/movie_subscription_change_notifier.dart';
 import 'package:sakuramedia/features/overview/presentation/desktop_overview_page.dart';
@@ -528,6 +532,12 @@ Future<void> _pumpOverviewPage(
         ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
         Provider<StatusApi>.value(value: bundle.statusApi),
         Provider<MoviesApi>.value(value: bundle.moviesApi),
+        Provider<MediaLibrariesApi>.value(value: bundle.mediaLibrariesApi),
+        Provider<DownloadClientsApi>.value(value: bundle.downloadClientsApi),
+        Provider<IndexerSettingsApi>.value(value: bundle.indexerSettingsApi),
+        Provider<MovieDescTranslationSettingsApi>.value(
+          value: bundle.movieDescTranslationSettingsApi,
+        ),
         ChangeNotifierProvider(
           create: (_) => MovieSubscriptionChangeNotifier(),
         ),

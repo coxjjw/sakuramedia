@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sakuramedia/features/configuration/data/dto/download_client_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_status_chip.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
 import 'package:sakuramedia/widgets/base/forms/app_info_pill.dart';
@@ -53,65 +54,14 @@ class DownloadClientProbeStatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final spacing = context.appSpacing;
     final palette = _resolvePalette(context, state);
     final disabled = state == DownloadClientProbeChipState.probing;
 
-    final content = Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: spacing.sm,
-        vertical: spacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: palette.background,
-        borderRadius: context.appRadius.smBorder,
-        border:
-            palette.borderColor == null
-                ? null
-                : Border.all(color: palette.borderColor!),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (state == DownloadClientProbeChipState.probing)
-            SizedBox(
-              width: context.appComponentTokens.iconSize2xs,
-              height: context.appComponentTokens.iconSize2xs,
-              child: CircularProgressIndicator(
-                strokeWidth: 1.6,
-                color: palette.foreground,
-              ),
-            )
-          else
-            Icon(
-              palette.icon,
-              size: context.appComponentTokens.iconSize2xs,
-              color: palette.foreground,
-            ),
-          SizedBox(width: spacing.xs),
-          Text(
-            label,
-            style: resolveAppTextStyle(
-              context,
-              size: AppTextSize.s12,
-              weight: AppTextWeight.medium,
-              tone: palette.tone,
-            ),
-          ),
-          if (detail != null && detail!.isNotEmpty) ...[
-            SizedBox(width: spacing.xs),
-            Text(
-              detail!,
-              style: resolveAppTextStyle(
-                context,
-                size: AppTextSize.s12,
-                weight: AppTextWeight.regular,
-                tone: palette.tone,
-              ),
-            ),
-          ],
-        ],
-      ),
+    final content = AppStatusChip(
+      label: label,
+      palette: palette,
+      isBusy: disabled,
+      detail: detail,
     );
 
     final tap = disabled ? null : onTap;
@@ -133,14 +83,14 @@ class DownloadClientProbeStatusChip extends StatelessWidget {
     return Tooltip(message: tooltip!, child: interactive);
   }
 
-  _ChipPalette _resolvePalette(
+  AppStatusChipPalette _resolvePalette(
     BuildContext context,
     DownloadClientProbeChipState state,
   ) {
     final colors = context.appColors;
     switch (state) {
       case DownloadClientProbeChipState.notTested:
-        return _ChipPalette(
+        return AppStatusChipPalette(
           background: colors.surfaceMuted,
           borderColor: colors.borderSubtle,
           tone: AppTextTone.secondary,
@@ -148,7 +98,7 @@ class DownloadClientProbeStatusChip extends StatelessWidget {
           icon: Icons.radio_button_unchecked,
         );
       case DownloadClientProbeChipState.probing:
-        return _ChipPalette(
+        return AppStatusChipPalette(
           background: colors.surfaceMuted,
           borderColor: colors.borderSubtle,
           tone: AppTextTone.secondary,
@@ -156,7 +106,7 @@ class DownloadClientProbeStatusChip extends StatelessWidget {
           icon: Icons.hourglass_top,
         );
       case DownloadClientProbeChipState.healthy:
-        return _ChipPalette(
+        return AppStatusChipPalette(
           background: colors.successSurface,
           borderColor: null,
           tone: AppTextTone.success,
@@ -164,7 +114,7 @@ class DownloadClientProbeStatusChip extends StatelessWidget {
           icon: Icons.check_circle_outline,
         );
       case DownloadClientProbeChipState.warning:
-        return _ChipPalette(
+        return AppStatusChipPalette(
           background: colors.warningSurface,
           borderColor: null,
           tone: AppTextTone.warning,
@@ -172,7 +122,7 @@ class DownloadClientProbeStatusChip extends StatelessWidget {
           icon: Icons.warning_amber_rounded,
         );
       case DownloadClientProbeChipState.unhealthy:
-        return _ChipPalette(
+        return AppStatusChipPalette(
           background: colors.errorSurface,
           borderColor: null,
           tone: AppTextTone.error,
@@ -181,22 +131,6 @@ class DownloadClientProbeStatusChip extends StatelessWidget {
         );
     }
   }
-}
-
-class _ChipPalette {
-  const _ChipPalette({
-    required this.background,
-    required this.borderColor,
-    required this.tone,
-    required this.foreground,
-    required this.icon,
-  });
-
-  final Color background;
-  final Color? borderColor;
-  final AppTextTone tone;
-  final Color foreground;
-  final IconData icon;
 }
 
 /// 连通性检测结果对话框。

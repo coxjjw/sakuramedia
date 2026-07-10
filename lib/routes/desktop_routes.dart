@@ -18,6 +18,7 @@ import 'package:sakuramedia/features/clip_collections/presentation/pages/desktop
 import 'package:sakuramedia/features/clip_collections/presentation/pages/desktop/clip_collection_detail_page.dart';
 import 'package:sakuramedia/features/clip_collections/presentation/pages/desktop/clip_collection_play_page.dart';
 import 'package:sakuramedia/features/subscriptions/presentation/desktop_follow_page.dart';
+import 'package:sakuramedia/features/system_diagnostics/presentation/pages/desktop/desktop_system_diagnostics_page.dart';
 import 'package:sakuramedia/features/tags/presentation/desktop_tags_page.dart';
 import 'package:sakuramedia/routes/app_route_helpers.dart';
 import 'package:sakuramedia/features/search/presentation/catalog_search_page.dart';
@@ -209,6 +210,9 @@ class DesktopVideoCollectionPlayRouteData extends _DesktopNoTransitionRouteData
     ),
     TypedGoRoute<DesktopConfigurationRouteData>(path: desktopConfigurationPath),
     TypedGoRoute<DesktopMediaImportRouteData>(path: desktopMediaImportPath),
+    TypedGoRoute<DesktopSystemDiagnosticsRouteData>(
+      path: desktopSystemDiagnosticsPath,
+    ),
     TypedGoRoute<DesktopSearchRouteData>(path: desktopSearchPath),
     // 以图搜图必须先于 `:query` 声明，避免 `/desktop/search/image` 被吞成普通搜索。
     TypedGoRoute<DesktopImageSearchRouteData>(path: desktopImageSearchPath),
@@ -374,6 +378,19 @@ class DesktopNotificationsRouteData extends _DesktopShellSpecRouteData
 class DesktopMediaImportRouteData extends _DesktopShellSpecRouteData
     with $DesktopMediaImportRouteData {
   const DesktopMediaImportRouteData() : super(desktopMediaImportPath);
+}
+
+class DesktopSystemDiagnosticsRouteData extends _DesktopShellPageRouteData
+    with $DesktopSystemDiagnosticsRouteData {
+  const DesktopSystemDiagnosticsRouteData();
+
+  @override
+  String get pageName => 'desktop-system-diagnostics';
+
+  @override
+  Widget buildContent(BuildContext context, GoRouterState state) {
+    return const DesktopSystemDiagnosticsPage();
+  }
 }
 
 class DesktopSearchRouteData extends _DesktopShellPageRouteData

@@ -65,6 +65,14 @@
 - **何时用**: 任何"确认吗?"弹窗。删除、退出、断开、放弃编辑。**别再手写抽屉+双按钮**。
 - **相关**: `AppMobileConfirmActions` 是抽屉里"取消 / 确认"这一条 row 的原子件,通常已由本函数包好了不用你直接调;真要在自定义抽屉里放这条 row 时才用它——见 [sheets-dialogs.md](./sheets-dialogs.md)。
 
+## AppStatusChip
+- **路径**: `lib/widgets/base/feedback/app_status_chip.dart`
+- **用途**: 状态徽章的纯展示层——`[图标或 spinner] 标签 (可选 detail)`，圆角色块底。不含点击/tooltip 交互，业务方按需在外面包一层。
+- **required**: `label` · `palette`(`AppStatusChipPalette`：`background` / `borderColor` / `tone` / `foreground` / `icon`，由调用方把自己的状态枚举映射成这个值对象)
+- **可选**: `isBusy`(true 用 spinner 替代 `icon`) · `detail` · `dense`(更紧凑的横条/阵列场景)
+- **何时用**: 任何"探针/诊断类状态指示"——连通性检测、健康检查这类多态徽章。**不要重新手写容器 + 调色板**；各业务方只需维护自己的枚举 → `AppStatusChipPalette` 映射函数。
+- **现有用例**: `DownloadClientProbeStatusChip`（下载器探针，5 态 + 点击/tooltip 交互）、`DiagnosticStatusBadge`（组件诊断，6 态，纯展示）。
+
 ---
 
 ## 相关约定
