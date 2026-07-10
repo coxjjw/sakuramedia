@@ -14,15 +14,12 @@ import 'package:sakuramedia/features/downloads/data/download_candidate_dto.dart'
 import 'package:sakuramedia/features/downloads/data/download_request_dto.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
-import 'package:sakuramedia/features/movies/data/dto/thumbnails/missav_thumbnail_stream_update.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/thumbnails/movie_media_thumbnail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_review_dto.dart';
-import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_missav_thumbnail_controller.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_magnet_controller.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_review_controller.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_thumbnail_controller.dart';
-import 'package:sakuramedia/features/search/presentation/catalog_search_stream_status.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
@@ -35,7 +32,6 @@ import 'package:sakuramedia/widgets/base/media/images/thumbnail_grid_column_reso
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
 import 'package:sakuramedia/widgets/domain/media/movie_media_thumbnail_grid.dart';
 import 'package:sakuramedia/widgets/base/navigation/app_tab_bar.dart';
-import 'package:sakuramedia/widgets/domain/search/catalog_search_stream_status_card.dart';
 
 class MovieDetailInspectorPanel extends StatefulWidget {
   const MovieDetailInspectorPanel({
@@ -44,7 +40,6 @@ class MovieDetailInspectorPanel extends StatefulWidget {
     required this.selectedMedia,
     required this.fetchMovieReviews,
     required this.fetchMediaThumbnails,
-    required this.fetchMissavThumbnailsStream,
     required this.searchCandidates,
     required this.createDownloadRequest,
     required this.onClose,
@@ -65,11 +60,6 @@ class MovieDetailInspectorPanel extends StatefulWidget {
   fetchMovieReviews;
   final Future<List<MovieMediaThumbnailDto>> Function({required int mediaId})
   fetchMediaThumbnails;
-  final Stream<MissavThumbnailStreamUpdate> Function({
-    required String movieNumber,
-    bool refresh,
-  })
-  fetchMissavThumbnailsStream;
   final Future<List<DownloadCandidateDto>> Function({
     required String movieNumber,
     String? indexerKind,
@@ -102,13 +92,12 @@ class _MovieDetailInspectorPanelState extends State<MovieDetailInspectorPanel>
   late final TabController _tabController;
   late final MovieDetailReviewController _reviewController;
   late final MovieDetailThumbnailController _thumbnailController;
-  late final MovieDetailMissavThumbnailController _missavThumbnailController;
   late final MovieDetailMagnetController _magnetController;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this, initialIndex: 0);
+    _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
     _reviewController = MovieDetailReviewController(
       movieNumber: widget.movieNumber,
       fetchMovieReviews: widget.fetchMovieReviews,
@@ -117,10 +106,6 @@ class _MovieDetailInspectorPanelState extends State<MovieDetailInspectorPanel>
     _thumbnailController = MovieDetailThumbnailController(
       mediaId: widget.selectedMedia?.mediaId,
       fetchMediaThumbnails: widget.fetchMediaThumbnails,
-    );
-    _missavThumbnailController = MovieDetailMissavThumbnailController(
-      movieNumber: widget.movieNumber,
-      fetchMissavThumbnailsStream: widget.fetchMissavThumbnailsStream,
     );
     _magnetController = MovieDetailMagnetController(
       movieNumber: widget.movieNumber,
@@ -136,7 +121,6 @@ class _MovieDetailInspectorPanelState extends State<MovieDetailInspectorPanel>
     _tabController.dispose();
     _reviewController.dispose();
     _thumbnailController.dispose();
-    _missavThumbnailController.dispose();
     _magnetController.dispose();
     super.dispose();
   }
@@ -330,7 +314,6 @@ class _MovieDetailInspectorPanelState extends State<MovieDetailInspectorPanel>
                   Tab(text: '评论'),
                   Tab(text: '磁力搜索'),
                   Tab(text: '缩略图'),
-                  Tab(text: 'Missav缩略图'),
                 ],
               ),
             ),
@@ -370,14 +353,6 @@ class _MovieDetailInspectorPanelState extends State<MovieDetailInspectorPanel>
                         widget.thumbnailPreviewPresentation,
                     onThumbnailMenuRequested: _showThumbnailActions,
                     onCreateClip: _handleCreateClip,
-                  );
-                },
-              ),
-              AnimatedBuilder(
-                animation: _missavThumbnailController,
-                builder: (context, child) {
-                  return _MovieDetailMissavThumbnailTab(
-                    controller: _missavThumbnailController,
                   );
                 },
               ),
@@ -1280,184 +1255,6 @@ class _MovieDetailThumbnailTab extends StatelessWidget {
   }
 }
 
-class _MovieDetailMissavThumbnailTab extends StatelessWidget {
-  static const List<int> _intervalOptions = <int>[10, 20, 30, 60];
-  static const List<int> _columnOptions = <int>[2, 3, 4, 5];
-
-  const _MovieDetailMissavThumbnailTab({required this.controller});
-
-  final MovieDetailMissavThumbnailController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final items = controller.items;
-    final thumbnails = items
-        .map(
-          (item) => MovieMediaThumbnailDto(
-            thumbnailId: item.index,
-            mediaId: 0,
-            offsetSeconds: 0,
-            image: item.toMovieImage(),
-          ),
-        )
-        .toList(growable: false);
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final autoColumns = resolveThumbnailGridColumnCount(
-          width: constraints.maxWidth,
-          spacing: context.appSpacing.sm,
-          targetWidth: context.appComponentTokens.movieThumbnailTargetWidth,
-        );
-        final resolvedColumns =
-            controller.usesAutoColumns
-                ? autoColumns
-                : (controller.columns ?? autoColumns);
-        if (controller.usesAutoColumns && controller.columns != autoColumns) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (context.mounted) {
-              controller.applyAutoColumns(autoColumns);
-            }
-          });
-        }
-
-        return Padding(
-          padding: EdgeInsets.only(
-            top: context.appSpacing.md,
-            bottom: context.appSpacing.lg,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _MovieDetailMissavTabHeader(
-                state: controller.state,
-                columns: resolvedColumns,
-                selectedIntervalSeconds: controller.selectedIntervalSeconds,
-                onSetInterval: controller.setIntervalSeconds,
-                onStart: controller.load,
-                onRetry: controller.load,
-                onSetColumns: controller.setColumns,
-              ),
-              SizedBox(height: context.appSpacing.md),
-              Expanded(
-                child: _buildContent(
-                  context: context,
-                  thumbnails: thumbnails,
-                  resolvedColumns: resolvedColumns,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildContent({
-    required BuildContext context,
-    required List<MovieMediaThumbnailDto> thumbnails,
-    required int resolvedColumns,
-  }) {
-    switch (controller.state) {
-      case MovieDetailMissavThumbnailState.idle:
-        return _MovieDetailMissavHintState(
-          message: '这是 MissAV 外部来源帧图，首次获取可能耗时较长。',
-        );
-      case MovieDetailMissavThumbnailState.loading:
-        final status = controller.status;
-        if (status == null) {
-          return const SizedBox.shrink();
-        }
-        return _MovieDetailMissavLoadingState(status: status);
-      case MovieDetailMissavThumbnailState.empty:
-        return const Center(child: AppEmptyState(message: 'MissAV 暂无可展示缩略图'));
-      case MovieDetailMissavThumbnailState.error:
-        return Center(
-          child: AppEmptyState(
-            message: controller.errorMessage ?? 'MissAV 缩略图获取失败，请稍后重试。',
-          ),
-        );
-      case MovieDetailMissavThumbnailState.success:
-        return MovieMediaThumbnailGrid(
-          thumbnails: thumbnails,
-          isLoading: false,
-          errorMessage: null,
-          columns: resolvedColumns,
-          activeIndex: controller.activeIndex,
-          isScrollLocked: false,
-          onRetry: controller.load,
-          keyPrefix: 'movie-detail-missav',
-          onThumbnailTap: controller.selectIndex,
-        );
-    }
-  }
-}
-
-class _MovieDetailMissavTabHeader extends StatelessWidget {
-  const _MovieDetailMissavTabHeader({
-    required this.state,
-    required this.columns,
-    required this.selectedIntervalSeconds,
-    required this.onSetInterval,
-    required this.onStart,
-    required this.onRetry,
-    required this.onSetColumns,
-  });
-
-  final MovieDetailMissavThumbnailState state;
-  final int columns;
-  final int selectedIntervalSeconds;
-  final ValueChanged<int> onSetInterval;
-  final VoidCallback onStart;
-  final VoidCallback onRetry;
-  final ValueChanged<int> onSetColumns;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      key: const Key('movie-detail-missav-toolbar'),
-      spacing: _MovieDetailThumbnailControlGroup.groupSpacing,
-      runSpacing: context.appSpacing.xs,
-      children: [
-        _MovieDetailThumbnailIntervalSelector(
-          keyPrefix: 'movie-detail-missav',
-          options: _MovieDetailMissavThumbnailTab._intervalOptions,
-          selectedIntervalSeconds: selectedIntervalSeconds,
-          onSelect: onSetInterval,
-        ),
-        switch (state) {
-          MovieDetailMissavThumbnailState.idle => AppButton(
-            key: const Key('movie-detail-missav-start-button'),
-            label: '开始获取',
-            size: AppButtonSize.xSmall,
-            variant: AppButtonVariant.primary,
-            onPressed: onStart,
-          ),
-          MovieDetailMissavThumbnailState.error => AppButton(
-            key: const Key('movie-detail-missav-retry-button'),
-            label: '重新获取',
-            size: AppButtonSize.xSmall,
-            variant: AppButtonVariant.secondary,
-            onPressed: onRetry,
-          ),
-          MovieDetailMissavThumbnailState.success => Wrap(
-            children: [
-              _MovieDetailThumbnailColumnsSelector(
-                keyPrefix: 'movie-detail-missav',
-                options: _MovieDetailMissavThumbnailTab._columnOptions,
-                selectedColumns: columns,
-                onSelect: onSetColumns,
-              ),
-            ],
-          ),
-          MovieDetailMissavThumbnailState.loading ||
-          MovieDetailMissavThumbnailState.empty => const SizedBox.shrink(),
-        },
-      ],
-    );
-  }
-}
-
 class _MovieDetailThumbnailIntervalSelector extends StatelessWidget {
   const _MovieDetailThumbnailIntervalSelector({
     required this.keyPrefix,
@@ -1578,47 +1375,3 @@ class _MovieDetailThumbnailControlGroup extends StatelessWidget {
   }
 }
 
-class _MovieDetailMissavHintState extends StatelessWidget {
-  const _MovieDetailMissavHintState({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: resolveAppTextStyle(
-            context,
-            size: AppTextSize.s14,
-            weight: AppTextWeight.regular,
-            tone: AppTextTone.secondary,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MovieDetailMissavLoadingState extends StatelessWidget {
-  const _MovieDetailMissavLoadingState({required this.status});
-
-  final CatalogSearchStreamStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        key: const Key('movie-detail-missav-loading-state'),
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [CatalogSearchStreamStatusCard(status: status)],
-        ),
-      ),
-    );
-  }
-}

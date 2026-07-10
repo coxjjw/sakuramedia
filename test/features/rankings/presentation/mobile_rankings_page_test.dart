@@ -127,119 +127,6 @@ void main() {
   });
 
   testWidgets(
-    'mobile rankings filter panel supports source switch and period selection',
-    (WidgetTester tester) async {
-      bundle.adapter.enqueueJson(
-        method: 'GET',
-        path: '/ranking-sources',
-        body: <Map<String, dynamic>>[
-          <String, dynamic>{'source_key': 'javdb', 'name': 'JavDB'},
-          <String, dynamic>{'source_key': 'missav', 'name': 'MissAV'},
-        ],
-      );
-      bundle.adapter.enqueueJson(
-        method: 'GET',
-        path: '/ranking-sources/javdb/boards',
-        body: <Map<String, dynamic>>[
-          <String, dynamic>{
-            'source_key': 'javdb',
-            'board_key': 'censored',
-            'name': '有码',
-            'supported_periods': <String>['daily', 'weekly'],
-            'default_period': 'daily',
-          },
-        ],
-      );
-      bundle.adapter.enqueueJson(
-        method: 'GET',
-        path: '/ranking-sources/javdb/boards/censored/items',
-        body: _rankingItemsJson(total: 1),
-      );
-      bundle.adapter.enqueueJson(
-        method: 'GET',
-        path: '/ranking-sources/missav/boards',
-        body: <Map<String, dynamic>>[
-          <String, dynamic>{
-            'source_key': 'missav',
-            'board_key': 'all',
-            'name': '综合',
-            'supported_periods': <String>['daily', 'weekly', 'monthly'],
-            'default_period': 'daily',
-          },
-        ],
-      );
-      bundle.adapter.enqueueJson(
-        method: 'GET',
-        path: '/ranking-sources/missav/boards/all/items',
-        body: _rankingItemsJson(total: 1),
-      );
-      bundle.adapter.enqueueJson(
-        method: 'GET',
-        path: '/ranking-sources/missav/boards/all/items',
-        body: _rankingItemsJson(total: 1),
-      );
-      bundle.adapter.enqueueJson(
-        method: 'GET',
-        path: '/ranking-sources/missav/boards/all/items',
-        body: _rankingItemsJson(total: 1),
-      );
-
-      await _pumpRankingsPage(
-        tester,
-        sessionStore: sessionStore,
-        bundle: bundle,
-      );
-      await tester.pumpAndSettle();
-
-      // L2 重设计：filter 改为右上 icon button 弹底抽屉。
-      await tester.tap(find.byKey(const Key('mobile-rankings-filter-button')));
-      await tester.pumpAndSettle();
-      expect(
-        find.byKey(const Key('mobile-rankings-filter-drawer')),
-        findsOneWidget,
-      );
-
-      await tester.tap(find.byKey(const Key('rankings-filter-source-missav')));
-      await tester.pump();
-      await tester.pumpAndSettle();
-      expect(
-        find.byKey(const Key('mobile-rankings-filter-drawer')),
-        findsOneWidget,
-      );
-      expect(
-        bundle.adapter.requests.last.uri.path,
-        '/ranking-sources/missav/boards/all/items',
-      );
-      expect(
-        bundle.adapter.requests.last.uri.queryParameters['period'],
-        'daily',
-      );
-
-      expect(
-        find.byKey(const Key('rankings-filter-board-all')),
-        findsOneWidget,
-      );
-      expect(find.text('综合'), findsWidgets);
-
-      await tester.tap(find.byKey(const Key('rankings-filter-period-weekly')));
-      await tester.pump();
-      await tester.pumpAndSettle();
-      expect(
-        find.byKey(const Key('mobile-rankings-filter-drawer')),
-        findsOneWidget,
-      );
-      expect(
-        bundle.adapter.requests.last.uri.path,
-        '/ranking-sources/missav/boards/all/items',
-      );
-      expect(
-        bundle.adapter.requests.last.uri.queryParameters['period'],
-        'weekly',
-      );
-    },
-  );
-
-  testWidgets(
     'mobile rankings page retries failed load-more without clearing items',
     (WidgetTester tester) async {
       _enqueueDefaultSourcesAndBoards(bundle);
@@ -472,7 +359,6 @@ void _enqueueDefaultSourcesAndBoards(TestApiBundle bundle) {
     path: '/ranking-sources',
     body: <Map<String, dynamic>>[
       <String, dynamic>{'source_key': 'javdb', 'name': 'JavDB'},
-      <String, dynamic>{'source_key': 'missav', 'name': 'MissAV'},
     ],
   );
   bundle.adapter.enqueueJson(

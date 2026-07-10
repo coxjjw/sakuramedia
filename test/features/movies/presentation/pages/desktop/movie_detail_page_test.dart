@@ -1483,19 +1483,11 @@ void main() {
     expect(find.text('评论'), findsOneWidget);
     expect(find.text('磁力搜索'), findsOneWidget);
     expect(find.text('缩略图'), findsOneWidget);
-    expect(find.text('Missav缩略图'), findsOneWidget);
     expect(find.text('hot-user-1'), findsOneWidget);
     expect(find.text('hot-review-1'), findsOneWidget);
     final reviewContent = tester.widget<Text>(find.text('hot-review-1'));
     expect(reviewContent.style?.fontSize, sakuraThemeData.appTextScale.s14);
     expect(bundle.adapter.hitCount('GET', '/movies/ABC-001/reviews'), 1);
-    expect(
-      bundle.adapter.hitCount(
-        'GET',
-        '/movies/ABC-001/thumbnails/missav/stream',
-      ),
-      0,
-    );
     final hotSortButton = tester.widget<AppTextButton>(
       find.byKey(const Key('movie-detail-review-sort-hotly')),
     );
@@ -1756,77 +1748,6 @@ void main() {
       expect(find.byKey(const Key('movie-media-thumb-1')), findsOneWidget);
       expect(find.byKey(const Key('movie-media-thumb-2')), findsNothing);
       expect(find.byKey(const Key('movie-media-thumb-3')), findsNothing);
-    },
-  );
-
-  testWidgets(
-    'movie detail page inspector missav interval filters visible thumbnails',
-    (WidgetTester tester) async {
-      bundle.adapter.enqueueJson(
-        method: 'GET',
-        path: '/movies/ABC-001',
-        body: _movieDetailJson(),
-      );
-      bundle.adapter.enqueueJson(
-        method: 'GET',
-        path: '/media/100/thumbnails',
-        body: _mediaThumbnailsJson(),
-      );
-      bundle.adapter.enqueueSse(
-        method: 'GET',
-        path: '/movies/ABC-001/thumbnails/missav/stream',
-        chunks: <String>[
-          'event: completed\n'
-              'data: {"success":true,"result":{"movie_number":"ABC-001","source":"missav","total":12,"items":[{"index":0,"url":"/missav-0.jpg"},{"index":1,"url":"/missav-1.jpg"},{"index":2,"url":"/missav-2.jpg"},{"index":3,"url":"/missav-3.jpg"},{"index":4,"url":"/missav-4.jpg"},{"index":5,"url":"/missav-5.jpg"},{"index":6,"url":"/missav-6.jpg"},{"index":7,"url":"/missav-7.jpg"},{"index":8,"url":"/missav-8.jpg"},{"index":9,"url":"/missav-9.jpg"},{"index":10,"url":"/missav-10.jpg"},{"index":11,"url":"/missav-11.jpg"}]}}\n\n',
-        ],
-      );
-
-      await _pumpPage(tester, sessionStore: sessionStore, bundle: bundle);
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.byKey(const Key('movie-detail-fixed-info-bar')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Missav缩略图'));
-      await tester.pumpAndSettle();
-      await tester.tap(
-        find.byKey(const Key('movie-detail-missav-start-button')),
-      );
-      await tester.pumpAndSettle();
-
-      expect(
-        find.byKey(const Key('movie-detail-missav-columns-icon')),
-        findsOneWidget,
-      );
-      final toolbarLeft = tester.getTopLeft(
-        find.byKey(const Key('movie-detail-missav-toolbar')),
-      );
-      final intervalGroupLeft = tester.getTopLeft(
-        find.byKey(const Key('movie-detail-missav-interval-group')),
-      );
-      expect(intervalGroupLeft.dx, toolbarLeft.dx);
-
-      expect(
-        find.byKey(const Key('movie-detail-missav-thumb-2')),
-        findsOneWidget,
-      );
-
-      await tester.tap(
-        find.byKey(const Key('movie-detail-missav-interval-20')),
-      );
-      await tester.pumpAndSettle();
-
-      expect(
-        find.byKey(const Key('movie-detail-missav-thumb-0')),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const Key('movie-detail-missav-thumb-1')),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const Key('movie-detail-missav-thumb-2')),
-        findsNothing,
-      );
     },
   );
 

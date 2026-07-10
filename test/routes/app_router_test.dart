@@ -4049,7 +4049,6 @@ void _enqueueDesktopRankingsResponses(TestApiBundle bundle) {
     path: '/ranking-sources',
     body: <Map<String, dynamic>>[
       <String, dynamic>{'source_key': 'javdb', 'name': 'JavDB'},
-      <String, dynamic>{'source_key': 'missav', 'name': 'MissAV'},
     ],
   );
   bundle.adapter.enqueueJson(

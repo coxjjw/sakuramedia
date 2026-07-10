@@ -299,17 +299,9 @@ void main() {
     expect(find.text('评论'), findsOneWidget);
     expect(find.text('磁力搜索'), findsOneWidget);
     expect(find.text('缩略图'), findsOneWidget);
-    expect(find.text('Missav缩略图'), findsOneWidget);
     expect(find.text('hot-review-1'), findsOneWidget);
     expect(bundle.adapter.hitCount('GET', '/media/101/thumbnails'), 1);
     expect(bundle.adapter.hitCount('GET', '/movies/ABC-001/reviews'), 1);
-    expect(
-      bundle.adapter.hitCount(
-        'GET',
-        '/movies/ABC-001/thumbnails/missav/stream',
-      ),
-      0,
-    );
   });
 
   testWidgets(
