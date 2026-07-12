@@ -171,7 +171,11 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
                         _toggleMovieSubscription(isSubscribed: isSubscribed),
                 onMoreActionsTap: isActionControlsLocked
                     ? null
-                    : (_) => _showMovieActionDrawer(movie, isSubscribed),
+                    : (_) => _showMovieActionDrawer(
+                          movie,
+                          isSubscribed,
+                          selectedMedia,
+                        ),
                 onPlayTap: selectedMedia != null && selectedMedia.hasPlayableUrl
                     ? () => _openMoviePlayer(mediaId: selectedMedia.mediaId)
                     : null,
@@ -242,23 +246,7 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
                     ),
                   ),
                 ),
-                onInspectorTap: () => showMobileMovieDetailInspectorBottomSheet(
-                  context: context,
-                  movieNumber: movie.movieNumber,
-                  selectedMedia: selectedMedia,
-                  onSearchSimilar: (thumbnail, imageUrl, fileName) {
-                    return _openImageSearchFromUrl(
-                      imageUrl: imageUrl,
-                      fileName: fileName,
-                    );
-                  },
-                  onPlay: (thumbnail) => _openMoviePlayer(
-                    mediaId: thumbnail.mediaId > 0
-                        ? thumbnail.mediaId
-                        : selectedMedia?.mediaId,
-                    positionSeconds: thumbnail.offsetSeconds,
-                  ),
-                ),
+                onInspectorTap: () => _openInspector(movie, selectedMedia),
                 clips: _movieClipsController.clips,
                 isClipsLoading: _movieClipsController.isLoading,
                 clipsErrorMessage: _movieClipsController.errorMessage,
@@ -429,8 +417,12 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
     }
   }
 
-  Future<void> _showMovieActionDrawer(MovieDetailDto movie, bool isSubscribed) {
-    return showMovieDetailMobileActionDrawer(
+  Future<void> _showMovieActionDrawer(
+    MovieDetailDto movie,
+    bool isSubscribed,
+    MovieMediaItemDto? selectedMedia,
+  ) async {
+    final action = await showMovieDetailMobileActionDrawer(
       context: context,
       movieNumber: movie.movieNumber,
       actions: buildMovieDetailActionDescriptors(
@@ -438,6 +430,34 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
         isSubscribed: isSubscribed,
       ),
       onExecuteAction: _executeMovieAction,
+    );
+    if (!mounted || action != MovieDetailActionType.openInspector) {
+      return;
+    }
+
+    await _openInspector(movie, selectedMedia);
+  }
+
+  Future<void> _openInspector(
+    MovieDetailDto movie,
+    MovieMediaItemDto? selectedMedia,
+  ) {
+    return showMobileMovieDetailInspectorBottomSheet(
+      context: context,
+      movieNumber: movie.movieNumber,
+      selectedMedia: selectedMedia,
+      onSearchSimilar: (thumbnail, imageUrl, fileName) {
+        return _openImageSearchFromUrl(
+          imageUrl: imageUrl,
+          fileName: fileName,
+        );
+      },
+      onPlay: (thumbnail) => _openMoviePlayer(
+        mediaId: thumbnail.mediaId > 0
+            ? thumbnail.mediaId
+            : selectedMedia?.mediaId,
+        positionSeconds: thumbnail.offsetSeconds,
+      ),
     );
   }
 

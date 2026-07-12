@@ -28,16 +28,27 @@ void main() {
       );
 
       expect(actions.map((action) => action.type), <MovieDetailActionType>[
+        MovieDetailActionType.openInspector,
         MovieDetailActionType.toggleSubscription,
         MovieDetailActionType.refreshMetadata,
         MovieDetailActionType.recomputeHeat,
         MovieDetailActionType.syncInteraction,
         MovieDetailActionType.translateDescription,
       ]);
-      expect(actions[3].enabled, isFalse);
       expect(actions[4].enabled, isFalse);
+      expect(actions[5].enabled, isFalse);
     },
   );
+
+  test('movieDetailRemoteActionSpecFor has no remote spec for openInspector', () {
+    expect(
+      movieDetailRemoteActionSpecFor(
+        action: MovieDetailActionType.openInspector,
+        movieNumber: 'ABC-001',
+      ),
+      isNull,
+    );
+  });
 
   test('movieDetailRemoteActionSpecFor maps refresh metadata action', () async {
     final spec = await _runRemoteActionSpec(

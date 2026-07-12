@@ -3372,7 +3372,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final labels = <String>['订阅影片', '刷新元数据', '计算热度', '刷新互动数', '翻译影片介绍'];
+    final labels = <String>[
+      '更多信息',
+      '订阅影片',
+      '刷新元数据',
+      '计算热度',
+      '刷新互动数',
+      '翻译影片介绍',
+    ];
     final orderedLabels = List<String>.from(labels)..sort((left, right) {
       final leftDy = tester.getTopLeft(find.text(left)).dy;
       final rightDy = tester.getTopLeft(find.text(right)).dy;
@@ -3380,6 +3387,54 @@ void main() {
     });
     expect(orderedLabels, labels);
   });
+
+  testWidgets(
+    'movie detail page opens inspector dialog from action menu without sending a request',
+    (WidgetTester tester) async {
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/movies/ABC-001',
+        body: _movieDetailJson(),
+      );
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/media/100/thumbnails',
+        body: _mediaThumbnailsJson(),
+      );
+
+      await _pumpPage(tester, sessionStore: sessionStore, bundle: bundle);
+      await tester.pumpAndSettle();
+
+      final requestCountBefore = bundle.adapter.requests.length;
+
+      await tester.tap(
+        find.byKey(const Key('movie-detail-hero-more-actions-button')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('movie-detail-hero-action-openInspector')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('movie-detail-inspector-dialog')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('movie-detail-inspector-panel')),
+        findsOneWidget,
+      );
+      // 打开检查器本身不是远程动作,只应产生面板自己的请求(评论),不走 movie mutation 端点。
+      final newPaths = bundle.adapter.requests
+          .skip(requestCountBefore)
+          .map((request) => request.path)
+          .toList();
+      expect(
+        newPaths.any((path) => path.contains('metadata-refresh')),
+        isFalse,
+      );
+    },
+  );
 
   testWidgets(
     'movie detail page disables interaction sync and description translation actions when prerequisites are missing',

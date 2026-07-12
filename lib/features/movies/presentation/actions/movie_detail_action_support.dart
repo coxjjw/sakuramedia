@@ -65,6 +65,9 @@ MovieDetailRemoteActionSpec? movieDetailRemoteActionSpecFor({
   required String movieNumber,
 }) {
   switch (action) {
+    // 本地动作:只开检查器,不发请求,由页面自行接管。
+    case MovieDetailActionType.openInspector:
+      return null;
     case MovieDetailActionType.toggleSubscription:
       return null;
     case MovieDetailActionType.refreshMetadata:

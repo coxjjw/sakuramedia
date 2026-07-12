@@ -6,6 +6,7 @@ import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 
 enum MovieDetailActionType {
+  openInspector,
   toggleSubscription,
   refreshMetadata,
   recomputeHeat,
@@ -37,6 +38,11 @@ List<MovieDetailActionDescriptor> buildMovieDetailActionDescriptors({
   final hasJavdbId = movie.javdbId.trim().isNotEmpty;
 
   return <MovieDetailActionDescriptor>[
+    const MovieDetailActionDescriptor(
+      type: MovieDetailActionType.openInspector,
+      label: '更多信息',
+      icon: Icons.info_outline_rounded,
+    ),
     MovieDetailActionDescriptor(
       type: MovieDetailActionType.toggleSubscription,
       label: isSubscribed ? '取消订阅' : '订阅影片',
@@ -135,13 +141,15 @@ Future<MovieDetailActionType?> showMovieDetailDesktopActionMenu({
   );
 }
 
-Future<void> showMovieDetailMobileActionDrawer({
+/// 返回被选中的「本地动作」(如 [MovieDetailActionType.openInspector]),交由调用方
+/// 在抽屉关闭后自行处理;远程动作在抽屉内就地执行完毕,返回 null。
+Future<MovieDetailActionType?> showMovieDetailMobileActionDrawer({
   required BuildContext context,
   required String movieNumber,
   required List<MovieDetailActionDescriptor> actions,
   required Future<bool> Function(MovieDetailActionType action) onExecuteAction,
 }) {
-  return showAppBottomDrawer<void>(
+  return showAppBottomDrawer<MovieDetailActionType>(
     context: context,
     drawerKey: const Key('movie-detail-actions-drawer'),
     maxHeightFactor: 0.64,
@@ -319,6 +327,12 @@ class _MovieDetailActionDrawerState extends State<_MovieDetailActionDrawer> {
       setState(() {
         _isConfirmingRefreshMetadata = true;
       });
+      return;
+    }
+
+    // 本地动作:不发请求,关抽屉后由调用方接手(避免行内 loading 与二次弹层打架)。
+    if (action == MovieDetailActionType.openInspector) {
+      Navigator.of(context).pop(action);
       return;
     }
 

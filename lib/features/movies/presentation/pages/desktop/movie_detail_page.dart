@@ -155,8 +155,12 @@ class _DesktopMovieDetailPageState extends State<DesktopMovieDetailPage>
                   : () => _toggleMovieSubscription(isSubscribed: isSubscribed),
               onMoreActionsTap: isActionControlsLocked
                   ? null
-                  : (globalPosition) =>
-                      _showMovieActionMenu(globalPosition, movie, isSubscribed),
+                  : (globalPosition) => _showMovieActionMenu(
+                        globalPosition,
+                        movie,
+                        isSubscribed,
+                        selectedMedia,
+                      ),
               onPlayTap: selectedMedia != null && selectedMedia.hasPlayableUrl
                   ? () => context.pushDesktopMoviePlayer(
                         movieNumber: widget.movieNumber,
@@ -226,11 +230,7 @@ class _DesktopMovieDetailPageState extends State<DesktopMovieDetailPage>
                   closeCurrentRouteOnSearch: true,
                 ),
               ),
-              onInspectorTap: () => showMovieDetailInspectorDialog(
-                context: context,
-                movieNumber: movie.movieNumber,
-                selectedMedia: selectedMedia,
-              ),
+              onInspectorTap: () => _openInspector(movie, selectedMedia),
               clips: _movieClipsController.clips,
               isClipsLoading: _movieClipsController.isLoading,
               clipsErrorMessage: _movieClipsController.errorMessage,
@@ -381,6 +381,7 @@ class _DesktopMovieDetailPageState extends State<DesktopMovieDetailPage>
     Offset globalPosition,
     MovieDetailDto movie,
     bool isSubscribed,
+    MovieMediaItemDto? selectedMedia,
   ) async {
     final action = await showMovieDetailDesktopActionMenu(
       context: context,
@@ -394,12 +395,28 @@ class _DesktopMovieDetailPageState extends State<DesktopMovieDetailPage>
       return;
     }
 
+    if (action == MovieDetailActionType.openInspector) {
+      await _openInspector(movie, selectedMedia);
+      return;
+    }
+
     if (action == MovieDetailActionType.refreshMetadata) {
       await _confirmRefreshMetadata();
       return;
     }
 
     await _executeMovieAction(action);
+  }
+
+  Future<void> _openInspector(
+    MovieDetailDto movie,
+    MovieMediaItemDto? selectedMedia,
+  ) {
+    return showMovieDetailInspectorDialog(
+      context: context,
+      movieNumber: movie.movieNumber,
+      selectedMedia: selectedMedia,
+    );
   }
 
   Future<void> _confirmRefreshMetadata() {

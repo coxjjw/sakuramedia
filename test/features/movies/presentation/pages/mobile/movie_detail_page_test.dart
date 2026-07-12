@@ -1521,7 +1521,14 @@ void main() {
       findsOneWidget,
     );
 
-    final labels = <String>['订阅影片', '刷新元数据', '计算热度', '刷新互动数', '翻译影片介绍'];
+    final labels = <String>[
+      '更多信息',
+      '订阅影片',
+      '刷新元数据',
+      '计算热度',
+      '刷新互动数',
+      '翻译影片介绍',
+    ];
     final orderedLabels = List<String>.from(labels)..sort((left, right) {
       final leftDy = tester.getTopLeft(find.text(left)).dy;
       final rightDy = tester.getTopLeft(find.text(right)).dy;
@@ -1529,6 +1536,43 @@ void main() {
     });
     expect(orderedLabels, labels);
   });
+
+  testWidgets(
+    'mobile movie detail action drawer closes and opens inspector bottom sheet',
+    (WidgetTester tester) async {
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/movies/ABC-001',
+        body: _movieDetailJson(),
+      );
+
+      await _pumpPage(tester, sessionStore: sessionStore, bundle: bundle);
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const Key('movie-detail-hero-more-actions-button')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('movie-detail-actions-openInspector')),
+      );
+      await tester.pumpAndSettle();
+
+      // 动作抽屉必须先关闭,再弹检查器抽屉,否则两个 bottom sheet 会叠在一起。
+      expect(
+        find.byKey(const Key('movie-detail-actions-drawer')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const Key('movie-detail-inspector-bottom-sheet')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('movie-detail-inspector-panel')),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets(
     'mobile movie detail disables interaction sync and description translation actions when prerequisites are missing',
