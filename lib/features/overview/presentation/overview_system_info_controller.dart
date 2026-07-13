@@ -12,8 +12,11 @@ class OverviewSystemInfoController extends ChangeNotifier {
   bool isLoadingStatus = true;
   bool isLoadingImageSearchStatus = true;
   bool isTestingMetadataProviders = false;
+  bool isTestingCloud115Authentication = false;
+  bool cloud115AuthenticationRequestFailed = false;
   StatusDto? status;
   StatusImageSearchDto? imageSearchStatus;
+  StatusCloud115CookiesDto? cloud115CookiesStatus;
   bool? javdbHealthy;
   bool? dmmHealthy;
   String? statusError;
@@ -74,6 +77,26 @@ class OverviewSystemInfoController extends ChangeNotifier {
     dmmHealthy = results[1];
     isTestingMetadataProviders = false;
     notifyListeners();
+  }
+
+  Future<void> testCloud115Authentication() async {
+    if (isTestingCloud115Authentication) {
+      return;
+    }
+
+    isTestingCloud115Authentication = true;
+    cloud115AuthenticationRequestFailed = false;
+    cloud115CookiesStatus = null;
+    notifyListeners();
+
+    try {
+      cloud115CookiesStatus = await _statusApi.getCloud115CookiesStatus();
+    } catch (_) {
+      cloud115AuthenticationRequestFailed = true;
+    } finally {
+      isTestingCloud115Authentication = false;
+      notifyListeners();
+    }
   }
 
   String formatGigabytes(int bytes) {

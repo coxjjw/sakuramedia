@@ -25,10 +25,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('desktop overview page leaves outer page inset to the shell', () {
-    final source =
-        File(
-          'lib/features/overview/presentation/desktop_overview_page.dart',
-        ).readAsStringSync();
+    final source = File(
+      'lib/features/overview/presentation/desktop_overview_page.dart',
+    ).readAsStringSync();
 
     expect(source, isNot(contains('AppPageInsets.desktopStandard')));
     expect(source, isNot(contains('EdgeInsets.all(24)')));
@@ -98,6 +97,46 @@ void main() {
     expect(find.text('23'), findsOneWidget);
   });
 
+  testWidgets('desktop overview probes cloud115 authentication only on action',
+      (
+    WidgetTester tester,
+  ) async {
+    _enqueueStatusSuccess(bundle);
+    _enqueueLatestMoviesSuccess(bundle, count: 1, total: 1);
+
+    await _pumpOverviewPage(tester, sessionStore: sessionStore, bundle: bundle);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('overview-stat-cloud115-authentication')),
+      findsOneWidget,
+    );
+    expect(find.text('115 认证状态'), findsOneWidget);
+    expect(find.text('未检测'), findsOneWidget);
+    expect(
+      bundle.adapter.hitCount('GET', '/status/media-libraries/cloud115'),
+      0,
+    );
+
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/status/media-libraries/cloud115',
+      body: _cloud115StatusJson(alive: 2),
+    );
+    await tester.tap(
+      find.byKey(const Key('overview-cloud115-authentication-test-button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      bundle.adapter.hitCount('GET', '/status/media-libraries/cloud115'),
+      1,
+    );
+    expect(find.text('全部正常'), findsOneWidget);
+    expect(find.text('2/2'), findsOneWidget);
+    expect(find.byIcon(Icons.check_circle_outline), findsOneWidget);
+  });
+
   testWidgets('desktop overview uses a denser poster grid on wide screens', (
     WidgetTester tester,
   ) async {
@@ -124,7 +163,9 @@ void main() {
     WidgetTester tester,
   ) async {
     bundle.adapter.enqueueJson(
-      method: 'GET', path: '/status', statusCode: 200,
+      method: 'GET',
+      path: '/status',
+      statusCode: 200,
       body: _statusJson(totalSizeBytes: 0),
     );
     _enqueueImageSearchStatusSuccess(bundle);
@@ -141,10 +182,14 @@ void main() {
     (WidgetTester tester) async {
       final imageSearchStatusCompleter = Completer<void>();
       bundle.adapter.enqueueJson(
-        method: 'GET', path: '/status', statusCode: 200, body: _statusJson(),
+        method: 'GET',
+        path: '/status',
+        statusCode: 200,
+        body: _statusJson(),
       );
       bundle.adapter.enqueueResponder(
-        method: 'GET', path: '/status/image-search',
+        method: 'GET',
+        path: '/status/image-search',
         responder: (options, body) async {
           await imageSearchStatusCompleter.future;
           return ResponseBody.fromString(
@@ -160,7 +205,8 @@ void main() {
 
       await _pumpOverviewPage(
         tester,
-        sessionStore: sessionStore, bundle: bundle,
+        sessionStore: sessionStore,
+        bundle: bundle,
       );
 
       final joyTagHealthTile = find.byKey(
@@ -230,10 +276,15 @@ void main() {
     'desktop overview shows fallback joytag values when image search status fails',
     (WidgetTester tester) async {
       bundle.adapter.enqueueJson(
-        method: 'GET', path: '/status', statusCode: 200, body: _statusJson(),
+        method: 'GET',
+        path: '/status',
+        statusCode: 200,
+        body: _statusJson(),
       );
       bundle.adapter.enqueueJson(
-        method: 'GET', path: '/status/image-search', statusCode: 500,
+        method: 'GET',
+        path: '/status/image-search',
+        statusCode: 500,
         body: <String, dynamic>{
           'error': <String, dynamic>{
             'code': 'server_error',
@@ -298,7 +349,8 @@ void main() {
       _enqueueImageSearchStatusSuccess(bundle);
 
       bundle.adapter.enqueueResponder(
-        method: 'GET', path: '/status',
+        method: 'GET',
+        path: '/status',
         responder: (options, body) async {
           await statusCompleter.future;
           return ResponseBody.fromString(
@@ -311,7 +363,8 @@ void main() {
         },
       );
       bundle.adapter.enqueueResponder(
-        method: 'GET', path: '/movies/latest',
+        method: 'GET',
+        path: '/movies/latest',
         responder: (options, body) async {
           await moviesCompleter.future;
           return ResponseBody.fromString(
@@ -352,7 +405,9 @@ void main() {
   ) async {
     _enqueueStatusSuccess(bundle);
     bundle.adapter.enqueueJson(
-      method: 'GET', path: '/movies/latest', statusCode: 200,
+      method: 'GET',
+      path: '/movies/latest',
+      statusCode: 200,
       body: _latestMoviesJson(count: 0, total: 0),
     );
 
@@ -367,7 +422,9 @@ void main() {
   ) async {
     _enqueueStatusSuccess(bundle);
     bundle.adapter.enqueueJson(
-      method: 'GET', path: '/movies/latest', statusCode: 500,
+      method: 'GET',
+      path: '/movies/latest',
+      statusCode: 500,
       body: <String, dynamic>{
         'error': <String, dynamic>{
           'code': 'server_error',
@@ -402,7 +459,11 @@ void main() {
       _enqueueStatusSuccess(bundle);
       _enqueueLatestMoviesSuccess(bundle, count: 24, total: 30);
       _enqueueLatestMoviesSuccess(
-        bundle, count: 6, page: 2, total: 30, startIndex: 25,
+        bundle,
+        count: 6,
+        page: 2,
+        total: 30,
+        startIndex: 25,
       );
 
       await _pumpOverviewPage(
@@ -417,7 +478,8 @@ void main() {
       expect(find.byKey(const Key('movie-summary-card-ABC-025')), findsNothing);
 
       await tester.drag(
-        find.byType(SingleChildScrollView), const Offset(0, -2800),
+        find.byType(SingleChildScrollView),
+        const Offset(0, -2800),
       );
       await tester.pump();
       await tester.pumpAndSettle();
@@ -430,7 +492,8 @@ void main() {
       );
 
       await tester.drag(
-        find.byType(SingleChildScrollView), const Offset(0, -600),
+        find.byType(SingleChildScrollView),
+        const Offset(0, -600),
       );
       await tester.pumpAndSettle();
 
@@ -444,7 +507,9 @@ void main() {
       _enqueueStatusSuccess(bundle);
       _enqueueLatestMoviesSuccess(bundle, count: 24, total: 30);
       bundle.adapter.enqueueJson(
-        method: 'GET', path: '/movies/latest', statusCode: 500,
+        method: 'GET',
+        path: '/movies/latest',
+        statusCode: 500,
         body: <String, dynamic>{
           'error': <String, dynamic>{
             'code': 'server_error',
@@ -461,7 +526,8 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.drag(
-        find.byType(SingleChildScrollView), const Offset(0, -2800),
+        find.byType(SingleChildScrollView),
+        const Offset(0, -2800),
       );
       await tester.pump();
       await tester.pumpAndSettle();
@@ -471,7 +537,11 @@ void main() {
       expect(find.widgetWithText(TextButton, '重试'), findsOneWidget);
 
       _enqueueLatestMoviesSuccess(
-        bundle, count: 6, page: 2, total: 30, startIndex: 25,
+        bundle,
+        count: 6,
+        page: 2,
+        total: 30,
+        startIndex: 25,
       );
 
       await tester.ensureVisible(find.widgetWithText(TextButton, '重试'));
@@ -494,7 +564,9 @@ void main() {
   ) async {
     _enqueueStatusSuccess(bundle);
     bundle.adapter.enqueueJson(
-      method: 'GET', path: '/movies/latest', statusCode: 200,
+      method: 'GET',
+      path: '/movies/latest',
+      statusCode: 200,
       body: _latestMoviesJson(count: 1, total: 1),
     );
     bundle.adapter.enqueueJson(
@@ -506,9 +578,11 @@ void main() {
     await _pumpOverviewPage(tester, sessionStore: sessionStore, bundle: bundle);
     await tester.pumpAndSettle();
 
-    await tester.tap(
-      find.byKey(const Key('movie-summary-card-subscription-ABC-001')),
+    final subscriptionButton = find.byKey(
+      const Key('movie-summary-card-subscription-ABC-001'),
     );
+    await tester.ensureVisible(subscriptionButton);
+    await tester.tap(subscriptionButton);
     await tester.pump();
     await tester.pumpAndSettle();
 
@@ -552,26 +626,41 @@ Future<void> _pumpOverviewPage(
 
 void _enqueueStatusSuccess(TestApiBundle bundle) {
   bundle.adapter.enqueueJson(
-    method: 'GET', path: '/status', statusCode: 200, body: _statusJson(),
+    method: 'GET',
+    path: '/status',
+    statusCode: 200,
+    body: _statusJson(),
   );
   _enqueueImageSearchStatusSuccess(bundle);
 }
 
 void _enqueueImageSearchStatusSuccess(TestApiBundle bundle) {
   bundle.adapter.enqueueJson(
-    method: 'GET', path: '/status/image-search', statusCode: 200,
+    method: 'GET',
+    path: '/status/image-search',
+    statusCode: 200,
     body: _imageSearchStatusJson(),
   );
 }
 
 void _enqueueLatestMoviesSuccess(
   TestApiBundle bundle, {
-  required int count, required int total, int page = 1, int pageSize = 24, int startIndex = 1,
+  required int count,
+  required int total,
+  int page = 1,
+  int pageSize = 24,
+  int startIndex = 1,
 }) {
   bundle.adapter.enqueueJson(
-    method: 'GET', path: '/movies/latest', statusCode: 200,
+    method: 'GET',
+    path: '/movies/latest',
+    statusCode: 200,
     body: _latestMoviesJson(
-      count: count, total: total, page: page, pageSize: pageSize, startIndex: startIndex,
+      count: count,
+      total: total,
+      page: page,
+      pageSize: pageSize,
+      startIndex: startIndex,
     ),
   );
 }
@@ -581,20 +670,26 @@ Map<String, dynamic> _statusJson({int totalSizeBytes = 987654321}) {
     'actors': <String, dynamic>{'female_total': 12, 'female_subscribed': 8},
     'movies': <String, dynamic>{'total': 120, 'subscribed': 35, 'playable': 88},
     'media_files': <String, dynamic>{
-      'total': 156, 'total_size_bytes': totalSizeBytes,
+      'total': 156,
+      'total_size_bytes': totalSizeBytes,
     },
     'media_libraries': <String, dynamic>{'total': 3},
   };
 }
 
 Map<String, dynamic> _imageSearchStatusJson({
-  bool healthy = true, bool joyTagHealthy = true, String? usedDevice = 'GPU',
-  int pendingThumbnails = 23, int failedThumbnails = 2,
+  bool healthy = true,
+  bool joyTagHealthy = true,
+  String? usedDevice = 'GPU',
+  int pendingThumbnails = 23,
+  int failedThumbnails = 2,
 }) {
   return <String, dynamic>{
-    'healthy': healthy, 'checked_at': '2026-03-16T07:30:00Z',
+    'healthy': healthy,
+    'checked_at': '2026-03-16T07:30:00Z',
     'joytag': <String, dynamic>{
-      'healthy': joyTagHealthy, 'used_device': usedDevice,
+      'healthy': joyTagHealthy,
+      'used_device': usedDevice,
     },
     'indexing': <String, dynamic>{
       'pending_thumbnails': pendingThumbnails,
@@ -604,8 +699,29 @@ Map<String, dynamic> _imageSearchStatusJson({
   };
 }
 
+Map<String, dynamic> _cloud115StatusJson({
+  int alive = 0,
+  int expired = 0,
+  int unavailable = 0,
+}) {
+  return <String, dynamic>{
+    'checked_at': '2026-07-14T10:00:00Z',
+    'summary': <String, dynamic>{
+      'total': alive + expired + unavailable,
+      'alive': alive,
+      'expired': expired,
+      'unavailable': unavailable,
+    },
+    'libraries': <dynamic>[],
+  };
+}
+
 Map<String, dynamic> _latestMoviesJson({
-  required int count, required int total, int page = 1, int pageSize = 24, int startIndex = 1,
+  required int count,
+  required int total,
+  int page = 1,
+  int pageSize = 24,
+  int startIndex = 1,
 }) {
   return <String, dynamic>{
     'items': List<Map<String, dynamic>>.generate(

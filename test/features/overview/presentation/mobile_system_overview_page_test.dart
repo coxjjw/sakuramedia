@@ -49,6 +49,43 @@ void main() {
     expect(find.text('JoyTag 健康'), findsOneWidget);
     expect(find.text('120'), findsOneWidget);
     expect(find.text('正常'), findsOneWidget);
+    expect(find.text('115 认证状态'), findsOneWidget);
+    expect(find.text('未检测'), findsOneWidget);
+    expect(
+      bundle.adapter.hitCount('GET', '/status/media-libraries/cloud115'),
+      0,
+    );
+  });
+
+  testWidgets('mobile system overview manually probes cloud115 authentication',
+      (
+    WidgetTester tester,
+  ) async {
+    _enqueueSystemOverviewResponses(bundle);
+
+    await _pumpPage(tester, sessionStore: sessionStore, bundle: bundle);
+    await tester.pumpAndSettle();
+
+    final button = find.byKey(
+      const Key('mobile-system-overview-cloud115-authentication-test-button'),
+    );
+    await tester.ensureVisible(button);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/status/media-libraries/cloud115',
+      body: _cloud115StatusJson(expired: 1, unavailable: 1),
+    );
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+
+    expect(
+      bundle.adapter.hitCount('GET', '/status/media-libraries/cloud115'),
+      1,
+    );
+    expect(find.text('认证失效'), findsOneWidget);
+    expect(find.text('暂不可用'), findsOneWidget);
+    expect(find.byIcon(Icons.error_outline), findsOneWidget);
+    expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);
   });
 
   testWidgets('mobile system overview retries status failure', (
@@ -99,6 +136,10 @@ void main() {
 
       expect(bundle.adapter.hitCount('GET', '/status'), 2);
       expect(bundle.adapter.hitCount('GET', '/status/image-search'), 2);
+      expect(
+        bundle.adapter.hitCount('GET', '/status/media-libraries/cloud115'),
+        0,
+      );
     },
   );
 }
@@ -164,5 +205,22 @@ Map<String, dynamic> _statusJson({int totalSizeBytes = 987654321}) {
       'total_size_bytes': totalSizeBytes,
     },
     'media_libraries': <String, dynamic>{'total': 3},
+  };
+}
+
+Map<String, dynamic> _cloud115StatusJson({
+  int alive = 0,
+  int expired = 0,
+  int unavailable = 0,
+}) {
+  return <String, dynamic>{
+    'checked_at': '2026-07-14T10:00:00Z',
+    'summary': <String, dynamic>{
+      'total': alive + expired + unavailable,
+      'alive': alive,
+      'expired': expired,
+      'unavailable': unavailable,
+    },
+    'libraries': <dynamic>[],
   };
 }

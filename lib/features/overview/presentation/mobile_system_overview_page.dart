@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/features/overview/presentation/overview_system_info_controller.dart';
+import 'package:sakuramedia/features/overview/presentation/widgets/cloud115_authentication_status_chips.dart';
 import 'package:sakuramedia/features/overview/presentation/widgets/external_data_source_status_chips.dart';
 import 'package:sakuramedia/features/status/data/status_api.dart';
 import 'package:sakuramedia/theme.dart';
@@ -175,6 +176,19 @@ class _MobileSystemOverviewPageState extends State<MobileSystemOverviewPage> {
               actionLabel: '检测',
               isActionLoading: _controller.isTestingMetadataProviders,
               onActionPressed: _controller.testExternalDataSources,
+            ),
+            _MobileSystemOverviewMetricItem(
+              id: 'cloud115-authentication',
+              label: '115 认证状态',
+              valueWidget: Cloud115AuthenticationStatusChips(
+                summary: _controller.cloud115CookiesStatus?.summary,
+                isTesting: _controller.isTestingCloud115Authentication,
+                requestFailed: _controller.cloud115AuthenticationRequestFailed,
+                keyPrefix: 'mobile-system-overview',
+              ),
+              actionLabel: '检测',
+              isActionLoading: _controller.isTestingCloud115Authentication,
+              onActionPressed: _controller.testCloud115Authentication,
             ),
           ],
         ),
