@@ -91,3 +91,6 @@ android.agents.md
 .env.local
 
 docs/refactor
+
+# 全量测试的 bundle 入口,由 scripts/test.sh 每次跑测前重新生成(见 tool/gen_test_bundles.dart)
+/test_bundles/
