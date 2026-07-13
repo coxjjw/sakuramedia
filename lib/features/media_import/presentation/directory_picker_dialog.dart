@@ -299,6 +299,15 @@ class _DirectoryPickerDialogState extends State<_DirectoryPickerDialog> {
               .toList(growable: false),
           onChanged: (value) => setState(() => _selectedLibraryId = value),
         ),
+        SizedBox(height: spacing.xs),
+        Text(
+          '硬链接优先模式下，源目录需和目标媒体库根路径位于同一块物理盘，否则会回退到复制。',
+          style: resolveAppTextStyle(
+            context,
+            size: AppTextSize.s12,
+            tone: AppTextTone.muted,
+          ),
+        ),
         SizedBox(height: spacing.md),
         AppSelectField<TransferMode>(
           key: const Key('media-import-picker-transfer-mode-select'),

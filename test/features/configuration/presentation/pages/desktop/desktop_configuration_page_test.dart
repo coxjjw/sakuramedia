@@ -873,13 +873,15 @@ void main() {
       await tester.tap(find.byKey(const Key('media-library-edit-1')));
       await tester.pumpAndSettle();
 
+      final rootPathField = tester.widget<TextFormField>(
+        find.byKey(const Key('media-library-root-path-field')),
+      );
+      expect(rootPathField.enabled, isFalse);
+      expect(find.text('根路径创建后不可修改'), findsOneWidget);
+
       await tester.enterText(
         find.byKey(const Key('media-library-name-field')),
         'Main Library Updated',
-      );
-      await tester.enterText(
-        find.byKey(const Key('media-library-root-path-field')),
-        '/media/library/updated',
       );
       await tester.tap(find.text('保存').last);
       await tester.pumpAndSettle();
@@ -889,7 +891,7 @@ void main() {
             request.method == 'PATCH' && request.path == '/media-libraries/1',
       );
       expect(patchRequest.body['name'], 'Main Library Updated');
-      expect(patchRequest.body['root_path'], '/media/library/updated');
+      expect(patchRequest.body.containsKey('root_path'), isFalse);
       expect(find.text('Main Library Updated'), findsWidgets);
 
       await tester.tap(find.byKey(const Key('configuration-tab-downloads')));

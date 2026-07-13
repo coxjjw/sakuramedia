@@ -38,15 +38,11 @@ class CreateMediaLibraryPayload {
 }
 
 class UpdateMediaLibraryPayload {
-  const UpdateMediaLibraryPayload({this.name, this.rootPath});
+  const UpdateMediaLibraryPayload({this.name});
 
   final String? name;
-  final String? rootPath;
 
   Map<String, dynamic> toJson() {
-    return <String, dynamic>{
-      if (name != null) 'name': name,
-      if (rootPath != null) 'root_path': rootPath,
-    };
+    return <String, dynamic>{if (name != null) 'name': name};
   }
 }

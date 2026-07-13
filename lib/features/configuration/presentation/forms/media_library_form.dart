@@ -27,7 +27,7 @@ class MediaLibraryFormValue {
   }
 
   UpdateMediaLibraryPayload toUpdatePayload() {
-    return UpdateMediaLibraryPayload(name: name, rootPath: rootPath);
+    return UpdateMediaLibraryPayload(name: name);
   }
 }
 
@@ -69,6 +69,7 @@ class MediaLibraryFormFields extends StatelessWidget {
     this.nameFieldKey = const Key('media-library-name-field'),
     this.rootPathFieldKey = const Key('media-library-root-path-field'),
     this.fieldSpacing,
+    this.rootPathEnabled = true,
   });
 
   final TextEditingController nameController;
@@ -82,6 +83,9 @@ class MediaLibraryFormFields extends StatelessWidget {
   final Key nameFieldKey;
   final Key rootPathFieldKey;
   final double? fieldSpacing;
+
+  /// 编辑时置为 false — 根路径显示为只读禁用态（保留可见性，禁用可编辑）。
+  final bool rootPathEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -115,10 +119,11 @@ class MediaLibraryFormFields extends StatelessWidget {
             fieldKey: rootPathFieldKey,
             controller: rootPathController,
             focusNode: rootPathFocusNode,
-            enabled: enabled,
+            enabled: enabled && rootPathEnabled,
             label: labelBuilder == null ? '根路径' : null,
             hintText: '填映射到容器内的路径，例如: /mnt/medialibray1',
-            validator: validateMediaLibraryRootPath,
+            helperText: rootPathEnabled ? null : '根路径创建后不可修改',
+            validator: rootPathEnabled ? validateMediaLibraryRootPath : null,
             autovalidateMode: autovalidateMode,
             textInputAction: TextInputAction.done,
             onFieldSubmitted: onRootPathSubmitted,

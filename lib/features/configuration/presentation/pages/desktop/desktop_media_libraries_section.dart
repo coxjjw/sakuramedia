@@ -288,6 +288,7 @@ class _MediaLibraryDialogState extends State<MediaLibraryDialog> {
             MediaLibraryFormFields(
               nameController: _nameController,
               rootPathController: _rootPathController,
+              rootPathEnabled: !_isEditing,
               labelBuilder: (context, label) => Text(
                 label,
                 style: resolveAppTextStyle(

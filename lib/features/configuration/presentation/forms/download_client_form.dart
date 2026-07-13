@@ -296,6 +296,15 @@ class DownloadClientFormFields extends StatelessWidget {
           onChanged: enabled && libraries.isNotEmpty ? onLibraryChanged : null,
           validator: (value) => value == null ? '请选择目标媒体库' : null,
         ),
+        SizedBox(height: spacing.xs),
+        Text(
+          '本地访问路径需和目标媒体库根路径位于同一块物理盘，硬链接才会生效。',
+          style: resolveAppTextStyle(
+            context,
+            size: AppTextSize.s12,
+            tone: AppTextTone.muted,
+          ),
+        ),
       ],
     );
   }

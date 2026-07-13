@@ -473,7 +473,6 @@ void main() {
         libraryId: 2,
         payload: const UpdateMediaLibraryPayload(
           name: 'Archive Library Updated',
-          rootPath: '/media/library/archive-new',
         ),
       );
       await bundle.mediaLibrariesApi.deleteLibrary(2);
@@ -484,8 +483,8 @@ void main() {
       expect(updated.name, 'Archive Library Updated');
       expect(bundle.adapter.requests[1].body['name'], 'Archive Library');
       expect(
-        bundle.adapter.requests[2].body['root_path'],
-        '/media/library/archive-new',
+        bundle.adapter.requests[2].body,
+        <String, dynamic>{'name': 'Archive Library Updated'},
       );
       expect(bundle.adapter.hitCount('DELETE', '/media-libraries/2'), 1);
     });

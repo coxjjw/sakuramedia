@@ -404,21 +404,35 @@ class _VideoImportDialogState extends State<VideoImportDialog> {
   }
 
   Widget _buildLibraryField(BuildContext context) {
-    return AppSelectField<int>(
-      key: const Key('video-import-library-select'),
-      label: '导入到媒体库',
-      placeholder:
-          _libraries.isEmpty ? '暂无媒体库，请先在系统设置中添加' : '请选择媒体库',
-      value: _libraryId,
-      items: _libraries
-          .map(
-            (library) => DropdownMenuItem<int>(
-              value: library.id,
-              child: Text(library.name),
-            ),
-          )
-          .toList(growable: false),
-      onChanged: (value) => setState(() => _libraryId = value),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppSelectField<int>(
+          key: const Key('video-import-library-select'),
+          label: '导入到媒体库',
+          placeholder:
+              _libraries.isEmpty ? '暂无媒体库，请先在系统设置中添加' : '请选择媒体库',
+          value: _libraryId,
+          items: _libraries
+              .map(
+                (library) => DropdownMenuItem<int>(
+                  value: library.id,
+                  child: Text(library.name),
+                ),
+              )
+              .toList(growable: false),
+          onChanged: (value) => setState(() => _libraryId = value),
+        ),
+        SizedBox(height: context.appSpacing.xs),
+        Text(
+          '硬链接优先模式下，源目录需和目标媒体库根路径位于同一块物理盘，否则会回退到复制。',
+          style: resolveAppTextStyle(
+            context,
+            size: AppTextSize.s12,
+            tone: AppTextTone.muted,
+          ),
+        ),
+      ],
     );
   }
 

@@ -516,6 +516,7 @@ class _MobileMediaLibraryEditorDrawerState
         nameFocusNode: _nameFocusNode,
         rootPathFocusNode: _rootPathFocusNode,
         enabled: !_isSubmitting,
+        rootPathEnabled: !_isEditing,
         autovalidateMode: _autovalidateMode,
         onRootPathSubmitted: (_) => _submit(),
       ),

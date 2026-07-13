@@ -292,14 +292,12 @@ void main() {
     );
     expect(nameField.controller?.text, 'Main Library');
     expect(rootPathField.controller?.text, '/media/library/main');
+    expect(rootPathField.enabled, isFalse);
+    expect(find.text('根路径创建后不可修改'), findsOneWidget);
 
     await tester.enterText(
       find.byKey(const Key('media-library-name-field')),
       'Main Library Updated',
-    );
-    await tester.enterText(
-      find.byKey(const Key('media-library-root-path-field')),
-      '/media/library/updated',
     );
     await tester.tap(find.byKey(const Key('mobile-media-library-submit-button')));
     await tester.pump();
@@ -310,7 +308,7 @@ void main() {
           request.method == 'PATCH' && request.path == '/media-libraries/1',
     );
     expect(patchRequest.body['name'], 'Main Library Updated');
-    expect(patchRequest.body['root_path'], '/media/library/updated');
+    expect(patchRequest.body.containsKey('root_path'), isFalse);
     expect(find.text('Main Library Updated'), findsOneWidget);
     await tester.pump(const Duration(seconds: 3));
   });
