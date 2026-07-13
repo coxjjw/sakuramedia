@@ -481,7 +481,10 @@ class _VideoImportDialogState extends State<VideoImportDialog> {
       key: const Key('video-import-transfer-mode-select'),
       label: '导入方式',
       value: _transferMode,
-      items: TransferMode.values
+      items: const <TransferMode>[
+        TransferMode.auto,
+        TransferMode.cleanupSource,
+      ]
           .map(
             (mode) => DropdownMenuItem<TransferMode>(
               value: mode,

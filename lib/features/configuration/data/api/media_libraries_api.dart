@@ -1,4 +1,5 @@
 import 'package:sakuramedia/core/network/api_client.dart';
+import 'package:sakuramedia/features/configuration/data/dto/cloud115_directory_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/cloud115_qr_login_dto.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 
@@ -77,5 +78,22 @@ class MediaLibrariesApi {
       receiveTimeout: const Duration(seconds: 60),
     );
     return MediaLibraryDto.fromJson(response);
+  }
+
+  Future<Cloud115DirectoryPageDto> listCloud115Directory({
+    required int libraryId,
+    String cid = '0',
+    int offset = 0,
+    int limit = 200,
+  }) async {
+    final response = await _apiClient.get(
+      '/media-libraries/cloud115/$libraryId/entries',
+      queryParameters: <String, dynamic>{
+        'cid': cid,
+        'offset': offset,
+        'limit': limit,
+      },
+    );
+    return Cloud115DirectoryPageDto.fromJson(response);
   }
 }

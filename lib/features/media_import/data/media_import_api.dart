@@ -2,6 +2,7 @@ import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/media_import/data/filesystem_entry_dto.dart';
 import 'package:sakuramedia/features/media_import/data/import_job_dto.dart';
+import 'package:sakuramedia/features/media_import/data/media_import_source.dart';
 
 /// 媒体导入接口封装（后端 `media-import` 标签，挂载于根路径）。
 class MediaImportApi {
@@ -25,14 +26,14 @@ class MediaImportApi {
   /// 触发目录导入。
   Future<ImportJobTriggerResponseDto> createImportJob({
     required int libraryId,
-    required String sourcePath,
+    required MediaImportSource source,
     TransferMode transferMode = TransferMode.auto,
   }) async {
     final response = await _apiClient.post(
       '/import-jobs',
       data: <String, dynamic>{
         'library_id': libraryId,
-        'source_path': sourcePath,
+        ...source.toJson(),
         'transfer_mode': transferMode.wireValue,
       },
     );

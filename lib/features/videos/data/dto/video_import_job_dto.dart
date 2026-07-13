@@ -29,6 +29,8 @@ class VideoImportJobListItemDto implements ImportJobCardData {
   final int id;
   @override
   final String sourcePath;
+  @override
+  String get displaySourcePath => sourcePath;
   final int libraryId;
   final int? collectionId;
   @override
@@ -49,6 +51,12 @@ class VideoImportJobListItemDto implements ImportJobCardData {
   @override
   final DateTime? createdAt;
   final DateTime? updatedAt;
+
+  @override
+  bool get isCloud115 => false;
+
+  @override
+  bool get canMutateFailedSource => true;
 
   /// 终态（completed / failed）才允许失败文件的删除/重命名/重导。
   @override
@@ -106,20 +114,19 @@ class VideoImportJobDto extends VideoImportJobListItemDto
   factory VideoImportJobDto.fromJson(Map<String, dynamic> json) {
     final base = VideoImportJobListItemDto.fromJson(json);
     final rawFiles = json['failed_files'];
-    final failedFiles =
-        rawFiles is List
-            ? rawFiles
-                .whereType<Map>()
-                .map(
-                  (item) => FailedFileDto.fromJson(
-                    item.map(
-                      (dynamic key, dynamic value) =>
-                          MapEntry(key.toString(), value),
-                    ),
-                  ),
-                )
-                .toList(growable: false)
-            : const <FailedFileDto>[];
+    final failedFiles = rawFiles is List
+        ? rawFiles
+            .whereType<Map>()
+            .map(
+              (item) => FailedFileDto.fromJson(
+                item.map(
+                  (dynamic key, dynamic value) =>
+                      MapEntry(key.toString(), value),
+                ),
+              ),
+            )
+            .toList(growable: false)
+        : const <FailedFileDto>[];
 
     return VideoImportJobDto(
       id: base.id,

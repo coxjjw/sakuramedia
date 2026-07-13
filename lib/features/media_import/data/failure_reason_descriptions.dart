@@ -18,6 +18,10 @@ const Map<String, String> _kFailureReasonDescriptions = {
   'retry_sources_missing': '源文件缺失：待重导的源文件均已不存在',
   'already_indexed_path': '已在库中：该文件路径已登记，跳过重复导入',
   'duplicate_fingerprint': '内容重复：库中已存在相同内容的文件，跳过导入',
+  'cloud115_file_censored': '115 已封禁：文件被 115 标记违规，已登记为失效（拿不到直链也播不了）',
+  'cloud115_transfer_failed': '115 搬运失败：云端复制或对账阶段异常',
+  'cloud115_rename_failed': '115 单文件改名未成功或查询到的实际名称不一致',
+  'cloud115_subtitle_download_failed': '字幕下载失败：影片已入库，但字幕从 115 下载失败（仅告警）',
 };
 
 /// 返回失败/跳过原因的中文说明；未知 code 回落原值，空串落「未知原因」。

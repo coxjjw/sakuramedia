@@ -1,18 +1,27 @@
 import 'package:sakuramedia/core/json/json_parse.dart';
 
-/// 导入方式：`auto` 硬链接优先，`cleanup-source` 复制后删除源文件。
-enum TransferMode { auto, cleanupSource }
+/// 导入方式：本地支持 `auto/cleanup-source`，115 支持 `copy/cleanup-source`。
+enum TransferMode { auto, cleanupSource, copy }
 
 extension TransferModeX on TransferMode {
   /// 后端序列化值。
-  String get wireValue =>
-      this == TransferMode.cleanupSource ? 'cleanup-source' : 'auto';
+  String get wireValue => switch (this) {
+        TransferMode.auto => 'auto',
+        TransferMode.cleanupSource => 'cleanup-source',
+        TransferMode.copy => 'copy',
+      };
 
-  String get label =>
-      this == TransferMode.cleanupSource ? '复制后删除源文件' : '硬链接优先（保留源文件）';
+  String get label => switch (this) {
+        TransferMode.auto => '硬链接优先（保留源文件）',
+        TransferMode.cleanupSource => '复制后删除源文件',
+        TransferMode.copy => '复制并保留源文件',
+      };
 
-  static TransferMode fromWire(dynamic value) =>
-      value == 'cleanup-source' ? TransferMode.cleanupSource : TransferMode.auto;
+  static TransferMode fromWire(dynamic value) => switch (value) {
+        'cleanup-source' => TransferMode.cleanupSource,
+        'copy' => TransferMode.copy,
+        _ => TransferMode.auto,
+      };
 }
 
 /// 失败文件条目分类，决定其是否可被删除/重命名/重导。
@@ -62,6 +71,7 @@ class FailedFileDto {
 abstract class ImportJobCardData {
   int get id;
   String get sourcePath;
+  String get displaySourcePath;
   int? get taskRunId;
   String get state;
   TransferMode get transferMode;
@@ -70,6 +80,8 @@ abstract class ImportJobCardData {
   int get failedCount;
   DateTime? get createdAt;
   DateTime? get finishedAt;
+  bool get isCloud115;
+  bool get canMutateFailedSource;
 
   /// 终态（completed / failed）才允许失败文件的删除/重命名/重导。
   bool get isTerminal;
@@ -87,6 +99,7 @@ class ImportJobListItemDto implements ImportJobCardData {
   const ImportJobListItemDto({
     required this.id,
     required this.sourcePath,
+    required this.sourceCid,
     required this.libraryId,
     required this.downloadTaskId,
     required this.taskRunId,
@@ -105,6 +118,7 @@ class ImportJobListItemDto implements ImportJobCardData {
   final int id;
   @override
   final String sourcePath;
+  final String? sourceCid;
   final int libraryId;
   final int? downloadTaskId;
   @override
@@ -126,6 +140,20 @@ class ImportJobListItemDto implements ImportJobCardData {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
+  @override
+  bool get isCloud115 => sourceCid != null;
+
+  @override
+  bool get canMutateFailedSource => !isCloud115;
+
+  @override
+  String get displaySourcePath {
+    if (isCloud115 && sourcePath.startsWith('cloud115:')) {
+      return '115 网盘目录';
+    }
+    return sourcePath;
+  }
+
   /// 终态（completed / failed）才允许失败文件的删除/重命名/重导。
   @override
   bool get isTerminal => state == 'completed' || state == 'failed';
@@ -134,6 +162,7 @@ class ImportJobListItemDto implements ImportJobCardData {
     return ImportJobListItemDto(
       id: asInt(json['id']),
       sourcePath: json['source_path'] as String? ?? '',
+      sourceCid: json['source_cid'] as String?,
       libraryId: asInt(json['library_id']),
       downloadTaskId: asIntOrNull(json['download_task_id']),
       taskRunId: asIntOrNull(json['task_run_id']),
@@ -151,10 +180,12 @@ class ImportJobListItemDto implements ImportJobCardData {
 }
 
 /// 导入作业详情（含失败文件清单）。
-class ImportJobDto extends ImportJobListItemDto implements ImportJobCardDetailData {
+class ImportJobDto extends ImportJobListItemDto
+    implements ImportJobCardDetailData {
   const ImportJobDto({
     required super.id,
     required super.sourcePath,
+    required super.sourceCid,
     required super.libraryId,
     required super.downloadTaskId,
     required super.taskRunId,
@@ -181,24 +212,24 @@ class ImportJobDto extends ImportJobListItemDto implements ImportJobCardDetailDa
   factory ImportJobDto.fromJson(Map<String, dynamic> json) {
     final base = ImportJobListItemDto.fromJson(json);
     final rawFiles = json['failed_files'];
-    final failedFiles =
-        rawFiles is List
-            ? rawFiles
-                .whereType<Map>()
-                .map(
-                  (item) => FailedFileDto.fromJson(
-                    item.map(
-                      (dynamic key, dynamic value) =>
-                          MapEntry(key.toString(), value),
-                    ),
-                  ),
-                )
-                .toList(growable: false)
-            : const <FailedFileDto>[];
+    final failedFiles = rawFiles is List
+        ? rawFiles
+            .whereType<Map>()
+            .map(
+              (item) => FailedFileDto.fromJson(
+                item.map(
+                  (dynamic key, dynamic value) =>
+                      MapEntry(key.toString(), value),
+                ),
+              ),
+            )
+            .toList(growable: false)
+        : const <FailedFileDto>[];
 
     return ImportJobDto(
       id: base.id,
       sourcePath: base.sourcePath,
+      sourceCid: base.sourceCid,
       libraryId: base.libraryId,
       downloadTaskId: base.downloadTaskId,
       taskRunId: base.taskRunId,

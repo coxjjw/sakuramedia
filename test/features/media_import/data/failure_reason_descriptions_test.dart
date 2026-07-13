@@ -16,6 +16,14 @@ void main() {
         describeFailureReason('movie_number_not_found'),
         '未识别番号：无法从文件名/路径解析出影片番号',
       );
+      expect(
+        describeFailureReason('cloud115_transfer_failed'),
+        '115 搬运失败：云端复制或对账阶段异常',
+      );
+      expect(
+        describeFailureReason('cloud115_subtitle_download_failed'),
+        contains('字幕下载失败'),
+      );
     });
 
     test('未知 reason 回落原值', () {

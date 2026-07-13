@@ -48,13 +48,13 @@ class ImportJobCard extends StatelessWidget {
     final showProgress = liveRun != null && liveRun.isActive;
 
     return AppContentCard(
-      title: _sourceName(job.sourcePath),
+      title: _sourceName(job.displaySourcePath),
       headerBottomSpacing: spacing.sm,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            job.sourcePath,
+            job.displaySourcePath,
             key: Key('media-import-job-path-${job.id}'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -72,6 +72,11 @@ class ImportJobCard extends StatelessWidget {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               _StatusBadge(state: job.state),
+              if (job.isCloud115)
+                const _MetaChip(
+                  icon: Icons.cloud_outlined,
+                  label: '115 网盘',
+                ),
               _MetaChip(
                 icon: Icons.swap_horiz_rounded,
                 label: job.transferMode.label,
@@ -136,7 +141,8 @@ class ImportJobCard extends StatelessWidget {
             width: context.appComponentTokens.movieCardLoaderSize,
             height: context.appComponentTokens.movieCardLoaderSize,
             child: CircularProgressIndicator(
-              strokeWidth: context.appComponentTokens.movieCardLoaderStrokeWidth,
+              strokeWidth:
+                  context.appComponentTokens.movieCardLoaderStrokeWidth,
             ),
           ),
         ),
@@ -198,6 +204,7 @@ class ImportJobCard extends StatelessWidget {
             child: _FailedFileRow(
               file: file,
               canAct: file.isActionable && loaded.isTerminal,
+              canMutateSource: job.canMutateFailedSource,
               onRetry: () => onRetryFile(file.path),
               onDelete: () => onDeleteFile(file.path),
               onRename: () => onRenameFile(file.path, _sourceName(file.path)),
@@ -218,9 +225,8 @@ class ImportJobCard extends StatelessWidget {
   }
 
   String _sourceName(String path) {
-    final normalized = path.endsWith('/')
-        ? path.substring(0, path.length - 1)
-        : path;
+    final normalized =
+        path.endsWith('/') ? path.substring(0, path.length - 1) : path;
     final index = normalized.lastIndexOf('/');
     final name = index >= 0 ? normalized.substring(index + 1) : normalized;
     return name.isEmpty ? path : name;
@@ -345,6 +351,7 @@ class _FailedFileRow extends StatelessWidget {
   const _FailedFileRow({
     required this.file,
     required this.canAct,
+    required this.canMutateSource,
     required this.onRetry,
     required this.onDelete,
     required this.onRename,
@@ -352,6 +359,7 @@ class _FailedFileRow extends StatelessWidget {
 
   final FailedFileDto file;
   final bool canAct;
+  final bool canMutateSource;
   final VoidCallback onRetry;
   final VoidCallback onDelete;
   final VoidCallback onRename;
@@ -385,7 +393,10 @@ class _FailedFileRow extends StatelessWidget {
                 ),
               ),
               SizedBox(width: spacing.sm),
-              _KindTag(kind: file.kind),
+              _KindTag(
+                kind: file.kind,
+                retryOnly: !canMutateSource,
+              ),
             ],
           ),
           SizedBox(height: spacing.xs),
@@ -411,17 +422,19 @@ class _FailedFileRow extends StatelessWidget {
                   size: AppButtonSize.xSmall,
                   onPressed: onRetry,
                 ),
-                AppButton(
-                  label: '重命名',
-                  size: AppButtonSize.xSmall,
-                  onPressed: onRename,
-                ),
-                AppButton(
-                  label: '删除',
-                  size: AppButtonSize.xSmall,
-                  variant: AppButtonVariant.danger,
-                  onPressed: onDelete,
-                ),
+                if (canMutateSource) ...[
+                  AppButton(
+                    label: '重命名',
+                    size: AppButtonSize.xSmall,
+                    onPressed: onRename,
+                  ),
+                  AppButton(
+                    label: '删除',
+                    size: AppButtonSize.xSmall,
+                    variant: AppButtonVariant.danger,
+                    onPressed: onDelete,
+                  ),
+                ],
               ],
             ),
           ],
@@ -432,14 +445,15 @@ class _FailedFileRow extends StatelessWidget {
 }
 
 class _KindTag extends StatelessWidget {
-  const _KindTag({required this.kind});
+  const _KindTag({required this.kind, required this.retryOnly});
 
   final FailedFileKind kind;
+  final bool retryOnly;
 
   @override
   Widget build(BuildContext context) {
     final label = switch (kind) {
-      FailedFileKind.file => '可处理',
+      FailedFileKind.file => retryOnly ? '可重导' : '可处理',
       FailedFileKind.skipped => '已跳过',
       FailedFileKind.warning => '告警',
       FailedFileKind.job => '任务级',

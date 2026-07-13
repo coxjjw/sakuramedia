@@ -581,6 +581,53 @@ void main() {
       });
     });
 
+    test('cloud115 directory api maps pagination and entries', () async {
+      final sessionStore = await _buildLoggedInSessionStore();
+      final bundle = await createTestApiBundle(sessionStore);
+      addTearDown(bundle.dispose);
+
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/media-libraries/cloud115/8/entries',
+        body: {
+          'cid': 'cid-parent',
+          'total': 3,
+          'offset': 1,
+          'limit': 1,
+          'root_cid': 'cid-root',
+          'entries': [
+            {
+              'entry_id': 'cid-child',
+              'name': '来源目录',
+              'is_dir': true,
+              'size': 0,
+              'is_video': false,
+              'mtime': 1700000000,
+            },
+          ],
+        },
+      );
+
+      final page = await bundle.mediaLibrariesApi.listCloud115Directory(
+        libraryId: 8,
+        cid: 'cid-parent',
+        offset: 1,
+        limit: 1,
+      );
+
+      expect(page.cid, 'cid-parent');
+      expect(page.rootCid, 'cid-root');
+      expect(page.entries.single.entryId, 'cid-child');
+      expect(page.entries.single.isDirectory, isTrue);
+      expect(page.entries.single.mtime, 1700000000);
+      expect(page.hasMore, isTrue);
+      expect(bundle.adapter.requests.single.uri.queryParameters, {
+        'cid': 'cid-parent',
+        'offset': '1',
+        'limit': '1',
+      });
+    });
+
     test('indexer settings api maps singleton resource', () async {
       final sessionStore = await _buildLoggedInSessionStore();
       final bundle = await createTestApiBundle(sessionStore);

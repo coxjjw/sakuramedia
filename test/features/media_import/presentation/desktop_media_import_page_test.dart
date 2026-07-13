@@ -156,6 +156,69 @@ void main() {
     expect(find.text('重导'), findsOneWidget);
   });
 
+  testWidgets('cloud115 job only exposes retry for failed source files', (
+    tester,
+  ) async {
+    _setDesktopViewport(tester);
+    final sessionStore = await _createSessionStore();
+    final bundle = await createTestApiBundle(sessionStore);
+    addTearDown(bundle.dispose);
+    addTearDown(sessionStore.dispose);
+
+    _enqueueJobsPage(
+      bundle,
+      jobs: <Map<String, dynamic>>[
+        _jobJson(
+          id: 9,
+          taskRunId: 52,
+          state: 'failed',
+          failed: 1,
+          sourcePath: 'cloud115:cid-source',
+          sourceCid: 'cid-source',
+          transferMode: 'copy',
+        ),
+      ],
+      total: 1,
+    );
+    _enqueueBootstrapAndStream(bundle);
+    _enqueueVideoJobsPage(bundle);
+    bundle.adapter.enqueueJson(
+      method: 'GET',
+      path: '/import-jobs/9',
+      body: _jobJson(
+        id: 9,
+        taskRunId: 52,
+        state: 'failed',
+        failed: 1,
+        sourcePath: 'cloud115:cid-source',
+        sourceCid: 'cid-source',
+        transferMode: 'copy',
+        failedFiles: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'path': 'ABP-123/movie.mp4',
+            'reason': 'cloud115_transfer_failed',
+            'detail': '',
+            'kind': 'file',
+          },
+        ],
+      ),
+    );
+
+    await _pumpPage(tester, bundle: bundle);
+
+    expect(find.text('115 网盘'), findsOneWidget);
+    expect(find.text('115 网盘目录'), findsWidgets);
+    expect(find.text('复制并保留源文件'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('media-import-job-toggle-9')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('可重导'), findsOneWidget);
+    expect(find.text('重导'), findsOneWidget);
+    expect(find.text('重命名'), findsNothing);
+    expect(find.text('删除'), findsNothing);
+  });
+
   testWidgets(
     '纯跳过作业（failed=0、skipped>0）也能展开，渲染中文原因 + 已跳过徽标',
     (tester) async {
@@ -365,15 +428,19 @@ Map<String, dynamic> _jobJson({
   int imported = 0,
   int skipped = 0,
   int failed = 0,
+  String sourcePath = '/mnt/incoming/movies',
+  String? sourceCid,
+  String transferMode = 'auto',
   List<Map<String, dynamic>>? failedFiles,
 }) {
   return <String, dynamic>{
     'id': id,
-    'source_path': '/mnt/incoming/movies',
+    'source_path': sourcePath,
+    if (sourceCid != null) 'source_cid': sourceCid,
     'library_id': 1,
     'task_run_id': taskRunId,
     'state': state,
-    'transfer_mode': 'auto',
+    'transfer_mode': transferMode,
     'imported_count': imported,
     'skipped_count': skipped,
     'failed_count': failed,

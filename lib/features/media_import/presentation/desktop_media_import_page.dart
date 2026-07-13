@@ -106,7 +106,7 @@ class _DesktopMediaImportPageState extends State<DesktopMediaImportPage>
     }
     final error = await _javController.triggerImport(
       libraryId: request.libraryId,
-      sourcePath: request.sourcePath,
+      source: request.source,
       transferMode: request.transferMode,
     );
     if (!mounted) {
@@ -133,7 +133,8 @@ class _DesktopMediaImportPageState extends State<DesktopMediaImportPage>
   }
 
   void _toggleExpanded(ImportJobsViewController controller, int jobId) {
-    final expanded = controller == _pornController ? _expandedPorn : _expandedJav;
+    final expanded =
+        controller == _pornController ? _expandedPorn : _expandedJav;
     setState(() {
       if (expanded.contains(jobId)) {
         expanded.remove(jobId);
@@ -179,7 +180,7 @@ class _DesktopMediaImportPageState extends State<DesktopMediaImportPage>
                   controller: _javController,
                   expanded: _expandedJav,
                   description:
-                      '从后端白名单目录中选择 JAV 媒体导入到媒体库。导入在后台运行，可在此查看实时进度与失败文件处理。',
+                      '从后端本地目录或 115 网盘目录中选择 JAV 媒体导入到对应媒体库。导入在后台运行，可在此查看实时进度与失败文件处理。',
                   onCreate: () => unawaited(_openJavCreateDialog()),
                 ),
             ],
@@ -240,7 +241,8 @@ class _DesktopMediaImportPageState extends State<DesktopMediaImportPage>
           ),
           child: Center(
             child: CircularProgressIndicator(
-              strokeWidth: context.appComponentTokens.movieCardLoaderStrokeWidth,
+              strokeWidth:
+                  context.appComponentTokens.movieCardLoaderStrokeWidth,
             ),
           ),
         ),

@@ -5,6 +5,7 @@ import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/media_import/data/filesystem_entry_dto.dart';
 import 'package:sakuramedia/features/media_import/data/import_job_dto.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_api.dart';
+import 'package:sakuramedia/features/media_import/data/media_import_source.dart';
 
 import '../../../support/fake_http_client_adapter.dart';
 
@@ -110,7 +111,7 @@ void main() {
 
     final response = await api.createImportJob(
       libraryId: 1,
-      sourcePath: '/mnt/incoming/movies',
+      source: const MediaImportSource.local('/mnt/incoming/movies'),
       transferMode: TransferMode.cleanupSource,
     );
 
@@ -138,13 +139,43 @@ void main() {
     );
 
     await expectLater(
-      api.createImportJob(libraryId: 1, sourcePath: '/mnt/x'),
+      api.createImportJob(
+        libraryId: 1,
+        source: const MediaImportSource.local('/mnt/x'),
+      ),
       throwsA(
         isA<ApiException>()
             .having((e) => e.statusCode, 'statusCode', 409)
             .having((e) => e.error?.code, 'code', 'media_import_conflict'),
       ),
     );
+  });
+
+  test('createImportJob sends source_cid and copy for cloud115', () async {
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/import-jobs',
+      statusCode: 202,
+      body: <String, dynamic>{
+        'import_job_id': 8,
+        'task_run_id': 43,
+        'status': 'pending',
+      },
+    );
+
+    await api.createImportJob(
+      libraryId: 2,
+      source: const MediaImportSource.cloud115('cid-source'),
+      transferMode: TransferMode.copy,
+    );
+
+    final body = adapter.requests.single.body as Map;
+    expect(body, <String, dynamic>{
+      'library_id': 2,
+      'source_cid': 'cid-source',
+      'transfer_mode': 'copy',
+    });
+    expect(body.containsKey('source_path'), isFalse);
   });
 
   test('listImportJobs parses paginated jobs', () async {
@@ -184,6 +215,43 @@ void main() {
     expect(job.transferMode, TransferMode.auto);
     expect(job.isTerminal, isFalse);
     expect(job.importedCount, 2);
+  });
+
+  test('listImportJobs recognizes cloud115 source and copy mode', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/import-jobs',
+      body: <String, dynamic>{
+        'items': <Map<String, dynamic>>[
+          <String, dynamic>{
+            'id': 4,
+            'source_path': 'cloud115:cid-source',
+            'source_cid': 'cid-source',
+            'library_id': 2,
+            'task_run_id': 43,
+            'state': 'pending',
+            'transfer_mode': 'copy',
+            'imported_count': 0,
+            'skipped_count': 0,
+            'failed_count': 0,
+            'created_at': '2026-07-14 10:00:00',
+            'updated_at': '2026-07-14 10:00:00',
+          },
+        ],
+        'page': 1,
+        'page_size': 20,
+        'total': 1,
+      },
+    );
+
+    final job = (await api.listImportJobs()).items.single;
+
+    expect(job.sourceCid, 'cid-source');
+    expect(job.isCloud115, isTrue);
+    expect(job.canMutateFailedSource, isFalse);
+    expect(job.displaySourcePath, '115 网盘目录');
+    expect(job.transferMode, TransferMode.copy);
+    expect(job.transferMode.label, '复制并保留源文件');
   });
 
   test('getImportJob parses failed files with kinds', () async {

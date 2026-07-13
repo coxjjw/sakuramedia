@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
+import 'package:sakuramedia/core/network/api_exception.dart';
 import 'package:sakuramedia/features/activity/data/activity_api.dart';
 import 'package:sakuramedia/features/activity/data/activity_event_stream_client.dart';
 import 'package:sakuramedia/features/activity/data/activity_stream_event.dart';
 import 'package:sakuramedia/features/activity/data/task_run_dto.dart';
 import 'package:sakuramedia/features/media_import/data/import_job_dto.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_api.dart';
+import 'package:sakuramedia/features/media_import/data/media_import_source.dart';
 import 'package:sakuramedia/features/media_import/presentation/import_jobs_view_controller.dart';
 
 /// 媒体导入后台作业的 task_run task_key。
@@ -20,8 +22,8 @@ class MediaImportController extends ChangeNotifier
     required MediaImportApi mediaImportApi,
     required ActivityApi activityApi,
     this.pageSize = 20,
-  }) : _mediaImportApi = mediaImportApi,
-       _activityApi = activityApi;
+  })  : _mediaImportApi = mediaImportApi,
+        _activityApi = activityApi;
 
   final MediaImportApi _mediaImportApi;
   final ActivityApi _activityApi;
@@ -73,7 +75,8 @@ class MediaImportController extends ChangeNotifier
   String? get initialError => _initialError;
   @override
   String? get loadMoreError => _loadMoreError;
-  bool get isEmpty => !_isInitialLoading && _initialError == null && _jobs.isEmpty;
+  bool get isEmpty =>
+      !_isInitialLoading && _initialError == null && _jobs.isEmpty;
 
   /// 返回某作业关联的实时 task_run（若有）。
   @override
@@ -202,18 +205,22 @@ class MediaImportController extends ChangeNotifier
   /// 触发目录导入。成功返回 `null`，失败返回中文错误信息。
   Future<String?> triggerImport({
     required int libraryId,
-    required String sourcePath,
+    required MediaImportSource source,
     required TransferMode transferMode,
   }) async {
     try {
       await _mediaImportApi.createImportJob(
         libraryId: libraryId,
-        sourcePath: sourcePath,
+        source: source,
         transferMode: transferMode,
       );
       await refresh();
       return null;
     } catch (error) {
+      if (error is ApiException &&
+          error.error?.code == 'cloud115_cookies_invalid') {
+        return '115 登录已失效，请前往“系统设置 → 媒体库”重新认证后重试。';
+      }
       return apiErrorMessage(error, fallback: '触发导入失败，请稍后重试。');
     }
   }
