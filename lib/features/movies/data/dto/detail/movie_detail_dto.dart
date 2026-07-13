@@ -205,7 +205,6 @@ class MovieMediaItemDto {
     required this.mediaId,
     required this.libraryId,
     required this.playUrl,
-    required this.path,
     required this.storageMode,
     required this.resolution,
     required this.fileSizeBytes,
@@ -220,7 +219,6 @@ class MovieMediaItemDto {
   final int mediaId;
   final int? libraryId;
   final String playUrl;
-  final String path;
   final String storageMode;
   final String resolution;
   final int fileSizeBytes;
@@ -238,7 +236,6 @@ class MovieMediaItemDto {
       mediaId: json['media_id'] as int? ?? 0,
       libraryId: json['library_id'] as int?,
       playUrl: json['play_url'] as String? ?? '',
-      path: json['path'] as String? ?? '',
       storageMode: json['storage_mode'] as String? ?? '',
       resolution: json['resolution'] as String? ?? '',
       fileSizeBytes: json['file_size_bytes'] as int? ?? 0,

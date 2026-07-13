@@ -295,7 +295,7 @@ class MoviesApi {
       case 'series_found':
         return MovieSearchStreamUpdate(
           stage: 'series_matched',
-          message: '已找到本地系列：${payload['series_name'] ?? ''}',
+          message: '已找到库内系列：${payload['series_name'] ?? ''}',
         );
       case 'javdb_series_found':
         final count = payload['videos_count'];

@@ -322,7 +322,7 @@ void main() {
         find.byKey(const Key('movie-player-thumbnail-panel')),
         findsOneWidget,
       );
-      expect(find.text('还没有可用缩略图'), findsNothing);
+      expect(find.text('暂时还没有可用缩略图，可稍后重新加载。'), findsNothing);
     },
   );
 
@@ -344,23 +344,21 @@ void main() {
       routes: [
         GoRoute(
           path: '/desktop/library/movies/:movieNumber',
-          builder:
-              (context, state) =>
-                  Text('detail:${state.pathParameters['movieNumber']}'),
+          builder: (context, state) =>
+              Text('detail:${state.pathParameters['movieNumber']}'),
           routes: [
             GoRoute(
               path: 'player',
-              builder:
-                  (context, state) => DesktopMoviePlayerPage(
-                    movieNumber: state.pathParameters['movieNumber']!,
-                    initialMediaId: int.tryParse(
-                      state.uri.queryParameters['mediaId'] ?? '',
-                    ),
-                    surfaceBuilder: _testSurfaceBuilder(
-                      seekRequests,
-                      initialPositions,
-                    ),
-                  ),
+              builder: (context, state) => DesktopMoviePlayerPage(
+                movieNumber: state.pathParameters['movieNumber']!,
+                initialMediaId: int.tryParse(
+                  state.uri.queryParameters['mediaId'] ?? '',
+                ),
+                surfaceBuilder: _testSurfaceBuilder(
+                  seekRequests,
+                  initialPositions,
+                ),
+              ),
             ),
           ],
         ),
@@ -450,7 +448,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('还没有可用缩略图'), findsOneWidget);
+      expect(find.text('暂时还没有可用缩略图，可稍后重新加载。'), findsOneWidget);
     },
   );
 
@@ -838,31 +836,31 @@ void main() {
       tester,
       sessionStore: sessionStore,
       bundle: bundle,
-      surfaceBuilder:
-          (
-            context,
-            resolvedUrl,
-            surfaceController,
-            initialPosition,
-            onPositionChanged,
-            onPlayingChanged,
-            subtitleState,
-            onSubtitleSelectionChanged,
-            onSubtitleReloadRequested,
-            onBackPressed,
-            useTouchOptimizedControls,
-          ) => _TestMoviePlayerSurface(
-            resolvedUrl: resolvedUrl,
-            surfaceController: surfaceController,
-            initialPosition: initialPosition,
-            seekRequests: seekRequests,
-            initialPositions: initialPositions,
-            onPositionChanged: onPositionChanged,
-            onPlayingChanged: onPlayingChanged,
-            subtitleState: subtitleState,
-            onBackPressed: onBackPressed,
-            emitPositionOnBuild: const Duration(seconds: 25),
-          ),
+      surfaceBuilder: (
+        context,
+        resolvedUrl,
+        surfaceController,
+        initialPosition,
+        onPositionChanged,
+        onPlayingChanged,
+        subtitleState,
+        onSubtitleSelectionChanged,
+        onSubtitleReloadRequested,
+        onBackPressed,
+        useTouchOptimizedControls,
+      ) =>
+          _TestMoviePlayerSurface(
+        resolvedUrl: resolvedUrl,
+        surfaceController: surfaceController,
+        initialPosition: initialPosition,
+        seekRequests: seekRequests,
+        initialPositions: initialPositions,
+        onPositionChanged: onPositionChanged,
+        onPlayingChanged: onPlayingChanged,
+        subtitleState: subtitleState,
+        onBackPressed: onBackPressed,
+        emitPositionOnBuild: const Duration(seconds: 25),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -975,16 +973,15 @@ void main() {
         routes: [
           GoRoute(
             path: '/player',
-            builder:
-                (context, state) => DesktopMoviePlayerPage(
-                  movieNumber: 'ABC-001',
-                  initialMediaId: 100,
-                  initialPositionSeconds: 61,
-                  surfaceBuilder: _testSurfaceBuilder(
-                    seekRequests,
-                    initialPositions,
-                  ),
-                ),
+            builder: (context, state) => DesktopMoviePlayerPage(
+              movieNumber: 'ABC-001',
+              initialMediaId: 100,
+              initialPositionSeconds: 61,
+              surfaceBuilder: _testSurfaceBuilder(
+                seekRequests,
+                initialPositions,
+              ),
+            ),
           ),
           GoRoute(
             path: desktopImageSearchPath,
@@ -1098,8 +1095,7 @@ Future<void> _pumpPage(
     Future<void> Function() onSubtitleReloadRequested,
     VoidCallback onBackPressed,
     bool useTouchOptimizedControls,
-  )?
-  surfaceBuilder,
+  )? surfaceBuilder,
 }) async {
   tester.view.physicalSize = const Size(1440, 900);
   tester.view.devicePixelRatio = 1;
@@ -1152,8 +1148,7 @@ Map<String, dynamic> _movieDetailJson({
     'tags': const <Map<String, dynamic>>[],
     'thin_cover_image': null,
     'plot_images': const <Map<String, dynamic>>[],
-    'media_items':
-        mediaItems ??
+    'media_items': mediaItems ??
         <Map<String, dynamic>>[
           <String, dynamic>{
             'media_id': 100,
@@ -1236,8 +1231,7 @@ Map<String, dynamic> _movieSubtitlesJson({
     'last_succeeded_at':
         fetchStatus == 'succeeded' ? '2026-04-10T09:01:00' : null,
     'last_error': lastError,
-    'items':
-        items ??
+    'items': items ??
         const <Map<String, dynamic>>[
           <String, dynamic>{
             'subtitle_id': 501,
@@ -1312,16 +1306,15 @@ class _TestMoviePlayerSurfaceState extends State<_TestMoviePlayerSurface> {
   Widget build(BuildContext context) {
     final content = Text('surface:${widget.resolvedUrl}');
     final readiness = widget.readiness;
-    final surface =
-        readiness == null
-            ? content
-            : ValueListenableBuilder<bool>(
-              valueListenable: readiness,
-              builder: (context, isReady, child) {
-                return MoviePlayerSurfaceFrame(isReady: isReady, child: child!);
-              },
-              child: content,
-            );
+    final surface = readiness == null
+        ? content
+        : ValueListenableBuilder<bool>(
+            valueListenable: readiness,
+            builder: (context, isReady, child) {
+              return MoviePlayerSurfaceFrame(isReady: isReady, child: child!);
+            },
+            child: content,
+          );
     return Stack(
       children: [
         surface,

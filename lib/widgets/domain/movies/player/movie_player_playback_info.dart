@@ -8,6 +8,23 @@ enum MoviePlayerDecodingMode { hardware, software, unknown }
 enum MoviePlayerDynamicRangeMode { hdr, sdr, unknown }
 
 @immutable
+class MoviePlayerMediaInfo {
+  const MoviePlayerMediaInfo({
+    required this.sourceLabel,
+    required this.libraryLabel,
+    required this.fileSizeLabel,
+    required this.durationLabel,
+    required this.resolutionLabel,
+  });
+
+  final String sourceLabel;
+  final String libraryLabel;
+  final String fileSizeLabel;
+  final String durationLabel;
+  final String resolutionLabel;
+}
+
+@immutable
 class MoviePlayerPlaybackInfoSnapshot {
   const MoviePlayerPlaybackInfoSnapshot({
     required this.decodingModeLabel,
@@ -33,26 +50,26 @@ class MoviePlayerPlaybackInfoSnapshot {
 
   static const MoviePlayerPlaybackInfoSnapshot empty =
       MoviePlayerPlaybackInfoSnapshot(
-        decodingModeLabel: '--',
-        videoCodecLabel: '--',
-        videoDecoderLabel: '--',
-        videoResolutionLabel: '--',
-        mediaFrameRateLabel: '--',
-        filterChainFrameRateLabel: '--',
-        actualOutputFrameRateLabel: '--',
-        videoBitrateLabel: '--',
-        renderDropFrameLabel: '--',
-        decoderDropFrameLabel: '--',
-        delayedFrameLabel: '--',
-        mistimedFrameLabel: '--',
-        videoPixelFormatLabel: '--',
-        audioCodecLabel: '--',
-        audioChannelsLabel: '--',
-        audioSampleRateLabel: '--',
-        audioBitrateLabel: '--',
-        dynamicRangeLabel: '--',
-        dynamicRangeDetailLabel: '--',
-      );
+    decodingModeLabel: '--',
+    videoCodecLabel: '--',
+    videoDecoderLabel: '--',
+    videoResolutionLabel: '--',
+    mediaFrameRateLabel: '--',
+    filterChainFrameRateLabel: '--',
+    actualOutputFrameRateLabel: '--',
+    videoBitrateLabel: '--',
+    renderDropFrameLabel: '--',
+    decoderDropFrameLabel: '--',
+    delayedFrameLabel: '--',
+    mistimedFrameLabel: '--',
+    videoPixelFormatLabel: '--',
+    audioCodecLabel: '--',
+    audioChannelsLabel: '--',
+    audioSampleRateLabel: '--',
+    audioBitrateLabel: '--',
+    dynamicRangeLabel: '--',
+    dynamicRangeDetailLabel: '--',
+  );
 
   final String decodingModeLabel;
   final String videoCodecLabel;
@@ -239,12 +256,11 @@ String _buildDecodingModeLabel(
   String? hwdecCurrent,
 ) {
   return switch (mode) {
-    MoviePlayerDecodingMode.hardware =>
-      hwdecCurrent == null ||
-              hwdecCurrent.trim().isEmpty ||
-              hwdecCurrent.trim().toLowerCase() == 'yes'
-          ? '硬件解码'
-          : '硬件解码 (${hwdecCurrent.trim()})',
+    MoviePlayerDecodingMode.hardware => hwdecCurrent == null ||
+            hwdecCurrent.trim().isEmpty ||
+            hwdecCurrent.trim().toLowerCase() == 'yes'
+        ? '硬件解码'
+        : '硬件解码 (${hwdecCurrent.trim()})',
     MoviePlayerDecodingMode.software => '软件解码',
     MoviePlayerDecodingMode.unknown => '未知',
   };
@@ -428,9 +444,14 @@ bool _hasText(String? value) {
 }
 
 class MoviePlayerPlaybackInfoPanel extends StatelessWidget {
-  const MoviePlayerPlaybackInfoPanel({super.key, required this.infoListenable});
+  const MoviePlayerPlaybackInfoPanel({
+    super.key,
+    required this.infoListenable,
+    this.mediaInfo,
+  });
 
   final ValueListenable<MoviePlayerPlaybackInfoSnapshot> infoListenable;
+  final MoviePlayerMediaInfo? mediaInfo;
 
   @override
   Widget build(BuildContext context) {
@@ -454,6 +475,49 @@ class MoviePlayerPlaybackInfoPanel extends StatelessWidget {
             Expanded(
               child: ListView(
                 children: [
+                  if (mediaInfo case final mediaInfo?) ...[
+                    _MoviePlayerPlaybackInfoSection(
+                      title: '媒体',
+                      rows: [
+                        _MoviePlayerPlaybackInfoRowData(
+                          label: '存储来源',
+                          value: mediaInfo.sourceLabel,
+                          valueKey: const Key(
+                            'movie-player-info-value-media-source',
+                          ),
+                        ),
+                        _MoviePlayerPlaybackInfoRowData(
+                          label: '媒体库',
+                          value: mediaInfo.libraryLabel,
+                          valueKey: const Key(
+                            'movie-player-info-value-media-library',
+                          ),
+                        ),
+                        _MoviePlayerPlaybackInfoRowData(
+                          label: '文件大小',
+                          value: mediaInfo.fileSizeLabel,
+                          valueKey: const Key(
+                            'movie-player-info-value-media-file-size',
+                          ),
+                        ),
+                        _MoviePlayerPlaybackInfoRowData(
+                          label: '时长',
+                          value: mediaInfo.durationLabel,
+                          valueKey: const Key(
+                            'movie-player-info-value-media-duration',
+                          ),
+                        ),
+                        _MoviePlayerPlaybackInfoRowData(
+                          label: '记录分辨率',
+                          value: mediaInfo.resolutionLabel,
+                          valueKey: const Key(
+                            'movie-player-info-value-media-resolution',
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: context.appSpacing.md),
+                  ],
                   _MoviePlayerPlaybackInfoSection(
                     title: '解码与动态范围',
                     rows: [

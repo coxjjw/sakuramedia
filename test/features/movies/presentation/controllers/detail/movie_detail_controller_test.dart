@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_controller.dart';
@@ -7,6 +8,47 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('MovieDetailController', () {
+    test('media library lookup failure does not block movie detail', () async {
+      final controller = MovieDetailController(
+        movieNumber: 'ABC-001',
+        fetchMovieDetail: ({required movieNumber}) async =>
+            _movieDetail(title: 'Movie 1', coverOrigin: '/covers/1.jpg'),
+        fetchSimilarMovies: ({required movieNumber, int limit = 15}) async =>
+            const <MovieListItemDto>[],
+        fetchMediaLibraries: () async => throw Exception('libraries failed'),
+      );
+
+      await controller.load();
+
+      expect(controller.movie?.movieNumber, 'ABC-001');
+      expect(controller.storageDescriptors, isEmpty);
+      expect(controller.errorMessage, isNull);
+    });
+
+    test('loads media library storage descriptors with detail', () async {
+      final controller = MovieDetailController(
+        movieNumber: 'ABC-001',
+        fetchMovieDetail: ({required movieNumber}) async =>
+            _movieDetail(title: 'Movie 1', coverOrigin: '/covers/1.jpg'),
+        fetchSimilarMovies: ({required movieNumber, int limit = 15}) async =>
+            const <MovieListItemDto>[],
+        fetchMediaLibraries: () async => const <MediaLibraryDto>[
+          MediaLibraryDto(
+            id: 9,
+            name: '115 主库',
+            backend: MediaLibraryBackend.cloud115,
+            createdAt: null,
+            updatedAt: null,
+          ),
+        ],
+      );
+
+      await controller.load();
+
+      expect(controller.storageDescriptors[9]?.isCloud115, isTrue);
+      expect(controller.storageDescriptors[9]?.normalizedLibraryName, '115 主库');
+    });
+
     test('refresh updates movie detail after initial load', () async {
       var cycle = 0;
       var similarCycle = 0;
@@ -243,16 +285,15 @@ MovieDetailDto _movieDetail({
     summary: '',
     descZh: '',
     desc: '',
-    thinCoverImage:
-        thinCoverOrigin == null
-            ? null
-            : MovieImageDto(
-              id: 2,
-              origin: thinCoverOrigin,
-              small: '',
-              medium: '',
-              large: '',
-            ),
+    thinCoverImage: thinCoverOrigin == null
+        ? null
+        : MovieImageDto(
+            id: 2,
+            origin: thinCoverOrigin,
+            small: '',
+            medium: '',
+            large: '',
+          ),
     plotImages: const <MovieImageDto>[],
     actors: const <MovieActorDto>[],
     tags: const <MovieTagDto>[],

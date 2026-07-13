@@ -151,6 +151,27 @@ void main() {
     expect(retried, isTrue);
   });
 
+  testWidgets('thumbnail grid lets users reload an empty result', (
+    WidgetTester tester,
+  ) async {
+    var reloaded = false;
+
+    await _pumpGrid(
+      tester,
+      thumbnails: const <MovieMediaThumbnailDto>[],
+      onRetry: () => reloaded = true,
+    );
+
+    expect(find.text('暂时还没有可用缩略图，可稍后重新加载。'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const Key('movie-media-thumbnail-empty-reload')),
+    );
+    await tester.pump();
+
+    expect(reloaded, isTrue);
+  });
+
   testWidgets('thumbnail grid uses vertical scroll grid', (
     WidgetTester tester,
   ) async {

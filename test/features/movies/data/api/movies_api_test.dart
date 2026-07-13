@@ -254,8 +254,8 @@ void main() {
     await moviesApi.getMovies(tagIds: const <int>[], page: 1, pageSize: 24);
 
     expect(
-      adapter.requests
-          .every((request) => !request.uri.queryParameters.containsKey('tag_ids')),
+      adapter.requests.every(
+          (request) => !request.uri.queryParameters.containsKey('tag_ids')),
       isTrue,
     );
   });
@@ -908,7 +908,6 @@ void main() {
             'library_id': 1,
             'play_url':
                 '/files/media/movies/ABC-001/video.mp4?expires=1700000900&signature=abc',
-            'path': '/library/main/ABC-001/video.mp4',
             'storage_mode': 'hardlink',
             'resolution': '1920x1080',
             'file_size_bytes': 1073741824,
@@ -1238,7 +1237,6 @@ void main() {
             'media_id': 100,
             'library_id': 1,
             'play_url': '/files/media/movies/ABC-010/video.mp4',
-            'path': '/library/main/ABC-010/video.mp4',
             'storage_mode': 'hardlink',
             'resolution': '1920x1080',
             'file_size_bytes': 1073741824,

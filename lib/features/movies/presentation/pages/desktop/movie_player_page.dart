@@ -5,9 +5,12 @@ import 'package:go_router/go_router.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:provider/provider.dart';
 import 'package:oktoast/oktoast.dart';
+import 'package:sakuramedia/core/format/file_size.dart';
+import 'package:sakuramedia/core/format/media_timecode.dart';
 import 'package:sakuramedia/core/media/image_save_service.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/clips/presentation/widgets/create_clip_dialog.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_launcher.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
@@ -21,24 +24,24 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/media/images/app_image_action_menu.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_back_overlay.dart';
+import 'package:sakuramedia/widgets/domain/movies/player/movie_player_playback_info.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_surface.dart';
 import 'package:sakuramedia/widgets/domain/movies/player/movie_player_surface_controller.dart';
 import 'package:sakuramedia/widgets/domain/media/movie_player_thumbnail_panel.dart';
 
-typedef MoviePlayerSurfaceBuilder =
-    Widget Function(
-      BuildContext context,
-      String resolvedUrl,
-      MoviePlayerSurfaceController surfaceController,
-      Duration? initialPosition,
-      ValueChanged<Duration>? onPositionChanged,
-      ValueChanged<bool>? onPlayingChanged,
-      MoviePlayerSubtitleState subtitleState,
-      ValueChanged<int?> onSubtitleSelectionChanged,
-      Future<void> Function() onSubtitleReloadRequested,
-      VoidCallback onBackPressed,
-      bool useTouchOptimizedControls,
-    );
+typedef MoviePlayerSurfaceBuilder = Widget Function(
+  BuildContext context,
+  String resolvedUrl,
+  MoviePlayerSurfaceController surfaceController,
+  Duration? initialPosition,
+  ValueChanged<Duration>? onPositionChanged,
+  ValueChanged<bool>? onPlayingChanged,
+  MoviePlayerSubtitleState subtitleState,
+  ValueChanged<int?> onSubtitleSelectionChanged,
+  Future<void> Function() onSubtitleReloadRequested,
+  VoidCallback onBackPressed,
+  bool useTouchOptimizedControls,
+);
 
 class DesktopMoviePlayerPage extends StatefulWidget {
   const DesktopMoviePlayerPage({
@@ -88,11 +91,20 @@ class _DesktopMoviePlayerPageState extends State<DesktopMoviePlayerPage> {
       fetchMediaThumbnails: context.read<MoviesApi>().getMediaThumbnails,
       fetchMovieSubtitles: context.read<MoviesApi>().getMovieSubtitles,
       updateMediaProgress: context.read<MoviesApi>().updateMediaProgress,
+      fetchMediaLibraries: _readMediaLibrariesApi()?.getLibraries,
     )..load();
     _splitController = MultiSplitViewController(
       areas: [Area(flex: 0.72), Area(flex: 0.28)],
     );
     _surfaceController = MoviePlayerSurfaceController();
+  }
+
+  MediaLibrariesApi? _readMediaLibrariesApi() {
+    try {
+      return context.read<MediaLibrariesApi>();
+    } on ProviderNotFoundException {
+      return null;
+    }
   }
 
   @override
@@ -144,10 +156,9 @@ class _DesktopMoviePlayerPageState extends State<DesktopMoviePlayerPage> {
                   controller: _splitController,
                   dividerHandleBuffer: widget.dividerHandleBuffer,
                   leftChild: const _MoviePlayerEmptyState(),
-                  rightChild:
-                      _controller.selectedMedia == null
-                          ? const SizedBox.expand()
-                          : _buildThumbnailPanel(),
+                  rightChild: _controller.selectedMedia == null
+                      ? const SizedBox.expand()
+                      : _buildThumbnailPanel(),
                 ),
               );
             }
@@ -155,10 +166,9 @@ class _DesktopMoviePlayerPageState extends State<DesktopMoviePlayerPage> {
               controller: _splitController,
               dividerHandleBuffer: widget.dividerHandleBuffer,
               leftChild: _buildPlayerSurface(context, resolvedUrl),
-              rightChild:
-                  _controller.selectedMedia == null
-                      ? const SizedBox.expand()
-                      : _buildThumbnailPanel(),
+              rightChild: _controller.selectedMedia == null
+                  ? const SizedBox.expand()
+                  : _buildThumbnailPanel(),
             );
           },
         ),
@@ -194,6 +204,32 @@ class _DesktopMoviePlayerPageState extends State<DesktopMoviePlayerPage> {
       onSubtitleReloadRequested: _controller.loadSubtitles,
       onBackPressed: _handleBack,
       useTouchOptimizedControls: widget.useTouchOptimizedControls,
+      mediaSourceKind: _controller.selectedMediaStorage.isCloud115
+          ? MoviePlayerMediaSourceKind.cloud115
+          : _controller.selectedMediaStorage.isLocal
+              ? MoviePlayerMediaSourceKind.local
+              : MoviePlayerMediaSourceKind.unknown,
+      mediaInfo: _buildMediaInfo(),
+    );
+  }
+
+  MoviePlayerMediaInfo? _buildMediaInfo() {
+    final media = _controller.selectedMedia;
+    if (media == null) {
+      return null;
+    }
+    final storage = _controller.selectedMediaStorage;
+    return MoviePlayerMediaInfo(
+      sourceLabel: storage.sourceLabel,
+      libraryLabel: storage.normalizedLibraryName ??
+          (storage.libraryId == null ? '--' : '媒体库 ${storage.libraryId}'),
+      fileSizeLabel:
+          media.fileSizeBytes > 0 ? formatFileSize(media.fileSizeBytes) : '--',
+      durationLabel: media.durationSeconds > 0
+          ? formatMediaTimecode(media.durationSeconds)
+          : '--',
+      resolutionLabel:
+          media.resolution.trim().isEmpty ? '--' : media.resolution.trim(),
     );
   }
 
@@ -313,10 +349,9 @@ class _DesktopMoviePlayerPageState extends State<DesktopMoviePlayerPage> {
       AppImageActionDescriptor(
         type: AppImageActionType.toggleMark,
         label: point == null ? '添加标记' : '删除标记',
-        icon:
-            point == null
-                ? Icons.bookmark_add_outlined
-                : Icons.bookmark_remove_outlined,
+        icon: point == null
+            ? Icons.bookmark_add_outlined
+            : Icons.bookmark_remove_outlined,
         enabled: hasMedia,
       ),
       AppImageActionDescriptor(
@@ -335,8 +370,8 @@ class _DesktopMoviePlayerPageState extends State<DesktopMoviePlayerPage> {
       return null;
     }
     final points = await context.read<MediaApi>().getMediaPoints(
-      mediaId: thumbnail.mediaId,
-    );
+          mediaId: thumbnail.mediaId,
+        );
     for (final point in points) {
       if (point.thumbnailId == thumbnail.thumbnailId) {
         return point;
@@ -399,14 +434,14 @@ class _DesktopMoviePlayerPageState extends State<DesktopMoviePlayerPage> {
         try {
           if (point == null) {
             await context.read<MediaApi>().createMediaPoint(
-              mediaId: thumbnail.mediaId,
-              thumbnailId: thumbnail.thumbnailId,
-            );
+                  mediaId: thumbnail.mediaId,
+                  thumbnailId: thumbnail.thumbnailId,
+                );
           } else {
             await context.read<MediaApi>().deleteMediaPoint(
-              mediaId: thumbnail.mediaId,
-              pointId: point.pointId,
-            );
+                  mediaId: thumbnail.mediaId,
+                  pointId: point.pointId,
+                );
           }
         } catch (_) {
           ScaffoldMessenger.of(
@@ -451,11 +486,9 @@ class _MoviePlayerSplitLayout extends StatelessWidget {
       child: MultiSplitView(
         controller: controller,
         axis: Axis.horizontal,
-        builder:
-            (context, area) =>
-                area.index == 0
-                    ? _MoviePlayerPanel(child: leftChild)
-                    : _MoviePlayerSidePanel(child: rightChild),
+        builder: (context, area) => area.index == 0
+            ? _MoviePlayerPanel(child: leftChild)
+            : _MoviePlayerSidePanel(child: rightChild),
       ),
     );
   }

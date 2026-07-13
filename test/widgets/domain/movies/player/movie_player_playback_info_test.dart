@@ -157,7 +157,16 @@ void main() {
           theme: sakuraThemeData,
           home: Scaffold(
             body: SizedBox.expand(
-              child: MoviePlayerPlaybackInfoPanel(infoListenable: notifier),
+              child: MoviePlayerPlaybackInfoPanel(
+                infoListenable: notifier,
+                mediaInfo: const MoviePlayerMediaInfo(
+                  sourceLabel: '115 网盘',
+                  libraryLabel: '115 主库',
+                  fileSizeLabel: '2.0 GB',
+                  durationLabel: '01:01:01',
+                  resolutionLabel: '3840x2160',
+                ),
+              ),
             ),
           ),
         ),
@@ -172,6 +181,12 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('--'), findsWidgets);
+      expect(find.text('115 网盘'), findsOneWidget);
+      expect(find.text('115 主库'), findsOneWidget);
+      expect(
+        find.byKey(const Key('movie-player-info-value-media-source')),
+        findsOneWidget,
+      );
 
       notifier.value = const MoviePlayerPlaybackInfoSnapshot(
         decodingModeLabel: '硬件解码 (videotoolbox)',

@@ -34,6 +34,8 @@ class MoviePlayerSurface extends StatefulWidget {
     this.onSubtitleReloadRequested,
     this.onBackPressed,
     this.useTouchOptimizedControls = false,
+    this.mediaSourceKind = MoviePlayerMediaSourceKind.unknown,
+    this.mediaInfo,
   });
 
   final String movieNumber;
@@ -51,9 +53,42 @@ class MoviePlayerSurface extends StatefulWidget {
   final Future<void> Function()? onSubtitleReloadRequested;
   final VoidCallback? onBackPressed;
   final bool useTouchOptimizedControls;
+  final MoviePlayerMediaSourceKind mediaSourceKind;
+  final MoviePlayerMediaInfo? mediaInfo;
 
   @override
   State<MoviePlayerSurface> createState() => _MoviePlayerSurfaceState();
+}
+
+enum MoviePlayerMediaSourceKind { local, cloud115, unknown }
+
+const String moviePlayerUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+    'AppleWebKit/537.36 (KHTML, like Gecko) '
+    'Chrome/125.0.0.0 Safari/537.36';
+
+@visibleForTesting
+Media buildMoviePlayerMedia(
+  String resolvedUrl, {
+  Duration? startPosition,
+  bool isWeb = kIsWeb,
+}) {
+  return Media(
+    resolvedUrl,
+    start: startPosition,
+    httpHeaders: isWeb
+        ? null
+        : const <String, String>{'User-Agent': moviePlayerUserAgent},
+  );
+}
+
+@visibleForTesting
+String moviePlayerPlaybackErrorMessage(MoviePlayerMediaSourceKind sourceKind) {
+  return switch (sourceKind) {
+    MoviePlayerMediaSourceKind.cloud115 =>
+      '暂时无法播放此 115 网盘媒体。请检查网络或媒体库认证状态；如需重新认证，请前往「系统设置 → 媒体库」。',
+    MoviePlayerMediaSourceKind.local => '暂时无法播放此媒体。请检查媒体文件是否仍然可用。',
+    MoviePlayerMediaSourceKind.unknown => '暂时无法播放此媒体。',
+  };
 }
 
 abstract class MoviePlayerSurfacePlaybackDriver {
@@ -72,8 +107,8 @@ abstract class MoviePlayerSurfacePlaybackDriver {
   Future<void> setSubtitleTrack(SubtitleTrack track);
 }
 
-typedef MoviePlayerSurfaceSubtitleTextLoader =
-    Future<String> Function(MoviePlayerSubtitleOption option);
+typedef MoviePlayerSurfaceSubtitleTextLoader = Future<String> Function(
+    MoviePlayerSubtitleOption option);
 
 class MoviePlayerSurfaceSubtitleCoordinator {
   const MoviePlayerSurfaceSubtitleCoordinator();
@@ -210,17 +245,18 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
   late final MoviePlayerSurfaceReadiness _readiness;
   late final MoviePlayerSurfacePlaybackDriver _playbackDriver;
   late final ValueNotifier<MoviePlayerPlaybackInfoSnapshot>
-  _playbackInfoNotifier;
+      _playbackInfoNotifier;
   late final ValueNotifier<MoviePlayerSubtitleState> _subtitleStateNotifier;
   late final ValueNotifier<bool> _isApplyingSubtitleNotifier;
   late final ValueNotifier<MoviePlayerMobileSpeedDisplayState>
-  _mobileSpeedDisplayNotifier;
+      _mobileSpeedDisplayNotifier;
   StreamSubscription<Duration>? _seekSubscription;
   StreamSubscription<void>? _playSubscription;
   StreamSubscription<Duration>? _positionSubscription;
   StreamSubscription<bool>? _playingSubscription;
   StreamSubscription<bool>? _completedSubscription;
   StreamSubscription<double>? _rateSubscription;
+  StreamSubscription<String>? _errorSubscription;
   StreamSubscription<Track>? _trackSubscription;
   StreamSubscription<VideoParams>? _videoParamsSubscription;
   StreamSubscription<AudioParams>? _audioParamsSubscription;
@@ -230,6 +266,7 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
   bool _isApplyingSubtitle = false;
   bool _isRefreshingNativePlaybackInfo = false;
   bool _isInfoSideDrawerOpen = false;
+  bool _hasPlaybackError = false;
   double _currentPlaybackRate = 1.0;
   bool _hasExplicitPlaybackRateSelection = false;
   double? _pendingPlaybackRate;
@@ -292,11 +329,11 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
     _isApplyingSubtitleNotifier = ValueNotifier<bool>(_isApplyingSubtitle);
     _mobileSpeedDisplayNotifier =
         ValueNotifier<MoviePlayerMobileSpeedDisplayState>(
-          MoviePlayerMobileSpeedDisplayState(
-            rate: _currentPlaybackRate,
-            hasExplicitSelection: false,
-          ),
-        );
+      MoviePlayerMobileSpeedDisplayState(
+        rate: _currentPlaybackRate,
+        hasExplicitSelection: false,
+      ),
+    );
     _seekSubscription = widget.surfaceController.seekStream.listen(
       _player.seek,
     );
@@ -362,6 +399,9 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
         _currentPlaybackRate = rate;
       });
     });
+    _errorSubscription = _player.stream.error.listen((error) {
+      _markPlaybackFailed(error);
+    });
     _refreshPlaybackInfoSnapshot();
     _nativePlaybackInfoTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       unawaited(_refreshNativePlaybackInfo());
@@ -394,6 +434,7 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
       _resetPlaybackInfoState();
       _closeMobileDrawer(notify: false);
       _isInfoSideDrawerOpen = false;
+      _hasPlaybackError = false;
       unawaited(_openMedia());
     }
     if (oldWidget.useTouchOptimizedControls &&
@@ -410,6 +451,7 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
     _playingSubscription?.cancel();
     _completedSubscription?.cancel();
     _rateSubscription?.cancel();
+    _errorSubscription?.cancel();
     _trackSubscription?.cancel();
     _videoParamsSubscription?.cancel();
     _audioParamsSubscription?.cancel();
@@ -427,11 +469,10 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
   Future<void> _openMedia() async {
     final requestId = ++_openRequestId;
     _resetPlaybackInfoState();
-    _startupSeekTarget =
-        widget.initialPosition != null &&
-                widget.initialPosition! > Duration.zero
-            ? widget.initialPosition
-            : null;
+    _startupSeekTarget = widget.initialPosition != null &&
+            widget.initialPosition! > Duration.zero
+        ? widget.initialPosition
+        : null;
     _startupSeekStartedAt = DateTime.now();
     _startupSeekRetryCount = 0;
     _startupSeekNearTargetSamples = 0;
@@ -440,14 +481,33 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
       '[player-debug] surface_state_open_media requestId=$requestId url=${widget.resolvedUrl} initialPositionSeconds=${widget.initialPosition?.inSeconds} startupTargetSeconds=${_startupSeekTarget?.inSeconds}',
     );
     _readiness.reset();
-    await _openCoordinator.open(
-      driver: _playbackDriver,
-      resolvedUrl: widget.resolvedUrl,
-      initialPosition: widget.initialPosition,
-      shouldContinue: () => mounted && requestId == _openRequestId,
-      markReady: _readiness.markReady,
-    );
+    try {
+      await _openCoordinator.open(
+        driver: _playbackDriver,
+        resolvedUrl: widget.resolvedUrl,
+        initialPosition: widget.initialPosition,
+        shouldContinue: () => mounted && requestId == _openRequestId,
+        markReady: _readiness.markReady,
+      );
+    } catch (error) {
+      if (mounted && requestId == _openRequestId) {
+        _markPlaybackFailed(error.toString());
+      }
+      return;
+    }
     unawaited(_refreshNativePlaybackInfo());
+  }
+
+  void _markPlaybackFailed(String error) {
+    if (!mounted || _hasPlaybackError) {
+      return;
+    }
+    debugPrint('[player-debug] playback_failed error=$error');
+    setState(() {
+      _hasPlaybackError = true;
+      _isInfoSideDrawerOpen = false;
+      _activeMobileDrawer = null;
+    });
   }
 
   void _resetPlaybackInfoState() {
@@ -518,10 +578,9 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
       final voDelayedFrameCount = _parseNativeCounter(results[5]);
       final mistimedFrameCount = _parseNativeCounter(results[6]);
       final previousSampleAt = _previousPlaybackCounterSampleAt;
-      final elapsedSeconds =
-          previousSampleAt == null
-              ? null
-              : now.difference(previousSampleAt).inMilliseconds / 1000;
+      final elapsedSeconds = previousSampleAt == null
+          ? null
+          : now.difference(previousSampleAt).inMilliseconds / 1000;
 
       _currentHwdecCurrent = results[0];
       _currentVideoBitrate = _parseNativeDouble(results[1]);
@@ -885,10 +944,10 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
     final mobileBottomControls = buildMoviePlayerMobileBottomControls(
       activeDrawer: _activeMobileDrawer,
       speedDisplayListenable: _mobileSpeedDisplayNotifier,
-      onSpeedButtonPressed:
-          () => _toggleMobileDrawer(MoviePlayerMobileDrawerType.speed),
-      onSubtitleButtonPressed:
-          () => _toggleMobileDrawer(MoviePlayerMobileDrawerType.subtitle),
+      onSpeedButtonPressed: () =>
+          _toggleMobileDrawer(MoviePlayerMobileDrawerType.speed),
+      onSubtitleButtonPressed: () =>
+          _toggleMobileDrawer(MoviePlayerMobileDrawerType.subtitle),
     );
     final desktopBottomControls = buildMoviePlayerDesktopBottomControls(
       currentRate: _currentPlaybackRate,
@@ -936,11 +995,12 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
           isOpen: _isInfoSideDrawerOpen,
           onDismiss: _dismissInfoSideDrawer,
           infoListenable: _playbackInfoNotifier,
+          mediaInfo: widget.mediaInfo,
         ),
       ],
     );
 
-    return MaterialVideoControlsTheme(
+    final player = MaterialVideoControlsTheme(
       normal: _mobileControlsTheme(theme, topControls, mobileBottomControls),
       fullscreen: _mobileControlsTheme(
         theme,
@@ -971,6 +1031,20 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
         ),
       ),
     );
+    if (!_hasPlaybackError) {
+      return player;
+    }
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        player,
+        MoviePlayerPlaybackErrorOverlay(
+          sourceKind: widget.mediaSourceKind,
+        ),
+        if (widget.onBackPressed case final onBackPressed?)
+          MoviePlayerBackOverlay(onPressed: onBackPressed),
+      ],
+    );
   }
 
   MaterialDesktopVideoControlsThemeData _desktopControlsTheme(
@@ -994,6 +1068,61 @@ class _MoviePlayerSurfaceState extends State<MoviePlayerSurface> {
       theme: theme,
       topControls: topControls,
       bottomControls: bottomControls,
+    );
+  }
+}
+
+class MoviePlayerPlaybackErrorOverlay extends StatelessWidget {
+  const MoviePlayerPlaybackErrorOverlay({
+    super.key,
+    required this.sourceKind,
+  });
+
+  final MoviePlayerMediaSourceKind sourceKind;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      key: const Key('movie-player-playback-error-overlay'),
+      color: context.appColors.movieDetailHeroBackgroundStart,
+      child: Center(
+        child: Padding(
+          padding: EdgeInsets.all(context.appSpacing.xl),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.error_outline_rounded,
+                size: context.appComponentTokens.iconSizeLg,
+                color: context.appTextPalette.onMedia,
+              ),
+              SizedBox(height: context.appSpacing.md),
+              Text(
+                '播放失败',
+                key: const Key('movie-player-playback-error-title'),
+                textAlign: TextAlign.center,
+                style: resolveAppTextStyle(
+                  context,
+                  size: AppTextSize.s18,
+                  weight: AppTextWeight.semibold,
+                  tone: AppTextTone.onMedia,
+                ),
+              ),
+              SizedBox(height: context.appSpacing.sm),
+              Text(
+                moviePlayerPlaybackErrorMessage(sourceKind),
+                key: const Key('movie-player-playback-error-message'),
+                textAlign: TextAlign.center,
+                style: resolveAppTextStyle(
+                  context,
+                  size: AppTextSize.s14,
+                  tone: AppTextTone.onMedia,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1028,7 +1157,7 @@ List<Widget> buildMoviePlayerTopControls({
 List<Widget> buildMoviePlayerMobileBottomControls({
   required MoviePlayerMobileDrawerType? activeDrawer,
   required ValueListenable<MoviePlayerMobileSpeedDisplayState>
-  speedDisplayListenable,
+      speedDisplayListenable,
   required VoidCallback onSpeedButtonPressed,
   required VoidCallback onSubtitleButtonPressed,
 }) {
@@ -1051,7 +1180,7 @@ List<Widget> buildMoviePlayerMobileBottomControls({
 List<Widget> buildMoviePlayerMobileDrawerToggleButtons({
   required MoviePlayerMobileDrawerType? activeDrawer,
   required ValueListenable<MoviePlayerMobileSpeedDisplayState>
-  speedDisplayListenable,
+      speedDisplayListenable,
   required VoidCallback onSpeedButtonPressed,
   required VoidCallback onSubtitleButtonPressed,
 }) {
@@ -1173,6 +1302,7 @@ Widget buildMoviePlayerInfoSideDrawerOverlay({
   required bool isOpen,
   required VoidCallback onDismiss,
   required ValueListenable<MoviePlayerPlaybackInfoSnapshot> infoListenable,
+  MoviePlayerMediaInfo? mediaInfo,
 }) {
   return _moviePlayerBuildSideDrawerHost(
     context: context,
@@ -1185,6 +1315,7 @@ Widget buildMoviePlayerInfoSideDrawerOverlay({
           ? _MoviePlayerInfoSideDrawer(
               key: const ValueKey<String>('movie-player-info-side-drawer'),
               infoListenable: infoListenable,
+              mediaInfo: mediaInfo,
             )
           : const SizedBox.shrink(
               key: ValueKey<String>(
@@ -1277,7 +1408,7 @@ class _MoviePlayerMobileSpeedDrawerToggleButton extends StatelessWidget {
 
   final Key buttonKey;
   final ValueListenable<MoviePlayerMobileSpeedDisplayState>
-  speedDisplayListenable;
+      speedDisplayListenable;
   final bool active;
   final VoidCallback onTap;
 
@@ -1286,13 +1417,11 @@ class _MoviePlayerMobileSpeedDrawerToggleButton extends StatelessWidget {
     return ValueListenableBuilder<MoviePlayerMobileSpeedDisplayState>(
       valueListenable: speedDisplayListenable,
       builder: (context, speedDisplay, child) {
-        final showsRateLabel =
-            speedDisplay.hasExplicitSelection ||
+        final showsRateLabel = speedDisplay.hasExplicitSelection ||
             (speedDisplay.rate - 1.0).abs() >= 0.001;
-        final label =
-            showsRateLabel
-                ? formatMoviePlayerPlaybackRateLabel(speedDisplay.rate)
-                : '倍速';
+        final label = showsRateLabel
+            ? formatMoviePlayerPlaybackRateLabel(speedDisplay.rate)
+            : '倍速';
         return _MoviePlayerMobileDrawerToggleButton(
           key: buttonKey,
           label: label,
@@ -1393,9 +1522,14 @@ class _MoviePlayerMobileSpeedDrawer extends StatelessWidget {
 }
 
 class _MoviePlayerInfoSideDrawer extends StatelessWidget {
-  const _MoviePlayerInfoSideDrawer({super.key, required this.infoListenable});
+  const _MoviePlayerInfoSideDrawer({
+    super.key,
+    required this.infoListenable,
+    this.mediaInfo,
+  });
 
   final ValueListenable<MoviePlayerPlaybackInfoSnapshot> infoListenable;
+  final MoviePlayerMediaInfo? mediaInfo;
 
   @override
   Widget build(BuildContext context) {
@@ -1428,7 +1562,10 @@ class _MoviePlayerInfoSideDrawer extends StatelessWidget {
       ),
       child: Padding(
         padding: EdgeInsets.all(context.appSpacing.md),
-        child: MoviePlayerPlaybackInfoPanel(infoListenable: infoListenable),
+        child: MoviePlayerPlaybackInfoPanel(
+          infoListenable: infoListenable,
+          mediaInfo: mediaInfo,
+        ),
       ),
     );
   }
@@ -1459,54 +1596,53 @@ class _MoviePlayerMobileSubtitleDrawer extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children:
-              options.isEmpty
-                  ? <Widget>[
-                    SizedBox(
-                      key: const Key(
-                        'movie-player-mobile-subtitle-drawer-empty',
-                      ),
-                      height: overlayTokens.menuItemHeight,
-                      child: Center(
-                        child: Text(
-                          _moviePlayerMobileNoSubtitleLabel,
-                          style: resolveAppTextStyle(
-                            context,
-                            size: AppTextSize.s14,
-                            tone: AppTextTone.muted,
-                          ),
+          children: options.isEmpty
+              ? <Widget>[
+                  SizedBox(
+                    key: const Key(
+                      'movie-player-mobile-subtitle-drawer-empty',
+                    ),
+                    height: overlayTokens.menuItemHeight,
+                    child: Center(
+                      child: Text(
+                        _moviePlayerMobileNoSubtitleLabel,
+                        style: resolveAppTextStyle(
+                          context,
+                          size: AppTextSize.s14,
+                          tone: AppTextTone.muted,
                         ),
                       ),
                     ),
-                  ]
-                  : options.map((option) {
-                      final selected =
-                          subtitleState.selectedSubtitleId == option.subtitleId;
-                      return GestureDetector(
-                        key: Key(
-                          'movie-player-mobile-subtitle-drawer-item-${option.subtitleId}',
-                        ),
-                        behavior: HitTestBehavior.opaque,
-                        onTap: isApplyingSubtitle
-                            ? null
-                            : () => unawaited(
-                                  onSubtitleSelected(option.subtitleId),
-                                ),
-                        child: MoviePlayerMenuItemRow(
-                          label: option.label,
-                          selected: selected,
-                          checkColor: selectedColor,
-                          checkKey: Key(
-                            'movie-player-mobile-subtitle-drawer-item-check-${option.subtitleId}',
-                          ),
-                          checkSlotKey: Key(
-                            'movie-player-mobile-subtitle-drawer-item-check-slot-${option.subtitleId}',
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      );
-                    }).toList(growable: false),
+                  ),
+                ]
+              : options.map((option) {
+                  final selected =
+                      subtitleState.selectedSubtitleId == option.subtitleId;
+                  return GestureDetector(
+                    key: Key(
+                      'movie-player-mobile-subtitle-drawer-item-${option.subtitleId}',
+                    ),
+                    behavior: HitTestBehavior.opaque,
+                    onTap: isApplyingSubtitle
+                        ? null
+                        : () => unawaited(
+                              onSubtitleSelected(option.subtitleId),
+                            ),
+                    child: MoviePlayerMenuItemRow(
+                      label: option.label,
+                      selected: selected,
+                      checkColor: selectedColor,
+                      checkKey: Key(
+                        'movie-player-mobile-subtitle-drawer-item-check-${option.subtitleId}',
+                      ),
+                      checkSlotKey: Key(
+                        'movie-player-mobile-subtitle-drawer-item-check-slot-${option.subtitleId}',
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  );
+                }).toList(growable: false),
         ),
       ),
     );
@@ -1539,8 +1675,8 @@ class _MediaKitMoviePlayerSurfacePlaybackDriver
   _MediaKitMoviePlayerSurfacePlaybackDriver({
     required Player player,
     required VideoController controller,
-  }) : _player = player,
-       _controller = controller;
+  })  : _player = player,
+        _controller = controller;
 
   final Player _player;
   final VideoController _controller;
@@ -1551,7 +1687,10 @@ class _MediaKitMoviePlayerSurfacePlaybackDriver
     required Duration? startPosition,
     required bool play,
   }) {
-    return _player.open(Media(resolvedUrl, start: startPosition), play: play);
+    return _player.open(
+      buildMoviePlayerMedia(resolvedUrl, startPosition: startPosition),
+      play: play,
+    );
   }
 
   @override

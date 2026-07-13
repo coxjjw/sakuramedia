@@ -7,12 +7,14 @@ import 'package:sakuramedia/core/media/image_save_service.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
+import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
 import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_draft_store.dart';
 import 'package:sakuramedia/features/image_search/presentation/image_search_file_picker.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
+import 'package:sakuramedia/features/media/data/media_storage_descriptor.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/api/movies_api.dart';
@@ -85,6 +87,7 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
       movieNumber: widget.movieNumber,
       fetchMovieDetail: context.read<MoviesApi>().getMovieDetail,
       fetchSimilarMovies: context.read<MoviesApi>().getSimilarMovies,
+      fetchMediaLibraries: _readMediaLibrariesApi()?.getLibraries,
     )..load();
     _movieClipsController = MovieClipsController(
       movieNumber: widget.movieNumber,
@@ -92,6 +95,14 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
       mutationNotifier: context.read<ClipMutationChangeNotifier>(),
     )..load();
     _loadMovieCollectionStatus();
+  }
+
+  MediaLibrariesApi? _readMediaLibrariesApi() {
+    try {
+      return context.read<MediaLibrariesApi>();
+    } on ProviderNotFoundException {
+      return null;
+    }
   }
 
   @override
@@ -139,6 +150,7 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
               return MovieDetailPageContent(
                 movie: movie,
                 mediaItemsOverride: mediaItems,
+                storageDescriptors: _controller.storageDescriptors,
                 selectedPreviewKey: _controller.selectedPreviewKey,
                 selectedPreviewUrl: _controller.selectedPreviewUrl,
                 isCollection: isCollection,
@@ -359,6 +371,10 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
   }
 
   Future<bool?> _confirmDeleteMedia(MovieMediaItemDto mediaItem) {
+    final storage = resolveMediaStorageDescriptor(
+      mediaItem.libraryId,
+      _controller.storageDescriptors,
+    );
     return showAppBottomDrawer<bool>(
       context: context,
       drawerKey: const Key('movie-media-delete-confirm-drawer'),
@@ -376,11 +392,11 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
           ),
           SizedBox(height: drawerContext.appSpacing.lg),
           Text(
-            '确认删除媒体“${_buildMediaDeleteLabel(mediaItem)}”？该操作会删除本地媒体文件且不可恢复。',
+            _mediaDeleteMessage(mediaItem, storage),
           ),
           SizedBox(height: drawerContext.appSpacing.sm),
           Text(
-            mediaItem.path,
+            _mediaStorageLabel(storage),
             key: const Key('movie-media-delete-path'),
             style: resolveAppTextStyle(
               drawerContext,
@@ -400,6 +416,27 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
         ],
       ),
     );
+  }
+
+  String _mediaDeleteMessage(
+    MovieMediaItemDto mediaItem,
+    MediaStorageDescriptor storage,
+  ) {
+    final prefix = '确认删除媒体“${_buildMediaDeleteLabel(mediaItem)}”？';
+    if (storage.isCloud115) {
+      return '$prefix 该操作会删除 115 网盘中的媒体文件（进入 115 回收站），并删除 SakuraMedia 记录。';
+    }
+    if (storage.isLocal) {
+      return '$prefix 该操作会删除本地媒体文件且不可恢复。';
+    }
+    return '$prefix 该操作会删除媒体文件及 SakuraMedia 记录，且可能无法恢复。';
+  }
+
+  String _mediaStorageLabel(MediaStorageDescriptor storage) {
+    final libraryName = storage.normalizedLibraryName;
+    return libraryName == null
+        ? storage.sourceLabel
+        : '${storage.sourceLabel} · $libraryName';
   }
 
   Future<void> _handleRefresh() async {
@@ -453,9 +490,8 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
         );
       },
       onPlay: (thumbnail) => _openMoviePlayer(
-        mediaId: thumbnail.mediaId > 0
-            ? thumbnail.mediaId
-            : selectedMedia?.mediaId,
+        mediaId:
+            thumbnail.mediaId > 0 ? thumbnail.mediaId : selectedMedia?.mediaId,
         positionSeconds: thumbnail.offsetSeconds,
       ),
     );
@@ -551,7 +587,6 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
       mediaId: item.mediaId,
       libraryId: item.libraryId,
       playUrl: item.playUrl,
-      path: item.path,
       storageMode: item.storageMode,
       resolution: item.resolution,
       fileSizeBytes: item.fileSizeBytes,
@@ -804,7 +839,6 @@ class _MobileMovieDetailPageState extends State<MobileMovieDetailPage>
       mediaId: mediaId,
       libraryId: null,
       playUrl: '',
-      path: '',
       storageMode: '',
       resolution: '',
       fileSizeBytes: 0,

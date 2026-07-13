@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
+import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
+import 'package:sakuramedia/features/media/data/media_storage_descriptor.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 
@@ -8,21 +10,24 @@ class MovieDetailController extends ChangeNotifier {
     required this.movieNumber,
     required this.fetchMovieDetail,
     required this.fetchSimilarMovies,
+    this.fetchMediaLibraries,
   });
 
   final String movieNumber;
   final Future<MovieDetailDto> Function({required String movieNumber})
-  fetchMovieDetail;
+      fetchMovieDetail;
   final Future<List<MovieListItemDto>> Function({
     required String movieNumber,
     int limit,
-  })
-  fetchSimilarMovies;
+  }) fetchSimilarMovies;
+  final Future<List<MediaLibraryDto>> Function()? fetchMediaLibraries;
 
   MovieDetailDto? _movie;
   bool _isLoading = true;
   String? _errorMessage;
   List<MovieListItemDto> _similarMovies = const <MovieListItemDto>[];
+  Map<int, MediaStorageDescriptor> _storageDescriptors =
+      const <int, MediaStorageDescriptor>{};
   bool _isSimilarMoviesLoading = false;
   String? _similarMoviesErrorMessage;
   _MovieDetailPreview _selectedPreview =
@@ -32,6 +37,8 @@ class MovieDetailController extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   List<MovieListItemDto> get similarMovies => _similarMovies;
+  Map<int, MediaStorageDescriptor> get storageDescriptors =>
+      _storageDescriptors;
   bool get isSimilarMoviesLoading => _isSimilarMoviesLoading;
   String? get similarMoviesErrorMessage => _similarMoviesErrorMessage;
   String? get selectedPreviewUrl => _selectedPreview.url;
@@ -39,10 +46,9 @@ class MovieDetailController extends ChangeNotifier {
 
   void applyMovie(MovieDetailDto movie, {bool resetPreview = false}) {
     _movie = movie;
-    _selectedPreview =
-        resetPreview
-            ? _defaultPreviewFor(movie)
-            : _resolveUpdatedPreview(movie);
+    _selectedPreview = resetPreview
+        ? _defaultPreviewFor(movie)
+        : _resolveUpdatedPreview(movie);
     _errorMessage = null;
     notifyListeners();
   }
@@ -52,7 +58,12 @@ class MovieDetailController extends ChangeNotifier {
       return;
     }
     final similarFuture = _loadSimilarMovies();
-    final movie = await fetchMovieDetail(movieNumber: movieNumber);
+    final results = await Future.wait<Object>(<Future<Object>>[
+      fetchMovieDetail(movieNumber: movieNumber),
+      _fetchStorageDescriptors(),
+    ]);
+    final movie = results[0] as MovieDetailDto;
+    _storageDescriptors = results[1] as Map<int, MediaStorageDescriptor>;
     _movie = movie;
     _selectedPreview = _defaultPreviewFor(movie);
     _errorMessage = null;
@@ -71,12 +82,18 @@ class MovieDetailController extends ChangeNotifier {
     final similarFuture = _loadSimilarMovies(clearExisting: true);
 
     try {
-      final movie = await fetchMovieDetail(movieNumber: movieNumber);
+      final results = await Future.wait<Object>(<Future<Object>>[
+        fetchMovieDetail(movieNumber: movieNumber),
+        _fetchStorageDescriptors(),
+      ]);
+      final movie = results[0] as MovieDetailDto;
+      _storageDescriptors = results[1] as Map<int, MediaStorageDescriptor>;
       _movie = movie;
       _selectedPreview = _defaultPreviewFor(movie);
       _errorMessage = null;
     } catch (error) {
       _movie = null;
+      _storageDescriptors = const <int, MediaStorageDescriptor>{};
       _selectedPreview = const _MovieDetailPreview.placeholder();
       _errorMessage = _messageForError(error);
     } finally {
@@ -85,6 +102,18 @@ class MovieDetailController extends ChangeNotifier {
     }
 
     await similarFuture;
+  }
+
+  Future<Map<int, MediaStorageDescriptor>> _fetchStorageDescriptors() async {
+    final fetch = fetchMediaLibraries;
+    if (fetch == null) {
+      return const <int, MediaStorageDescriptor>{};
+    }
+    try {
+      return buildMediaStorageDescriptors(await fetch());
+    } catch (_) {
+      return const <int, MediaStorageDescriptor>{};
+    }
   }
 
   Future<void> retryLoadSimilarMovies() {
@@ -147,7 +176,7 @@ class _MovieDetailPreview {
   const _MovieDetailPreview({required this.key, required this.url});
 
   const _MovieDetailPreview.cover({required String url})
-    : this(key: 'cover', url: url);
+      : this(key: 'cover', url: url);
 
   const _MovieDetailPreview.placeholder() : this(key: 'placeholder', url: null);
 

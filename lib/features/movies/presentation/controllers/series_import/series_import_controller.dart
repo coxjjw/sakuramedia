@@ -118,7 +118,7 @@ class SeriesImportController extends ChangeNotifier {
   String _resolveFailureMessage(String? reason) {
     switch (reason) {
       case 'series_not_found':
-        return '本地系列不存在';
+        return '库内系列不存在';
       case 'javdb_series_not_found':
         return '未能在 JAVDB 找到匹配的系列，请确认系列名称';
       default:

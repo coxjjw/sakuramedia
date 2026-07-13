@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
+import 'package:sakuramedia/features/media/data/media_storage_descriptor.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/theme.dart';
@@ -27,6 +29,48 @@ void main() {
     },
   );
 
+  testWidgets('movie media item list shows cloud115 storage and basic info', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      _testApp(
+        child: MovieMediaItemList(
+          mediaItems: const <MovieMediaItemDto>[
+            MovieMediaItemDto(
+              mediaId: 115,
+              libraryId: 9,
+              playUrl: '/media/115/stream?expires=1&signature=x',
+              storageMode: 'copy',
+              resolution: '3840x2160',
+              fileSizeBytes: 2147483648,
+              durationSeconds: 3661,
+              specialTags: '4K',
+              valid: true,
+              progress: null,
+              points: <MovieMediaPointDto>[],
+              videoInfo: null,
+            ),
+          ],
+          selectedMediaId: 115,
+          storageDescriptors: const <int, MediaStorageDescriptor>{
+            9: MediaStorageDescriptor(
+              libraryId: 9,
+              libraryName: '云盘库',
+              backend: MediaLibraryBackend.cloud115,
+            ),
+          },
+          onSelect: (_) {},
+        ),
+      ),
+    );
+
+    expect(find.text('4K 2.0 GB'), findsOneWidget);
+    expect(
+      find.text('115 网盘 · 云盘库 · 3840x2160 · 01:01:01'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets(
     'movie media item list renders compact shared pills and updates selected style',
     (WidgetTester tester) async {
@@ -38,7 +82,6 @@ void main() {
                 mediaId: 100,
                 libraryId: 1,
                 playUrl: '/files/media/movies/ABC-001/video.mp4',
-                path: '/library/main/ABC-001/video.mp4',
                 storageMode: 'hardlink',
                 resolution: '1920x1080',
                 fileSizeBytes: 1073741824,
@@ -88,7 +131,6 @@ void main() {
                 mediaId: 101,
                 libraryId: 1,
                 playUrl: '/files/media/movies/ABC-001/video-alt.mp4',
-                path: '/library/main/ABC-001/video-alt.mp4',
                 storageMode: 'hardlink',
                 resolution: '1280x720',
                 fileSizeBytes: 524288000,
@@ -141,7 +183,10 @@ void main() {
       expect(find.byType(MovieDetailPillWrap), findsOneWidget);
       expect(find.byKey(const Key('movie-media-tech-summary')), findsOneWidget);
       expect(find.byKey(const Key('movie-media-points-title')), findsOneWidget);
-      expect(find.text('H.264 · 22.8 Mbps · 29.97 fps'), findsOneWidget);
+      expect(
+        find.text('1920x1080 · 02:00:00 · H.264 · 22.8 Mbps · 29.97 fps'),
+        findsOneWidget,
+      );
       expect(
         find.byKey(const Key('movie-media-point-timecode-0')),
         findsOneWidget,
@@ -167,18 +212,15 @@ void main() {
 
       final pillWrapBottom =
           tester.getBottomLeft(find.byType(MovieDetailPillWrap)).dy;
-      final techSummaryTop =
-          tester
-              .getTopLeft(find.byKey(const Key('movie-media-tech-summary')))
-              .dy;
-      final techSummaryBottom =
-          tester
-              .getBottomLeft(find.byKey(const Key('movie-media-tech-summary')))
-              .dy;
-      final pointsTitleTop =
-          tester
-              .getTopLeft(find.byKey(const Key('movie-media-points-title')))
-              .dy;
+      final techSummaryTop = tester
+          .getTopLeft(find.byKey(const Key('movie-media-tech-summary')))
+          .dy;
+      final techSummaryBottom = tester
+          .getBottomLeft(find.byKey(const Key('movie-media-tech-summary')))
+          .dy;
+      final pointsTitleTop = tester
+          .getTopLeft(find.byKey(const Key('movie-media-points-title')))
+          .dy;
 
       expect(
         techSummaryTop - pillWrapBottom,
@@ -192,7 +234,10 @@ void main() {
       await tester.tap(find.text('导演剪辑版 500.0 MB'));
       await tester.pumpAndSettle();
 
-      expect(find.text('H.265 · 6.5 Mbps · 24 fps'), findsOneWidget);
+      expect(
+        find.text('1280x720 · 01:30:00 · H.265 · 6.5 Mbps · 24 fps'),
+        findsOneWidget,
+      );
       expect(
         tester
             .widget<Text>(find.byKey(const Key('movie-media-point-timecode-0')))
@@ -213,11 +258,10 @@ void main() {
                 mediaId: 100,
                 libraryId: 1,
                 playUrl: '/files/media/movies/ABC-001/video.mp4',
-                path: '/library/main/ABC-001/video.mp4',
                 storageMode: 'hardlink',
-                resolution: '1920x1080',
+                resolution: '',
                 fileSizeBytes: 1073741824,
-                durationSeconds: 7200,
+                durationSeconds: 0,
                 specialTags: '普通',
                 valid: true,
                 progress: null,
@@ -269,7 +313,6 @@ void main() {
                 mediaId: 100,
                 libraryId: 1,
                 playUrl: '/files/media/movies/ABC-001/video.mp4',
-                path: '/library/main/ABC-001/video.mp4',
                 storageMode: 'hardlink',
                 resolution: '1920x1080',
                 fileSizeBytes: 1073741824,
@@ -295,10 +338,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.byType(AppIconButton), findsOneWidget);
-      expect(
-        find.byKey(const Key('movie-media-tech-summary-placeholder')),
-        findsOneWidget,
-      );
+      expect(find.byKey(const Key('movie-media-tech-summary')), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('movie-media-delete-button')));
       await tester.pumpAndSettle();
@@ -318,7 +358,6 @@ void main() {
                 mediaId: 100,
                 libraryId: 1,
                 playUrl: '/files/media/movies/ABC-001/video.mp4',
-                path: '/library/main/ABC-001/video.mp4',
                 storageMode: 'hardlink',
                 resolution: '1920x1080',
                 fileSizeBytes: 1073741824,
@@ -357,7 +396,6 @@ void main() {
                 mediaId: 100,
                 libraryId: 1,
                 playUrl: '/files/media/movies/ABC-001/video.mp4',
-                path: '/library/main/ABC-001/video.mp4',
                 storageMode: 'hardlink',
                 resolution: '1920x1080',
                 fileSizeBytes: 1073741824,
@@ -395,14 +433,12 @@ void main() {
         ),
       );
 
-      final summaryRight =
-          tester
-              .getTopRight(find.byKey(const Key('movie-media-tech-summary')))
-              .dx;
-      final deleteLeft =
-          tester
-              .getTopLeft(find.byKey(const Key('movie-media-delete-button')))
-              .dx;
+      final summaryRight = tester
+          .getTopRight(find.byKey(const Key('movie-media-tech-summary')))
+          .dx;
+      final deleteLeft = tester
+          .getTopLeft(find.byKey(const Key('movie-media-delete-button')))
+          .dx;
 
       expect(deleteLeft - summaryRight, const AppSpacing.defaults().md);
     },

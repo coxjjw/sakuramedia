@@ -40,7 +40,8 @@ void main() {
     },
   );
 
-  test('movieDetailRemoteActionSpecFor has no remote spec for openInspector', () {
+  test('movieDetailRemoteActionSpecFor has no remote spec for openInspector',
+      () {
     expect(
       movieDetailRemoteActionSpecFor(
         action: MovieDetailActionType.openInspector,
@@ -206,7 +207,7 @@ void main() {
     );
     expect(
       MovieDetailRefreshConfirmationCopy.hint,
-      '这是一次覆盖式刷新，影片本地元数据会以远端最新结果为准。',
+      '这是一次覆盖式刷新，SakuraMedia 中的影片元数据会以远端最新结果为准。',
     );
     expect(MovieDetailRefreshConfirmationCopy.cancelLabel, '取消');
     expect(MovieDetailRefreshConfirmationCopy.confirmLabel, '确认刷新');
@@ -275,10 +276,10 @@ MovieDetailController _buildController() {
   return MovieDetailController(
     movieNumber: 'ABC-001',
     fetchMovieDetail: ({required movieNumber}) async => _movieDetail(),
-    fetchSimilarMovies:
-        ({required movieNumber, int limit = 15}) async => <MovieListItemDto>[
-          _similarMovie(),
-        ],
+    fetchSimilarMovies: ({required movieNumber, int limit = 15}) async =>
+        <MovieListItemDto>[
+      _similarMovie(),
+    ],
   );
 }
 
@@ -326,7 +327,6 @@ MovieDetailDto _movieDetail({
             mediaId: mediaId,
             libraryId: 1,
             playUrl: '/play/$mediaId',
-            path: '/media/$mediaId.mp4',
             storageMode: 'local',
             resolution: '1080p',
             fileSizeBytes: 10,

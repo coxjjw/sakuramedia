@@ -253,7 +253,10 @@ void main() {
     expect(find.byIcon(Icons.local_fire_department_rounded), findsWidgets);
     expect(find.text('演员'), findsOneWidget);
     expect(find.text('媒体源'), findsOneWidget);
-    expect(find.text('H.264 · 22.8 Mbps · 29.97 fps'), findsOneWidget);
+    expect(
+      find.text('1920x1080 · 02:00:00 · H.264 · 22.8 Mbps · 29.97 fps'),
+      findsOneWidget,
+    );
     expect(
       find.byKey(const Key('movie-media-point-timecode-0')),
       findsOneWidget,
@@ -268,7 +271,10 @@ void main() {
     await tester.ensureVisible(find.text('预告 1.0 GB'));
     await tester.tap(find.text('预告 1.0 GB'));
     await tester.pumpAndSettle();
-    expect(find.text('H.265 · 6.5 Mbps · 24 fps'), findsOneWidget);
+    expect(
+      find.text('1920x1080 · 02:00:00 · H.265 · 6.5 Mbps · 24 fps'),
+      findsOneWidget,
+    );
     expect(
       tester
           .widget<Text>(find.byKey(const Key('movie-media-point-timecode-0')))
@@ -2121,4 +2127,3 @@ String? _queryValueForPath(TestApiBundle bundle, String path, String key) {
   );
   return request.uri.queryParameters[key];
 }
-

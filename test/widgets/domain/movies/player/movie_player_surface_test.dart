@@ -186,22 +186,23 @@ void main() {
   });
 
   group('MoviePlayerSurfaceSubtitleCoordinator', () {
-    test('applies external subtitle data and returns the selected id', () async {
+    test('applies external subtitle data and returns the selected id',
+        () async {
       final driver = _FakeMoviePlayerSurfacePlaybackDriver();
       const subtitleText = '1\n00:00:01,000 --> 00:00:02,000\nhello\n';
 
-      final result = await const MoviePlayerSurfaceSubtitleCoordinator()
-          .applySelection(
-            driver: driver,
-            selectedOption: const MoviePlayerSubtitleOption(
-              subtitleId: 501,
-              label: 'ABC-001.zh.srt',
-              resolvedUrl: 'https://example.com/subtitles/501.srt',
-              title: 'ABC-001.zh.srt',
-            ),
-            loadSubtitleText: (_) async => subtitleText,
-            onError: () {},
-          );
+      final result =
+          await const MoviePlayerSurfaceSubtitleCoordinator().applySelection(
+        driver: driver,
+        selectedOption: const MoviePlayerSubtitleOption(
+          subtitleId: 501,
+          label: 'ABC-001.zh.srt',
+          resolvedUrl: 'https://example.com/subtitles/501.srt',
+          title: 'ABC-001.zh.srt',
+        ),
+        loadSubtitleText: (_) async => subtitleText,
+        onError: () {},
+      );
 
       expect(result, 501);
       expect(
@@ -215,13 +216,13 @@ void main() {
     test('disables subtitles when null is selected', () async {
       final driver = _FakeMoviePlayerSurfacePlaybackDriver();
 
-      final result = await const MoviePlayerSurfaceSubtitleCoordinator()
-          .applySelection(
-            driver: driver,
-            selectedOption: null,
-            loadSubtitleText: (_) async => throw UnimplementedError(),
-            onError: () {},
-          );
+      final result =
+          await const MoviePlayerSurfaceSubtitleCoordinator().applySelection(
+        driver: driver,
+        selectedOption: null,
+        loadSubtitleText: (_) async => throw UnimplementedError(),
+        onError: () {},
+      );
 
       expect(result, isNull);
       expect(driver.operations, <String>[
@@ -232,23 +233,22 @@ void main() {
     test(
       'falls back to no subtitle and emits error when subtitle load fails',
       () async {
-        final driver =
-            _FakeMoviePlayerSurfacePlaybackDriver()
-              ..failNextSubtitleSelection = true;
+        final driver = _FakeMoviePlayerSurfacePlaybackDriver()
+          ..failNextSubtitleSelection = true;
         var didError = false;
 
-        final result = await const MoviePlayerSurfaceSubtitleCoordinator()
-            .applySelection(
-              driver: driver,
-              selectedOption: const MoviePlayerSubtitleOption(
-                subtitleId: 501,
-                label: 'ABC-001.zh.srt',
-                resolvedUrl: 'https://example.com/subtitles/501.srt',
-              ),
-              loadSubtitleText:
-                  (_) async => '1\n00:00:01,000 --> 00:00:02,000\nhello\n',
-              onError: () => didError = true,
-            );
+        final result =
+            await const MoviePlayerSurfaceSubtitleCoordinator().applySelection(
+          driver: driver,
+          selectedOption: const MoviePlayerSubtitleOption(
+            subtitleId: 501,
+            label: 'ABC-001.zh.srt',
+            resolvedUrl: 'https://example.com/subtitles/501.srt',
+          ),
+          loadSubtitleText: (_) async =>
+              '1\n00:00:01,000 --> 00:00:02,000\nhello\n',
+          onError: () => didError = true,
+        );
 
         expect(result, isNull);
         expect(didError, isTrue);
@@ -265,17 +265,17 @@ void main() {
         final driver = _FakeMoviePlayerSurfacePlaybackDriver();
         var didError = false;
 
-        final result = await const MoviePlayerSurfaceSubtitleCoordinator()
-            .applySelection(
-              driver: driver,
-              selectedOption: const MoviePlayerSubtitleOption(
-                subtitleId: 501,
-                label: 'ABC-001.zh.srt',
-                resolvedUrl: 'https://example.com/subtitles/501.srt',
-              ),
-              loadSubtitleText: (_) async => throw const FormatException('bad'),
-              onError: () => didError = true,
-            );
+        final result =
+            await const MoviePlayerSurfaceSubtitleCoordinator().applySelection(
+          driver: driver,
+          selectedOption: const MoviePlayerSubtitleOption(
+            subtitleId: 501,
+            label: 'ABC-001.zh.srt',
+            resolvedUrl: 'https://example.com/subtitles/501.srt',
+          ),
+          loadSubtitleText: (_) async => throw const FormatException('bad'),
+          onError: () => didError = true,
+        );
 
         expect(result, isNull);
         expect(didError, isTrue);
@@ -573,23 +573,22 @@ void main() {
                 width: 240,
                 height: 420,
                 child: Builder(
-                  builder:
-                      (context) => Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          const ColoredBox(color: Colors.black),
-                          buildMoviePlayerMobileDrawerOverlay(
-                            context: context,
-                            activeDrawer: MoviePlayerMobileDrawerType.speed,
-                            subtitleState: MoviePlayerSubtitleState.empty,
-                            currentRate: 1.0,
-                            isApplyingSubtitle: false,
-                            onDismiss: () {},
-                            onRateSelected: (_) async {},
-                            onSubtitleSelected: (_) async {},
-                          ),
-                        ],
+                  builder: (context) => Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      const ColoredBox(color: Colors.black),
+                      buildMoviePlayerMobileDrawerOverlay(
+                        context: context,
+                        activeDrawer: MoviePlayerMobileDrawerType.speed,
+                        subtitleState: MoviePlayerSubtitleState.empty,
+                        currentRate: 1.0,
+                        isApplyingSubtitle: false,
+                        onDismiss: () {},
+                        onRateSelected: (_) async {},
+                        onSubtitleSelected: (_) async {},
                       ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -745,6 +744,29 @@ void main() {
   });
 
   group('Movie player configuration', () {
+    test('native media uses the stable generic browser user agent', () {
+      final media = buildMoviePlayerMedia(
+        'https://example.com/media/1/stream',
+        startPosition: const Duration(seconds: 12),
+        isWeb: false,
+      );
+
+      expect(media.start, const Duration(seconds: 12));
+      expect(media.httpHeaders, <String, String>{
+        'User-Agent': moviePlayerUserAgent,
+      });
+      expect(moviePlayerUserAgent, isNot(contains('SakuraMedia')));
+    });
+
+    test('web media leaves user agent ownership to the browser', () {
+      final media = buildMoviePlayerMedia(
+        'https://example.com/media/2/stream',
+        isWeb: true,
+      );
+
+      expect(media.httpHeaders, isNull);
+    });
+
     test('desktop configuration enables libass subtitles', () {
       expect(
         buildMoviePlayerConfiguration(
@@ -793,6 +815,46 @@ void main() {
       );
     });
   });
+
+  group('MoviePlayerPlaybackErrorOverlay', () {
+    testWidgets('shows cloud115 guidance without retry action', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: sakuraThemeData,
+          home: const Scaffold(
+            body: MoviePlayerPlaybackErrorOverlay(
+              sourceKind: MoviePlayerMediaSourceKind.cloud115,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('播放失败'), findsOneWidget);
+      expect(
+        find.text(
+          '暂时无法播放此 115 网盘媒体。请检查网络或媒体库认证状态；如需重新认证，请前往「系统设置 → 媒体库」。',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('重试'), findsNothing);
+      expect(find.byType(TextButton), findsNothing);
+    });
+
+    testWidgets('shows local media wording', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: sakuraThemeData,
+          home: const Scaffold(
+            body: MoviePlayerPlaybackErrorOverlay(
+              sourceKind: MoviePlayerMediaSourceKind.local,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('暂时无法播放此媒体。请检查媒体文件是否仍然可用。'), findsOneWidget);
+    });
+  });
 }
 
 class _MoviePlayerMobileDrawerHarness extends StatefulWidget {
@@ -808,7 +870,7 @@ class _MoviePlayerMobileDrawerHarnessState
   MoviePlayerMobileDrawerType? _activeDrawer;
   int? _selectedSubtitleId;
   final ValueNotifier<MoviePlayerMobileSpeedDisplayState>
-  _speedDisplayNotifier = ValueNotifier<MoviePlayerMobileSpeedDisplayState>(
+      _speedDisplayNotifier = ValueNotifier<MoviePlayerMobileSpeedDisplayState>(
     const MoviePlayerMobileSpeedDisplayState(
       rate: 1.0,
       hasExplicitSelection: false,
@@ -817,18 +879,18 @@ class _MoviePlayerMobileDrawerHarnessState
 
   final MoviePlayerSubtitleState _subtitleState =
       const MoviePlayerSubtitleState(
-        options: <MoviePlayerSubtitleOption>[
-          MoviePlayerSubtitleOption(
-            subtitleId: 501,
-            label: 'ABC-001.zh.srt',
-            resolvedUrl: 'https://example.com/subtitles/501.srt',
-          ),
-        ],
-        selectedSubtitleId: null,
-        isLoading: false,
-        fetchStatus: 'succeeded',
-        errorMessage: null,
-      );
+    options: <MoviePlayerSubtitleOption>[
+      MoviePlayerSubtitleOption(
+        subtitleId: 501,
+        label: 'ABC-001.zh.srt',
+        resolvedUrl: 'https://example.com/subtitles/501.srt',
+      ),
+    ],
+    selectedSubtitleId: null,
+    isLoading: false,
+    fetchStatus: 'succeeded',
+    errorMessage: null,
+  );
 
   @override
   void dispose() {
@@ -864,8 +926,8 @@ class _MoviePlayerMobileDrawerHarnessState
                   setState(() {
                     _activeDrawer = null;
                   });
-                  _speedDisplayNotifier
-                      .value = MoviePlayerMobileSpeedDisplayState(
+                  _speedDisplayNotifier.value =
+                      MoviePlayerMobileSpeedDisplayState(
                     rate: rate,
                     hasExplicitSelection: true,
                   );
@@ -888,22 +950,18 @@ class _MoviePlayerMobileDrawerHarnessState
                       children: buildMoviePlayerMobileDrawerToggleButtons(
                         activeDrawer: _activeDrawer,
                         speedDisplayListenable: _speedDisplayNotifier,
-                        onSpeedButtonPressed:
-                            () => setState(() {
-                              _activeDrawer =
-                                  _activeDrawer ==
-                                          MoviePlayerMobileDrawerType.speed
-                                      ? null
-                                      : MoviePlayerMobileDrawerType.speed;
-                            }),
-                        onSubtitleButtonPressed:
-                            () => setState(() {
-                              _activeDrawer =
-                                  _activeDrawer ==
-                                          MoviePlayerMobileDrawerType.subtitle
-                                      ? null
-                                      : MoviePlayerMobileDrawerType.subtitle;
-                            }),
+                        onSpeedButtonPressed: () => setState(() {
+                          _activeDrawer =
+                              _activeDrawer == MoviePlayerMobileDrawerType.speed
+                                  ? null
+                                  : MoviePlayerMobileDrawerType.speed;
+                        }),
+                        onSubtitleButtonPressed: () => setState(() {
+                          _activeDrawer = _activeDrawer ==
+                                  MoviePlayerMobileDrawerType.subtitle
+                              ? null
+                              : MoviePlayerMobileDrawerType.subtitle;
+                        }),
                       ),
                     ),
                   ),
@@ -932,10 +990,10 @@ class _MoviePlayerInfoDrawerHarnessState
   int? _selectedSubtitleId;
   final ValueNotifier<MoviePlayerPlaybackInfoSnapshot> _infoNotifier =
       ValueNotifier<MoviePlayerPlaybackInfoSnapshot>(
-        MoviePlayerPlaybackInfoSnapshot.empty,
-      );
+    MoviePlayerPlaybackInfoSnapshot.empty,
+  );
   final ValueNotifier<MoviePlayerMobileSpeedDisplayState>
-  _speedDisplayNotifier = ValueNotifier<MoviePlayerMobileSpeedDisplayState>(
+      _speedDisplayNotifier = ValueNotifier<MoviePlayerMobileSpeedDisplayState>(
     const MoviePlayerMobileSpeedDisplayState(
       rate: 1.0,
       hasExplicitSelection: false,
@@ -944,18 +1002,18 @@ class _MoviePlayerInfoDrawerHarnessState
 
   final MoviePlayerSubtitleState _subtitleState =
       const MoviePlayerSubtitleState(
-        options: <MoviePlayerSubtitleOption>[
-          MoviePlayerSubtitleOption(
-            subtitleId: 501,
-            label: 'ABC-001.zh.srt',
-            resolvedUrl: 'https://example.com/subtitles/501.srt',
-          ),
-        ],
-        selectedSubtitleId: null,
-        isLoading: false,
-        fetchStatus: 'succeeded',
-        errorMessage: null,
-      );
+    options: <MoviePlayerSubtitleOption>[
+      MoviePlayerSubtitleOption(
+        subtitleId: 501,
+        label: 'ABC-001.zh.srt',
+        resolvedUrl: 'https://example.com/subtitles/501.srt',
+      ),
+    ],
+    selectedSubtitleId: null,
+    isLoading: false,
+    fetchStatus: 'succeeded',
+    errorMessage: null,
+  );
 
   @override
   void dispose() {
@@ -1009,8 +1067,8 @@ class _MoviePlayerInfoDrawerHarnessState
                 onDismiss: () => setState(() => _activeDrawer = null),
                 onRateSelected: (rate) async {
                   setState(() => _activeDrawer = null);
-                  _speedDisplayNotifier
-                      .value = MoviePlayerMobileSpeedDisplayState(
+                  _speedDisplayNotifier.value =
+                      MoviePlayerMobileSpeedDisplayState(
                     rate: rate,
                     hasExplicitSelection: true,
                   );
@@ -1045,14 +1103,12 @@ class _MoviePlayerInfoDrawerHarnessState
                       children: buildMoviePlayerMobileDrawerToggleButtons(
                         activeDrawer: _activeDrawer,
                         speedDisplayListenable: _speedDisplayNotifier,
-                        onSpeedButtonPressed:
-                            () => _toggleMobileDrawer(
-                              MoviePlayerMobileDrawerType.speed,
-                            ),
-                        onSubtitleButtonPressed:
-                            () => _toggleMobileDrawer(
-                              MoviePlayerMobileDrawerType.subtitle,
-                            ),
+                        onSpeedButtonPressed: () => _toggleMobileDrawer(
+                          MoviePlayerMobileDrawerType.speed,
+                        ),
+                        onSubtitleButtonPressed: () => _toggleMobileDrawer(
+                          MoviePlayerMobileDrawerType.subtitle,
+                        ),
                       ),
                     ),
                   ),

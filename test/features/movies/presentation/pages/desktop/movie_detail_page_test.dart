@@ -169,7 +169,10 @@ void main() {
     expect(find.byIcon(Icons.local_fire_department_rounded), findsWidgets);
     expect(find.text('演员'), findsOneWidget);
     expect(find.text('媒体源'), findsOneWidget);
-    expect(find.text('H.264 · 22.8 Mbps · 29.97 fps'), findsOneWidget);
+    expect(
+      find.text('1920x1080 · 02:00:00 · H.264 · 22.8 Mbps · 29.97 fps'),
+      findsOneWidget,
+    );
     final sectionGap = AppComponentTokens.defaults().movieDetailSectionGap;
     final seriesTop = tester.getTopLeft(find.text('系列 · Attackers')).dy;
     final seriesBottom = tester.getBottomLeft(find.text('系列 · Attackers')).dy;
@@ -280,7 +283,7 @@ void main() {
     );
     expect(find.text('删除媒体文件'), findsOneWidget);
     expect(find.byKey(const Key('movie-media-delete-path')), findsOneWidget);
-    expect(find.textContaining('不可恢复'), findsOneWidget);
+    expect(find.textContaining('可能无法恢复'), findsOneWidget);
   });
 
   testWidgets(
@@ -530,7 +533,10 @@ void main() {
     expect(find.byType(RefreshIndicator), findsNothing);
     await tester.tap(find.text('预告 500.0 MB'));
     await tester.pumpAndSettle();
-    expect(find.text('H.265 · 6.5 Mbps · 24 fps'), findsOneWidget);
+    expect(
+      find.text('1280x720 · 02:00:00 · H.265 · 6.5 Mbps · 24 fps'),
+      findsOneWidget,
+    );
   });
 
   testWidgets(

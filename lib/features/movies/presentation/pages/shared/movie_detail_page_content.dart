@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sakuramedia/features/clips/data/dto/media_clip_dto.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_detail_dto.dart';
+import 'package:sakuramedia/features/media/data/media_storage_descriptor.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
 import 'package:sakuramedia/features/movies/presentation/actions/movie_collection_feature_actions.dart';
 import 'package:sakuramedia/features/movies/presentation/controllers/detail/movie_detail_controller.dart';
@@ -24,12 +25,11 @@ import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_pl
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_similar_movie_strip.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_tag_wrap.dart';
 
-typedef MovieDetailScrollViewBuilder =
-    Widget Function(
-      BuildContext context,
-      Widget content,
-      ScrollPhysics? scrollPhysics,
-    );
+typedef MovieDetailScrollViewBuilder = Widget Function(
+  BuildContext context,
+  Widget content,
+  ScrollPhysics? scrollPhysics,
+);
 
 class MovieDetailPageContent extends StatelessWidget {
   const MovieDetailPageContent({
@@ -52,6 +52,7 @@ class MovieDetailPageContent extends StatelessWidget {
     this.isDeletingSelectedMedia = false,
     this.onDeleteSelectedMedia,
     this.mediaItemsOverride,
+    this.storageDescriptors = const <int, MediaStorageDescriptor>{},
     this.onOpenMediaPointPreview,
     this.onRequestMediaPointMenu,
     this.onPlayTap,
@@ -82,6 +83,7 @@ class MovieDetailPageContent extends StatelessWidget {
 
   final MovieDetailDto movie;
   final List<MovieMediaItemDto>? mediaItemsOverride;
+  final Map<int, MediaStorageDescriptor> storageDescriptors;
   final String selectedPreviewKey;
   final String? selectedPreviewUrl;
   final bool isCollection;
@@ -100,14 +102,13 @@ class MovieDetailPageContent extends StatelessWidget {
   final bool isDeletingSelectedMedia;
   final ValueChanged<MovieMediaItemDto>? onDeleteSelectedMedia;
   final void Function(MovieMediaItemDto mediaItem, MovieMediaPointDto point)?
-  onOpenMediaPointPreview;
+      onOpenMediaPointPreview;
   final Future<void> Function(
     BuildContext context,
     MovieMediaItemDto mediaItem,
     MovieMediaPointDto point,
     Offset globalPosition,
-  )?
-  onRequestMediaPointMenu;
+  )? onRequestMediaPointMenu;
   final VoidCallback? onPlayTap;
   final VoidCallback? onSubscriptionTap;
   final Future<void> Function(Offset globalPosition)? onMoreActionsTap;
@@ -118,8 +119,7 @@ class MovieDetailPageContent extends StatelessWidget {
     BuildContext context,
     int index,
     Offset globalPosition,
-  )?
-  onRequestPlotImageMenu;
+  )? onRequestPlotImageMenu;
   final ValueChanged<int>? onOpenPlotPreview;
   final String? similarMoviesErrorMessage;
   final VoidCallback? onRetrySimilarMovies;
@@ -145,12 +145,11 @@ class MovieDetailPageContent extends StatelessWidget {
         builder: (context, constraints) {
           final viewportHeight = _resolveViewportHeight(context, constraints);
           final heroHeight = viewportHeight * 0.3;
-          final scrollBottomPadding =
-              bottomInfoBarVariant ==
-                      MovieDetailBottomInfoBarVariant.mobileFullWidth
-                  ? context.appComponentTokens.movieDetailBottomBarMinHeight
-                  : context.appComponentTokens.movieDetailBottomBarMinHeight +
-                      context.appSpacing.sm;
+          final scrollBottomPadding = bottomInfoBarVariant ==
+                  MovieDetailBottomInfoBarVariant.mobileFullWidth
+              ? context.appComponentTokens.movieDetailBottomBarMinHeight
+              : context.appComponentTokens.movieDetailBottomBarMinHeight +
+                  context.appSpacing.sm;
 
           final content = Padding(
             padding: EdgeInsets.only(bottom: scrollBottomPadding),
@@ -161,7 +160,7 @@ class MovieDetailPageContent extends StatelessWidget {
           );
           final scrollableContent =
               scrollViewBuilder?.call(context, content, scrollPhysics) ??
-              SingleChildScrollView(physics: scrollPhysics, child: content);
+                  SingleChildScrollView(physics: scrollPhysics, child: content);
 
           if (bottomInfoBarVariant ==
               MovieDetailBottomInfoBarVariant.desktopCard) {
@@ -311,6 +310,7 @@ class MovieDetailPageContent extends StatelessWidget {
             child: MovieMediaItemList(
               mediaItems: mediaItems,
               selectedMediaId: selectedMediaId,
+              storageDescriptors: storageDescriptors,
               onSelect: onMediaSelect,
               isDeletingSelectedMedia: isDeletingSelectedMedia,
               onDeleteSelectedMedia: onDeleteSelectedMedia,
@@ -344,11 +344,11 @@ class MovieDetailPageContent extends StatelessWidget {
             onMovieTap: onSimilarMovieTap,
             onMovieMenuRequest: (movie, globalPosition) =>
                 requestMovieCollectionMenu(
-                  context,
-                  movie.movieNumber,
-                  globalPosition,
-                  isSubscribed: movie.isSubscribed,
-                ),
+              context,
+              movie.movieNumber,
+              globalPosition,
+              isSubscribed: movie.isSubscribed,
+            ),
           ),
         ),
       ],
@@ -487,10 +487,8 @@ class MovieDetailLoadingSkeleton extends StatelessWidget {
                   _SkeletonBlock(height: heroHeight),
                   SizedBox(height: context.appSpacing.lg),
                   _SkeletonBlock(
-                    height:
-                        context
-                            .appComponentTokens
-                            .movieDetailPlotThumbnailHeight,
+                    height: context
+                        .appComponentTokens.movieDetailPlotThumbnailHeight,
                   ),
                   SizedBox(
                     height: context.appComponentTokens.movieDetailSectionGap,
@@ -580,10 +578,9 @@ List<MovieDetailStatItem> buildMovieDetailStatItems(
   BuildContext context,
   MovieDetailDto movie,
 ) {
-  final releaseLabel =
-      movie.releaseDate == null
-          ? '--'
-          : DateFormat('yy/MM/dd').format(movie.releaseDate!);
+  final releaseLabel = movie.releaseDate == null
+      ? '--'
+      : DateFormat('yy/MM/dd').format(movie.releaseDate!);
   final durationLabel =
       movie.durationMinutes > 0 ? '${movie.durationMinutes} 分钟' : '--';
   final scoreLabel = movie.score > 0 ? movie.score.toStringAsFixed(1) : '--';

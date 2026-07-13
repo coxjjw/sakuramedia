@@ -5,8 +5,10 @@ import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
+import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/media/data/invalid_media_dto.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
+import 'package:sakuramedia/features/media/data/media_storage_descriptor.dart';
 import 'package:sakuramedia/features/media/presentation/invalid_media_controller.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
@@ -32,6 +34,8 @@ class DesktopMediaMaintenancePage extends StatefulWidget {
 class _DesktopMediaMaintenancePageState
     extends State<DesktopMediaMaintenancePage> {
   late final InvalidMediaController _controller;
+  Map<int, MediaStorageDescriptor> _storageDescriptors =
+      const <int, MediaStorageDescriptor>{};
 
   @override
   void initState() {
@@ -40,6 +44,7 @@ class _DesktopMediaMaintenancePageState
     _controller.attachScrollListener();
     if (widget.active) {
       unawaited(_controller.initialize());
+      unawaited(_loadStorageDescriptors());
     }
   }
 
@@ -48,6 +53,7 @@ class _DesktopMediaMaintenancePageState
     super.didUpdateWidget(oldWidget);
     if (widget.active && !oldWidget.active) {
       unawaited(_controller.initialize());
+      unawaited(_loadStorageDescriptors());
     }
   }
 
@@ -134,12 +140,15 @@ class _DesktopMediaMaintenancePageState
               padding: EdgeInsets.only(bottom: context.appSpacing.md),
               child: _InvalidMediaCard(
                 item: item,
+                storage: resolveMediaStorageDescriptor(
+                  item.libraryId,
+                  _storageDescriptors,
+                ),
                 updatedAtText: formatUpdatedAtLabel(item.updatedAt) ?? '更新时间未知',
                 isChecking: _controller.checkingMediaId == item.id,
                 isDeleting: _controller.deletingMediaId == item.id,
                 canCheck: !isCheckingAnyMedia && !isDeletingAnyMedia,
-                canDelete:
-                    _controller.canDeleteMedia(item.id) &&
+                canDelete: _controller.canDeleteMedia(item.id) &&
                     !isCheckingAnyMedia &&
                     !isDeletingAnyMedia,
                 onCheck: () => _checkMedia(item),
@@ -157,7 +166,7 @@ class _DesktopMediaMaintenancePageState
       if (!mounted) {
         return;
       }
-      showToast(result.validAfter ? '媒体已恢复' : '文件仍不可用，已开放删除');
+      showToast(result.validAfter ? '媒体已恢复' : '媒体仍不可用，已开放删除');
     } catch (error) {
       if (mounted) {
         showToast(apiErrorMessage(error, fallback: '媒体有效性复查失败'));
@@ -184,17 +193,43 @@ class _DesktopMediaMaintenancePageState
   }
 
   Future<bool?> _confirmDeleteMedia(InvalidMediaDto item) {
+    final storage = resolveMediaStorageDescriptor(
+      item.libraryId,
+      _storageDescriptors,
+    );
     return showAppConfirmDialog(
       context,
       title: '删除失效媒体',
-      message:
-          '确认删除“${item.movieNumber}”的这条失效媒体记录和本地媒体文件？该操作不可恢复。请确认刚才复查后文件仍不可用。',
+      message: storage.isCloud115
+          ? '确认删除“${item.movieNumber}”的这条失效媒体记录和 115 网盘文件？网盘文件将进入 115 回收站。请确认刚才复查后媒体仍不可用。'
+          : storage.isLocal
+              ? '确认删除“${item.movieNumber}”的这条失效媒体记录和本地媒体文件？该操作不可恢复。请确认刚才复查后媒体仍不可用。'
+              : '确认删除“${item.movieNumber}”的这条失效媒体记录及对应媒体文件？该操作可能无法恢复。请确认刚才复查后媒体仍不可用。',
       confirmLabel: '删除',
       danger: true,
       dialogKey: const Key('invalid-media-delete-confirm-dialog'),
       confirmKey: const Key('invalid-media-delete-confirm-button'),
       cancelKey: const Key('invalid-media-delete-cancel-button'),
     );
+  }
+
+  Future<void> _loadStorageDescriptors() async {
+    MediaLibrariesApi? api;
+    try {
+      api = context.read<MediaLibrariesApi>();
+    } on ProviderNotFoundException {
+      return;
+    }
+    try {
+      final descriptors = buildMediaStorageDescriptors(
+        await api.getLibraries(),
+      );
+      if (mounted) {
+        setState(() => _storageDescriptors = descriptors);
+      }
+    } catch (_) {
+      // 来源信息是增强展示，加载失败不影响失效媒体维护主流程。
+    }
   }
 }
 
@@ -227,7 +262,7 @@ class _MediaMaintenanceHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '巡检标记为失效的本地媒体会出现在这里。你可以复查文件是否恢复，或清理已经确认不可用的记录。',
+                  '巡检标记为失效的媒体库内容会出现在这里。你可以复查媒体是否恢复，或清理已经确认不可用的记录。',
                   style: resolveAppTextStyle(
                     context,
                     size: AppTextSize.s12,
@@ -287,6 +322,7 @@ class _MediaMaintenanceLoadingState extends StatelessWidget {
 class _InvalidMediaCard extends StatelessWidget {
   const _InvalidMediaCard({
     required this.item,
+    required this.storage,
     required this.updatedAtText,
     required this.isChecking,
     required this.isDeleting,
@@ -297,6 +333,7 @@ class _InvalidMediaCard extends StatelessWidget {
   });
 
   final InvalidMediaDto item;
+  final MediaStorageDescriptor storage;
   final String updatedAtText;
   final bool isChecking;
   final bool isDeleting;
@@ -350,7 +387,7 @@ class _InvalidMediaCard extends StatelessWidget {
                 _InvalidMediaMetaLine(label: '更新时间', value: updatedAtText),
                 SizedBox(height: context.appSpacing.sm),
                 Text(
-                  item.path,
+                  _storageLocationText(item, storage),
                   key: Key('invalid-media-path-${item.id}'),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -411,6 +448,18 @@ class _InvalidMediaCard extends StatelessWidget {
     final mib = bytes / (1024 * 1024);
     return '${mib.toStringAsFixed(1)} MB';
   }
+
+  String _storageLocationText(
+    InvalidMediaDto item,
+    MediaStorageDescriptor storage,
+  ) {
+    final raw = item.path.trim();
+    if (storage.isCloud115 && raw.startsWith('cloud115:')) {
+      final fileName = raw.substring('cloud115:'.length).trim();
+      return fileName.isEmpty ? '115 网盘媒体' : fileName;
+    }
+    return raw.isEmpty ? storage.sourceLabel : raw;
+  }
 }
 
 class _InvalidMediaCover extends StatelessWidget {
@@ -435,24 +484,23 @@ class _InvalidMediaCover extends StatelessWidget {
       child: SizedBox(
         width: width,
         height: height,
-        child:
-            imageUrl == null || imageUrl!.isEmpty
-                ? DecoratedBox(
-                  key: Key('invalid-media-cover-placeholder-$movieNumber'),
-                  decoration: BoxDecoration(
-                    color: context.appColors.surfaceMuted,
-                  ),
-                  child: Icon(
-                    Icons.movie_creation_outlined,
-                    size: context.appComponentTokens.iconSize2xl,
-                    color: context.appTextPalette.muted,
-                  ),
-                )
-                : MaskedImage(
-                  key: Key('invalid-media-cover-$movieNumber'),
-                  url: imageUrl!,
-                  fit: fit,
+        child: imageUrl == null || imageUrl!.isEmpty
+            ? DecoratedBox(
+                key: Key('invalid-media-cover-placeholder-$movieNumber'),
+                decoration: BoxDecoration(
+                  color: context.appColors.surfaceMuted,
                 ),
+                child: Icon(
+                  Icons.movie_creation_outlined,
+                  size: context.appComponentTokens.iconSize2xl,
+                  color: context.appTextPalette.muted,
+                ),
+              )
+            : MaskedImage(
+                key: Key('invalid-media-cover-$movieNumber'),
+                url: imageUrl!,
+                fit: fit,
+              ),
       ),
     );
   }

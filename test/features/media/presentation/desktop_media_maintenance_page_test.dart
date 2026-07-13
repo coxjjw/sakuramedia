@@ -4,6 +4,7 @@ import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
+import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/presentation/desktop_media_maintenance_page.dart';
 import 'package:sakuramedia/theme.dart';
@@ -111,6 +112,67 @@ void main() {
     expect(find.text('先复查'), findsNWidgets(3));
   });
 
+  testWidgets(
+      'cloud115 invalid media hides locator prefix and uses cloud wording', (
+    tester,
+  ) async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media/invalid',
+      body: _invalidMediaPage(
+        total: 1,
+        items: [
+          <String, dynamic>{
+            ..._invalidMediaJson(id: 115, movieNumber: 'ABC-115'),
+            'path': 'cloud115:ABC-115.mp4',
+            'library_id': 9,
+            'library_name': '115 主库',
+          },
+        ],
+      ),
+    );
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media-libraries',
+      body: <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 9,
+          'name': '115 主库',
+          'backend': 'cloud115',
+          'backend_config': <String, dynamic>{
+            'root_cid': 'root',
+            'app': 'alipaymini',
+          },
+        },
+      ],
+    );
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/media/115/validity-check',
+      body: _validityResultJson(id: 115, revived: false, validAfter: false),
+    );
+
+    await _pumpPage(
+      tester,
+      sessionStore: sessionStore,
+      mediaApi: mediaApi,
+      mediaLibrariesApi: MediaLibrariesApi(apiClient: apiClient),
+    );
+
+    expect(find.text('ABC-115.mp4'), findsOneWidget);
+    expect(find.textContaining('cloud115:'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('invalid-media-check-115')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('invalid-media-delete-115')));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('115 网盘文件'), findsOneWidget);
+    expect(find.textContaining('进入 115 回收站'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 4));
+  });
+
   testWidgets('refresh button reloads first page', (tester) async {
     adapter.enqueueJson(
       method: 'GET',
@@ -190,7 +252,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('ABC-001'), findsOneWidget);
-    expect(find.text('文件仍不可用，已开放删除'), findsOneWidget);
+    expect(find.text('媒体仍不可用，已开放删除'), findsOneWidget);
     expect(find.text('删除'), findsOneWidget);
     await tester.pump(const Duration(seconds: 3));
   });
@@ -233,7 +295,7 @@ void main() {
       find.byKey(const Key('invalid-media-delete-confirm-dialog')),
       findsOneWidget,
     );
-    expect(find.textContaining('失效媒体记录和本地媒体文件'), findsOneWidget);
+    expect(find.textContaining('失效媒体记录及对应媒体文件'), findsOneWidget);
 
     await tester.tap(
       find.byKey(const Key('invalid-media-delete-cancel-button')),
@@ -319,6 +381,7 @@ Future<void> _pumpPage(
   WidgetTester tester, {
   required SessionStore sessionStore,
   required MediaApi mediaApi,
+  MediaLibrariesApi? mediaLibrariesApi,
 }) async {
   tester.view.physicalSize = const Size(1280, 900);
   tester.view.devicePixelRatio = 1;
@@ -330,6 +393,8 @@ Future<void> _pumpPage(
       providers: [
         ChangeNotifierProvider<SessionStore>.value(value: sessionStore),
         Provider<MediaApi>.value(value: mediaApi),
+        if (mediaLibrariesApi != null)
+          Provider<MediaLibrariesApi>.value(value: mediaLibrariesApi),
       ],
       child: MaterialApp(
         theme: sakuraThemeData,
@@ -370,10 +435,9 @@ Map<String, dynamic> _invalidMediaJson({
     'movie_title': title ?? 'Movie $id',
     'cover_image':
         coverUrl == null ? null : _imageJson(id: id * 10, url: coverUrl),
-    'thin_cover_image':
-        thinCoverUrl == null
-            ? null
-            : _imageJson(id: id * 10 + 1, url: thinCoverUrl),
+    'thin_cover_image': thinCoverUrl == null
+        ? null
+        : _imageJson(id: id * 10 + 1, url: thinCoverUrl),
     'path': '/library/main/$movieNumber.mp4',
     'library_id': 1,
     'library_name': 'Main Library',

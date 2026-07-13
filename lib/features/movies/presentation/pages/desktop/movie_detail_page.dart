@@ -5,9 +5,11 @@ import 'package:sakuramedia/core/media/image_save_service.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/core/network/api_exception.dart';
+import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/image_search/presentation/desktop_image_search_launcher.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
+import 'package:sakuramedia/features/media/data/media_storage_descriptor.dart';
 import 'package:sakuramedia/features/clips/data/api/clips_api.dart';
 import 'package:sakuramedia/features/clips/presentation/controllers/clip_mutation_change_notifier.dart';
 import 'package:sakuramedia/features/movies/data/dto/detail/movie_collection_type_dto.dart';
@@ -80,6 +82,7 @@ class _DesktopMovieDetailPageState extends State<DesktopMovieDetailPage>
       movieNumber: widget.movieNumber,
       fetchMovieDetail: context.read<MoviesApi>().getMovieDetail,
       fetchSimilarMovies: context.read<MoviesApi>().getSimilarMovies,
+      fetchMediaLibraries: _readMediaLibrariesApi()?.getLibraries,
     )..load();
     _movieClipsController = MovieClipsController(
       movieNumber: widget.movieNumber,
@@ -87,6 +90,14 @@ class _DesktopMovieDetailPageState extends State<DesktopMovieDetailPage>
       mutationNotifier: context.read<ClipMutationChangeNotifier>(),
     )..load();
     _loadMovieCollectionStatus();
+  }
+
+  MediaLibrariesApi? _readMediaLibrariesApi() {
+    try {
+      return context.read<MediaLibrariesApi>();
+    } on ProviderNotFoundException {
+      return null;
+    }
   }
 
   @override
@@ -130,6 +141,7 @@ class _DesktopMovieDetailPageState extends State<DesktopMovieDetailPage>
             return MovieDetailPageContent(
               movie: movie,
               mediaItemsOverride: mediaItems,
+              storageDescriptors: _controller.storageDescriptors,
               selectedPreviewKey: _controller.selectedPreviewKey,
               selectedPreviewUrl: _controller.selectedPreviewUrl,
               isCollection: isCollection,
@@ -342,18 +354,21 @@ class _DesktopMovieDetailPageState extends State<DesktopMovieDetailPage>
   }
 
   Future<bool?> _confirmDeleteMedia(MovieMediaItemDto mediaItem) {
+    final storage = resolveMediaStorageDescriptor(
+      mediaItem.libraryId,
+      _controller.storageDescriptors,
+    );
     return showAppConfirmDialog(
       context,
       title: '删除媒体文件',
-      message:
-          '确认删除媒体“${_buildMediaDeleteLabel(mediaItem)}”？该操作会删除本地媒体文件且不可恢复。',
+      message: _mediaDeleteMessage(mediaItem, storage),
       confirmLabel: '删除',
       danger: true,
       dialogKey: const Key('movie-media-delete-confirm-dialog'),
       confirmKey: const Key('movie-media-delete-confirm'),
       cancelKey: const Key('movie-media-delete-cancel'),
       extraContent: Text(
-        mediaItem.path,
+        _mediaStorageLabel(storage),
         key: const Key('movie-media-delete-path'),
         style: resolveAppTextStyle(
           context,
@@ -362,6 +377,27 @@ class _DesktopMovieDetailPageState extends State<DesktopMovieDetailPage>
         ),
       ),
     );
+  }
+
+  String _mediaDeleteMessage(
+    MovieMediaItemDto mediaItem,
+    MediaStorageDescriptor storage,
+  ) {
+    final prefix = '确认删除媒体“${_buildMediaDeleteLabel(mediaItem)}”？';
+    if (storage.isCloud115) {
+      return '$prefix 该操作会删除 115 网盘中的媒体文件（进入 115 回收站），并删除 SakuraMedia 记录。';
+    }
+    if (storage.isLocal) {
+      return '$prefix 该操作会删除本地媒体文件且不可恢复。';
+    }
+    return '$prefix 该操作会删除媒体文件及 SakuraMedia 记录，且可能无法恢复。';
+  }
+
+  String _mediaStorageLabel(MediaStorageDescriptor storage) {
+    final libraryName = storage.normalizedLibraryName;
+    return libraryName == null
+        ? storage.sourceLabel
+        : '${storage.sourceLabel} · $libraryName';
   }
 
   Future<void> _refreshAfterMediaDelete({required int deletedMediaId}) async {
@@ -594,7 +630,6 @@ class _DesktopMovieDetailPageState extends State<DesktopMovieDetailPage>
       mediaId: item.mediaId,
       libraryId: item.libraryId,
       playUrl: item.playUrl,
-      path: item.path,
       storageMode: item.storageMode,
       resolution: item.resolution,
       fileSizeBytes: item.fileSizeBytes,
@@ -842,7 +877,6 @@ class _DesktopMovieDetailPageState extends State<DesktopMovieDetailPage>
       mediaId: mediaId,
       libraryId: null,
       playUrl: '',
-      path: '',
       storageMode: '',
       resolution: '',
       fileSizeBytes: 0,
