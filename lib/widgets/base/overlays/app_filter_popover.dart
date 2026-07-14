@@ -31,6 +31,7 @@ class AppFilterPopover extends StatefulWidget {
     this.scrollViewKey,
     this.onOpened,
     this.initialTriggerSize = const Size(160, 36),
+    this.alignment = AppFilterPopoverAlignment.rightAlignedToTrigger,
   });
 
   final String triggerLabel;
@@ -66,9 +67,18 @@ class AppFilterPopover extends StatefulWidget {
 
   final Size initialTriggerSize;
 
+  /// 面板相对 trigger 的对齐方式。
+  /// - `rightAlignedToTrigger`（默认，movie / actor / ranking）：面板右边缘对齐
+  ///   trigger 右边缘，多出来的宽度向左延伸；trigger 靠右时看起来自然。
+  /// - `leftAlignedToTrigger`：面板左边缘对齐 trigger 左边缘，多出来的宽度
+  ///   向右延伸；trigger 位于容器左侧、且右侧有富余空间时更合适。
+  final AppFilterPopoverAlignment alignment;
+
   @override
   State<AppFilterPopover> createState() => _AppFilterPopoverState();
 }
+
+enum AppFilterPopoverAlignment { rightAlignedToTrigger, leftAlignedToTrigger }
 
 class _AppFilterPopoverState extends State<AppFilterPopover> {
   final LayerLink _layerLink = LayerLink();
@@ -177,9 +187,23 @@ class _AppFilterPopoverState extends State<AppFilterPopover> {
     final desiredWidth = _triggerSize.width + widget.panelExtraWidth;
     final panelWidth =
         desiredWidth.clamp(_triggerSize.width, overlayWidth).toDouble();
-    final leftSpace = _triggerOffsetInOverlay.dx;
-    final rightAlignedOffset =
-        -((panelWidth - _triggerSize.width).clamp(0, leftSpace)).toDouble();
+    final overflow = (panelWidth - _triggerSize.width).clamp(0, overlayWidth);
+    final horizontalOffset = switch (widget.alignment) {
+      // 右对齐：面板右边缘贴 trigger 右边缘，多出的宽度向左延伸，最多延伸
+      // 到 overlay 左边界（trigger 越靠右可用空间越大）。
+      AppFilterPopoverAlignment.rightAlignedToTrigger =>
+        -overflow.clamp(0, _triggerOffsetInOverlay.dx).toDouble(),
+      // 左对齐：面板左边缘贴 trigger 左边缘，多出的宽度向右延伸；trigger 太
+      // 靠右导致面板会超出 overlay 时，再把面板整体左移到刚好贴 overlay 右边。
+      AppFilterPopoverAlignment.leftAlignedToTrigger => () {
+          final rightSpace =
+              overlayWidth - _triggerOffsetInOverlay.dx - _triggerSize.width;
+          if (overflow <= rightSpace) {
+            return 0.0;
+          }
+          return -(overflow - rightSpace).toDouble();
+        }(),
+    };
 
     final overlayHeight = overlayBox?.size.height ?? mediaQuery.size.height;
     final panelTop =
@@ -204,7 +228,7 @@ class _AppFilterPopoverState extends State<AppFilterPopover> {
           link: _layerLink,
           showWhenUnlinked: false,
           offset: Offset(
-            rightAlignedOffset,
+            horizontalOffset,
             _triggerSize.height + _panelVerticalGap,
           ),
           child: Material(

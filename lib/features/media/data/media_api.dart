@@ -1,14 +1,104 @@
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/network/paginated_response_dto.dart';
 import 'package:sakuramedia/features/media/data/invalid_media_dto.dart';
+import 'package:sakuramedia/features/media/data/media_list_item_dto.dart';
 import 'package:sakuramedia/features/media/data/media_point_dto.dart';
 import 'package:sakuramedia/features/media/data/media_point_list_item_dto.dart';
+import 'package:sakuramedia/features/media/data/media_rapid_upload_dto.dart';
 import 'package:sakuramedia/features/media/data/media_validity_check_result_dto.dart';
 
 class MediaApi {
   const MediaApi({required ApiClient apiClient}) : _apiClient = apiClient;
 
   final ApiClient _apiClient;
+
+  /// `GET /media`：跨 JAV / videos 域的全局媒体列表。
+  ///
+  /// - [kind] 传 `all` / `jav` / `video`，`null` 走后端默认（`all`）。
+  /// - [libraryId] 指定媒体库过滤，null 时不加参数。
+  /// - [actorIds] 订阅女优 OR 筛选，会拼成逗号分隔字符串下发。
+  /// - [sort] 例如 `heat:desc`、`file_size_bytes:desc`，`null` 时后端默认 `created_at:desc`。
+  Future<PaginatedResponseDto<MediaListItemDto>> getMediaList({
+    int page = 1,
+    int pageSize = 20,
+    String? kind,
+    int? libraryId,
+    List<int>? actorIds,
+    String? sort,
+  }) async {
+    final queryParameters = <String, dynamic>{
+      'page': page,
+      'page_size': pageSize,
+    };
+    if (kind != null && kind.isNotEmpty) {
+      queryParameters['kind'] = kind;
+    }
+    if (libraryId != null) {
+      queryParameters['library_id'] = libraryId;
+    }
+    if (actorIds != null && actorIds.isNotEmpty) {
+      queryParameters['actor_ids'] = actorIds.join(',');
+    }
+    if (sort != null && sort.isNotEmpty) {
+      queryParameters['sort'] = sort;
+    }
+    final response = await _apiClient.get(
+      '/media',
+      queryParameters: queryParameters,
+    );
+    return PaginatedResponseDto<MediaListItemDto>.fromJson(
+      response,
+      MediaListItemDto.fromJson,
+    );
+  }
+
+  /// `POST /media/rapid-uploads`：异步创建一次秒传批次。
+  Future<MediaRapidUploadTriggerResponseDto> createMediaRapidUpload({
+    required List<int> mediaIds,
+    required int targetLibraryId,
+  }) async {
+    final response = await _apiClient.post(
+      '/media/rapid-uploads',
+      data: <String, dynamic>{
+        'media_ids': mediaIds,
+        'target_library_id': targetLibraryId,
+      },
+    );
+    return MediaRapidUploadTriggerResponseDto.fromJson(response);
+  }
+
+  /// `GET /media/rapid-uploads`：分页查询秒传批次。
+  Future<PaginatedResponseDto<MediaRapidUploadBatchListItemDto>>
+      getMediaRapidUploads({int page = 1, int pageSize = 20}) async {
+    final response = await _apiClient.get(
+      '/media/rapid-uploads',
+      queryParameters: <String, dynamic>{'page': page, 'page_size': pageSize},
+    );
+    return PaginatedResponseDto<MediaRapidUploadBatchListItemDto>.fromJson(
+      response,
+      MediaRapidUploadBatchListItemDto.fromJson,
+    );
+  }
+
+  /// `GET /media/rapid-uploads/{batch_id}`：单批次含 items 详情。
+  Future<MediaRapidUploadBatchDto> getMediaRapidUpload({
+    required int batchId,
+  }) async {
+    final response = await _apiClient.get('/media/rapid-uploads/$batchId');
+    return MediaRapidUploadBatchDto.fromJson(response);
+  }
+
+  /// `POST /media/rapid-uploads/{batch_id}/retry`：只重试失败/清理失败项。
+  ///
+  /// 若批次无可重试项，后端会以 `422 media_rapid_upload_no_retryable_items` 拒绝。
+  Future<MediaRapidUploadTriggerResponseDto> retryMediaRapidUpload({
+    required int batchId,
+  }) async {
+    final response = await _apiClient.post(
+      '/media/rapid-uploads/$batchId/retry',
+    );
+    return MediaRapidUploadTriggerResponseDto.fromJson(response);
+  }
 
   Future<PaginatedResponseDto<MediaPointListItemDto>> getGlobalMediaPoints({
     int page = 1,

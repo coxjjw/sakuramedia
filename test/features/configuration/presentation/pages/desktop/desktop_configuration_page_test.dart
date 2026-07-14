@@ -62,6 +62,7 @@ void main() {
           'configuration-tab-playlists',
           'configuration-tab-advanced',
           'configuration-tab-media-maintenance',
+          'configuration-tab-media-management',
         ];
         var previousTop = double.negativeInfinity;
         for (final key in categoryKeys) {

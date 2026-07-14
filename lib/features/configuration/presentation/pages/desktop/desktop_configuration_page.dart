@@ -8,6 +8,7 @@ import 'package:sakuramedia/features/configuration/presentation/pages/desktop/de
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/desktop_media_libraries_section.dart';
 import 'package:sakuramedia/features/configuration/presentation/pages/desktop/desktop_playlists_section.dart';
 import 'package:sakuramedia/features/media/presentation/desktop_media_maintenance_page.dart';
+import 'package:sakuramedia/features/media/presentation/desktop_media_management_page.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_rail.dart';
@@ -74,6 +75,11 @@ class _DesktopConfigurationPageState extends State<DesktopConfigurationPage> {
       itemKey: Key('configuration-tab-media-maintenance'),
       label: '媒体维护',
       icon: Icons.cleaning_services_outlined,
+    ),
+    _ConfigurationCategory(
+      itemKey: Key('configuration-tab-media-management'),
+      label: '媒体管理',
+      icon: Icons.folder_shared_outlined,
     ),
   ];
 
@@ -198,6 +204,8 @@ class _DesktopConfigurationPageState extends State<DesktopConfigurationPage> {
                     // 媒体维护页自带滚动控制器（无限滚动分页），直接铺满区域，
                     // 不再额外包一层滚动视图。
                     DesktopMediaMaintenancePage(active: _selectedIndex == 8),
+                    // 媒体管理页同样自带 AppPageFrame + 分页控制器，与维护页对称。
+                    DesktopMediaManagementPage(active: _selectedIndex == 9),
                   ],
                 ),
               ),

@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/core/network/api_client.dart';
 import 'package:sakuramedia/core/session/session_store.dart';
 import 'package:sakuramedia/features/media/data/media_api.dart';
+import 'package:sakuramedia/features/media/data/media_rapid_upload_dto.dart';
 
 import '../../../support/fake_http_client_adapter.dart';
 
@@ -341,4 +342,280 @@ void main() {
       expect(adapter.hitCount('DELETE', '/media/100/points/20'), 1);
     },
   );
+
+  test('getMediaList sends kind/library/actor/sort query params', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: <String, dynamic>{
+        'items': const <Map<String, dynamic>>[],
+        'page': 1,
+        'page_size': 20,
+        'total': 0,
+      },
+    );
+
+    await mediaApi.getMediaList(
+      page: 2,
+      pageSize: 30,
+      kind: 'jav',
+      libraryId: 5,
+      actorIds: const <int>[12, 34],
+      sort: 'heat:desc',
+    );
+
+    expect(adapter.requests.single.uri.queryParameters, <String, String>{
+      'page': '2',
+      'page_size': '30',
+      'kind': 'jav',
+      'library_id': '5',
+      'actor_ids': '12,34',
+      'sort': 'heat:desc',
+    });
+  });
+
+  test('getMediaList omits optional query params when not provided', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: <String, dynamic>{
+        'items': const <Map<String, dynamic>>[],
+        'page': 1,
+        'page_size': 20,
+        'total': 0,
+      },
+    );
+
+    await mediaApi.getMediaList();
+
+    expect(adapter.requests.single.uri.queryParameters, <String, String>{
+      'page': '1',
+      'page_size': '20',
+    });
+  });
+
+  test('getMediaList parses jav and video items', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media',
+      body: <String, dynamic>{
+        'items': [
+          <String, dynamic>{
+            'id': 100,
+            'kind': 'jav',
+            'movie_number': 'ABC-001',
+            'video_item_id': null,
+            'title': 'Movie 1',
+            'cover_image': <String, dynamic>{
+              'id': 88,
+              'origin': '/covers/abc-001-origin.webp',
+              'small': '/covers/abc-001-small.webp',
+              'medium': '/covers/abc-001-medium.webp',
+              'large': '/covers/abc-001-large.webp',
+            },
+            'thin_cover_image': null,
+            'library_id': 1,
+            'library_name': 'Main',
+            'path': '/library/main/abc-001.mp4',
+            'file_size_bytes': 2147483648,
+            'duration_seconds': 5400,
+            'resolution': '1920x1080',
+            'special_tags': '普通',
+            'valid': true,
+            'heat': 320,
+            'created_at': '2026-03-12T10:20:00Z',
+            'updated_at': '2026-03-12T10:20:00Z',
+          },
+          <String, dynamic>{
+            'id': 200,
+            'kind': 'video',
+            'movie_number': null,
+            'video_item_id': 999,
+            'title': 'Short video',
+            'cover_image': null,
+            'thin_cover_image': null,
+            'library_id': 2,
+            'library_name': null,
+            'path': 'cloud115:episode.mp4',
+            'file_size_bytes': 100,
+            'duration_seconds': 0,
+            'resolution': null,
+            'special_tags': '',
+            'valid': false,
+            'heat': null,
+            'created_at': '2026-03-12T10:20:00Z',
+            'updated_at': '2026-03-12T10:20:00Z',
+          },
+        ],
+        'page': 1,
+        'page_size': 20,
+        'total': 2,
+      },
+    );
+
+    final page = await mediaApi.getMediaList();
+
+    expect(page.items, hasLength(2));
+    final jav = page.items.first;
+    expect(jav.isJav, isTrue);
+    expect(jav.movieNumber, 'ABC-001');
+    expect(jav.displayHeading, 'ABC-001');
+    expect(jav.displaySubtitle, 'Movie 1');
+    expect(jav.heat, 320);
+    final video = page.items.last;
+    expect(video.isVideo, isTrue);
+    expect(video.videoItemId, 999);
+    expect(video.valid, isFalse);
+    expect(video.heat, isNull);
+    expect(video.displayHeading, 'Short video');
+    expect(video.displaySubtitle, isNull);
+  });
+
+  test('createMediaRapidUpload posts media_ids + target_library_id', () async {
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/media/rapid-uploads',
+      statusCode: 202,
+      body: <String, dynamic>{
+        'rapid_upload_batch_id': 42,
+        'task_run_id': 99,
+        'status': 'accepted',
+      },
+    );
+
+    final response = await mediaApi.createMediaRapidUpload(
+      mediaIds: const <int>[10, 20, 30],
+      targetLibraryId: 8,
+    );
+
+    expect(response.batchId, 42);
+    expect(response.taskRunId, 99);
+    expect(response.status, 'accepted');
+    expect(adapter.requests.single.body, <String, dynamic>{
+      'media_ids': <int>[10, 20, 30],
+      'target_library_id': 8,
+    });
+  });
+
+  test('getMediaRapidUploads returns a paginated batch list', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media/rapid-uploads',
+      body: <String, dynamic>{
+        'items': [
+          <String, dynamic>{
+            'id': 42,
+            'target_library_id': 8,
+            'retry_of_batch_id': null,
+            'task_run_id': 99,
+            'state': 'completed',
+            'total_count': 3,
+            'succeeded_count': 3,
+            'failed_count': 0,
+            'cleanup_failed_count': 0,
+            'started_at': '2026-03-12T10:00:00Z',
+            'finished_at': '2026-03-12T10:05:00Z',
+            'created_at': '2026-03-12T09:59:00Z',
+            'updated_at': '2026-03-12T10:05:00Z',
+          },
+        ],
+        'page': 1,
+        'page_size': 20,
+        'total': 1,
+      },
+    );
+
+    final page = await mediaApi.getMediaRapidUploads();
+
+    expect(page.total, 1);
+    expect(page.items.single.id, 42);
+    expect(page.items.single.hasRetryable, isFalse);
+    expect(page.items.single.pendingCount, 0);
+  });
+
+  test('getMediaRapidUpload returns a batch with items', () async {
+    adapter.enqueueJson(
+      method: 'GET',
+      path: '/media/rapid-uploads/42',
+      body: <String, dynamic>{
+        'id': 42,
+        'target_library_id': 8,
+        'retry_of_batch_id': null,
+        'task_run_id': 99,
+        'state': 'completed_with_errors',
+        'total_count': 3,
+        'succeeded_count': 2,
+        'failed_count': 1,
+        'cleanup_failed_count': 0,
+        'started_at': '2026-03-12T10:00:00Z',
+        'finished_at': '2026-03-12T10:05:00Z',
+        'created_at': '2026-03-12T09:59:00Z',
+        'updated_at': '2026-03-12T10:05:00Z',
+        'items': [
+          <String, dynamic>{
+            'id': 1,
+            'media_id': 10,
+            'action': 'rapid_upload',
+            'state': 'succeeded',
+            'source_path': '/library/main/a.mp4',
+            'source_size_bytes': 100,
+            'source_sha1': 'abcdef',
+            'target_fid': 'fid-1',
+            'target_pickcode': 'pc-1',
+            'target_name': 'a.mp4',
+            'error_message': null,
+            'started_at': '2026-03-12T10:00:00Z',
+            'finished_at': '2026-03-12T10:01:00Z',
+            'created_at': '2026-03-12T09:59:00Z',
+            'updated_at': '2026-03-12T10:01:00Z',
+          },
+          <String, dynamic>{
+            'id': 2,
+            'media_id': 20,
+            'action': 'rapid_upload',
+            'state': 'failed',
+            'source_path': '/library/main/b.mp4',
+            'source_size_bytes': 200,
+            'source_sha1': null,
+            'target_fid': null,
+            'target_pickcode': null,
+            'target_name': null,
+            'error_message': 'boom',
+            'started_at': '2026-03-12T10:00:00Z',
+            'finished_at': '2026-03-12T10:01:00Z',
+            'created_at': '2026-03-12T09:59:00Z',
+            'updated_at': '2026-03-12T10:01:00Z',
+          },
+        ],
+      },
+    );
+
+    final batch = await mediaApi.getMediaRapidUpload(batchId: 42);
+
+    expect(batch.id, 42);
+    expect(batch.state.label, '部分完成');
+    expect(batch.hasRetryable, isTrue);
+    expect(batch.items, hasLength(2));
+    expect(batch.items.first.state.isTerminal, isTrue);
+    expect(batch.items.last.state.isRetryable, isTrue);
+    expect(batch.items.last.errorMessage, 'boom');
+  });
+
+  test('retryMediaRapidUpload posts to /retry endpoint', () async {
+    adapter.enqueueJson(
+      method: 'POST',
+      path: '/media/rapid-uploads/42/retry',
+      statusCode: 202,
+      body: <String, dynamic>{
+        'rapid_upload_batch_id': 43,
+        'task_run_id': 100,
+        'status': 'accepted',
+      },
+    );
+
+    final response = await mediaApi.retryMediaRapidUpload(batchId: 42);
+
+    expect(response.batchId, 43);
+    expect(adapter.hitCount('POST', '/media/rapid-uploads/42/retry'), 1);
+  });
 }
