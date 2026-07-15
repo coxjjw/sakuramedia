@@ -253,34 +253,29 @@ class MediaRapidUploadBatchDto extends MediaRapidUploadBatchListItemDto {
   final List<MediaRapidUploadItemDto> items;
 
   factory MediaRapidUploadBatchDto.fromJson(Map<String, dynamic> json) {
+    final base = MediaRapidUploadBatchListItemDto.fromJson(json);
     final rawItems = json['items'];
     final items = rawItems is List
         ? rawItems
-            .whereType<Map>()
-            .map(
-              (item) => MediaRapidUploadItemDto.fromJson(
-                item.map(
-                  (dynamic key, dynamic value) =>
-                      MapEntry(key.toString(), value),
-                ),
-              ),
-            )
+            .map(asMapOrNull)
+            .whereType<Map<String, dynamic>>()
+            .map(MediaRapidUploadItemDto.fromJson)
             .toList(growable: false)
-        : <MediaRapidUploadItemDto>[];
+        : const <MediaRapidUploadItemDto>[];
     return MediaRapidUploadBatchDto(
-      id: asInt(json['id']),
-      targetLibraryId: asInt(json['target_library_id']),
-      retryOfBatchId: asIntOrNull(json['retry_of_batch_id']),
-      taskRunId: asIntOrNull(json['task_run_id']),
-      state: MediaRapidUploadBatchStateX.fromWire(json['state']),
-      totalCount: asInt(json['total_count']),
-      succeededCount: asInt(json['succeeded_count']),
-      failedCount: asInt(json['failed_count']),
-      cleanupFailedCount: asInt(json['cleanup_failed_count']),
-      startedAt: asDateTime(json['started_at']),
-      finishedAt: asDateTime(json['finished_at']),
-      createdAt: asDateTime(json['created_at']),
-      updatedAt: asDateTime(json['updated_at']),
+      id: base.id,
+      targetLibraryId: base.targetLibraryId,
+      retryOfBatchId: base.retryOfBatchId,
+      taskRunId: base.taskRunId,
+      state: base.state,
+      totalCount: base.totalCount,
+      succeededCount: base.succeededCount,
+      failedCount: base.failedCount,
+      cleanupFailedCount: base.cleanupFailedCount,
+      startedAt: base.startedAt,
+      finishedAt: base.finishedAt,
+      createdAt: base.createdAt,
+      updatedAt: base.updatedAt,
       items: items,
     );
   }

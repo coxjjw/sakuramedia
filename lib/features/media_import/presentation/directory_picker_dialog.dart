@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/media_import/data/import_job_dto.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_source.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 import 'package:sakuramedia/widgets/domain/media_import/media_import_source_picker.dart';
 import 'package:sakuramedia/widgets/domain/media_import/media_library_selector_field.dart';
 
@@ -24,27 +21,15 @@ class MediaImportRequest {
 }
 
 Future<MediaImportRequest?> showDirectoryPickerDialog(BuildContext context) {
-  final platform = Provider.of<AppPlatform?>(context, listen: false);
-  if (platform == AppPlatform.mobile) {
-    return showAppBottomDrawer<MediaImportRequest>(
-      context: context,
-      drawerKey: const Key('media-import-directory-picker-drawer'),
-      heightFactor: 0.9,
-      builder: (_) => const _DirectoryPickerDialog(variant: _PickerVariant.drawer),
-    );
-  }
-  return showDialog<MediaImportRequest>(
+  return showAppAdaptiveModal<MediaImportRequest>(
     context: context,
-    builder: (_) => const _DirectoryPickerDialog(variant: _PickerVariant.dialog),
+    modalKey: const Key('media-import-directory-picker-modal'),
+    builder: (_) => const _DirectoryPickerDialog(),
   );
 }
 
-enum _PickerVariant { dialog, drawer }
-
 class _DirectoryPickerDialog extends StatefulWidget {
-  const _DirectoryPickerDialog({required this.variant});
-
-  final _PickerVariant variant;
+  const _DirectoryPickerDialog();
 
   @override
   State<_DirectoryPickerDialog> createState() => _DirectoryPickerDialogState();
@@ -89,7 +74,7 @@ class _DirectoryPickerDialogState extends State<_DirectoryPickerDialog> {
     final spacing = context.appSpacing;
     final deletingCloudSource =
         _isCloud115 && _transferMode == TransferMode.cleanupSource;
-    final body = SingleChildScrollView(
+    return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -150,15 +135,6 @@ class _DirectoryPickerDialogState extends State<_DirectoryPickerDialog> {
           ),
         ],
       ),
-    );
-
-    if (widget.variant == _PickerVariant.drawer) {
-      return body;
-    }
-    return AppDesktopDialog(
-      dialogKey: const Key('media-import-directory-picker-dialog'),
-      width: context.appLayoutTokens.dialogWidthMd,
-      child: body,
     );
   }
 }

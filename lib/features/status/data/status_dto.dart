@@ -1,4 +1,5 @@
-import 'package:sakuramedia/core/json/json_parse.dart' show asDateTime, asMap;
+import 'package:sakuramedia/core/json/json_parse.dart'
+    show asDateTime, asInt, asMap;
 
 class ActorStatsDto {
   const ActorStatsDto({
@@ -134,8 +135,8 @@ class ImageSearchIndexingStatsDto {
 
   factory ImageSearchIndexingStatsDto.fromJson(Map<String, dynamic> json) {
     return ImageSearchIndexingStatsDto(
-      pendingThumbnails: _asInt(json['pending_thumbnails']),
-      failedThumbnails: _asInt(json['failed_thumbnails']),
+      pendingThumbnails: asInt(json['pending_thumbnails']),
+      failedThumbnails: asInt(json['failed_thumbnails']),
     );
   }
 
@@ -161,9 +162,9 @@ class StatusImageSearchDto {
   factory StatusImageSearchDto.fromJson(Map<String, dynamic> json) {
     return StatusImageSearchDto(
       healthy: _asBool(json['healthy']),
-      joyTag: ImageSearchJoyTagStatsDto.fromJson(_asJsonMap(json['joytag'])),
+      joyTag: ImageSearchJoyTagStatsDto.fromJson(asMap(json['joytag'])),
       indexing: ImageSearchIndexingStatsDto.fromJson(
-        _asJsonMap(json['indexing']),
+        asMap(json['indexing']),
       ),
     );
   }
@@ -214,7 +215,7 @@ class StatusMetadataProviderTestDto {
       error: errorJson == null
           ? null
           : StatusMetadataProviderTestErrorDto.fromJson(
-              _asJsonMap(errorJson),
+              asMap(errorJson),
             ),
     );
   }
@@ -257,7 +258,7 @@ class StatusCloud115LibraryCookieDto {
 
   factory StatusCloud115LibraryCookieDto.fromJson(Map<String, dynamic> json) {
     return StatusCloud115LibraryCookieDto(
-      libraryId: _asInt(json['library_id']),
+      libraryId: asInt(json['library_id']),
       name: json['name'] as String? ?? '',
       cookieStatus: Cloud115CookieStatusX.fromWire(json['cookie_status']),
     );
@@ -285,10 +286,10 @@ class StatusCloud115CookieSummaryDto {
 
   factory StatusCloud115CookieSummaryDto.fromJson(Map<String, dynamic> json) {
     return StatusCloud115CookieSummaryDto(
-      total: _asInt(json['total']),
-      alive: _asInt(json['alive']),
-      expired: _asInt(json['expired']),
-      unavailable: _asInt(json['unavailable']),
+      total: asInt(json['total']),
+      alive: asInt(json['alive']),
+      expired: asInt(json['expired']),
+      unavailable: asInt(json['unavailable']),
     );
   }
 
@@ -354,13 +355,13 @@ class StatusDto {
   factory StatusDto.fromJson(Map<String, dynamic> json) {
     return StatusDto(
       backendVersion: json['backend_version'] as String? ?? '',
-      actors: ActorStatsDto.fromJson(_asJsonMap(json['actors'])),
-      movies: MovieStatsDto.fromJson(_asJsonMap(json['movies'])),
-      mediaFiles: MediaFileStatsDto.fromJson(_asJsonMap(json['media_files'])),
+      actors: ActorStatsDto.fromJson(asMap(json['actors'])),
+      movies: MovieStatsDto.fromJson(asMap(json['movies'])),
+      mediaFiles: MediaFileStatsDto.fromJson(asMap(json['media_files'])),
       mediaLibraries: MediaLibraryStatsDto.fromJson(
-        _asJsonMap(json['media_libraries']),
+        asMap(json['media_libraries']),
       ),
-      thumbnails: ThumbnailStatsDto.fromJson(_asJsonMap(json['thumbnails'])),
+      thumbnails: ThumbnailStatsDto.fromJson(asMap(json['thumbnails'])),
     );
   }
 
@@ -374,22 +375,6 @@ class StatusDto {
       'thumbnails': thumbnails.toJson(),
     };
   }
-}
-
-Map<String, dynamic> _asJsonMap(dynamic value) {
-  if (value is Map<String, dynamic>) {
-    return value;
-  }
-  if (value is Map) {
-    return value.map(
-      (dynamic key, dynamic data) => MapEntry(key.toString(), data),
-    );
-  }
-  return const <String, dynamic>{};
-}
-
-int _asInt(dynamic value) {
-  return value is int ? value : 0;
 }
 
 bool _asBool(dynamic value) {

@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_settings_group.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 
 /// 「媒体库存储类型」选择器：本地目录 / 115 网盘。
 ///
@@ -67,21 +64,10 @@ Future<MediaLibraryBackend?> showMediaLibraryBackendPicker(
     );
   }
 
-  final platform = Provider.of<AppPlatform?>(context, listen: false);
-  if (platform == AppPlatform.mobile) {
-    return showAppBottomDrawer<MediaLibraryBackend>(
-      context: context,
-      drawerKey: const Key('media-library-backend-picker-drawer'),
-      maxHeightFactor: 0.48,
-      builder: buildBody,
-    );
-  }
-  return showDialog<MediaLibraryBackend>(
+  return showAppAdaptiveModal<MediaLibraryBackend>(
     context: context,
-    builder: (dialogContext) => AppDesktopDialog(
-      dialogKey: const Key('media-library-backend-picker-dialog'),
-      width: dialogContext.appLayoutTokens.dialogWidthMd,
-      child: buildBody(dialogContext),
-    ),
+    modalKey: const Key('media-library-backend-picker-drawer'),
+    mobileMaxHeightFactor: 0.48,
+    builder: buildBody,
   );
 }

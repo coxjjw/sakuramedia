@@ -4,7 +4,6 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/core/network/api_error_message.dart';
 import 'package:sakuramedia/features/configuration/data/api/media_libraries_api.dart';
 import 'package:sakuramedia/features/configuration/data/dto/cloud115_qr_login_dto.dart';
@@ -16,37 +15,19 @@ import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
 import 'package:sakuramedia/widgets/base/forms/app_select_field.dart';
 import 'package:sakuramedia/widgets/base/forms/app_text_field.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_notice_card.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
-import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_adaptive_modal.dart';
 
 Future<MediaLibraryDto?> showCloud115LibraryLoginFlow(
   BuildContext context, {
   MediaLibraryDto? reauthLibrary,
 }) {
-  Widget buildBody(BuildContext modalContext) => _Cloud115LibraryLoginBody(
-        reauthLibrary: reauthLibrary,
-      );
-
-  final platform = Provider.of<AppPlatform?>(context, listen: false);
-  if (platform == AppPlatform.mobile) {
-    return showAppBottomDrawer<MediaLibraryDto>(
-      context: context,
-      drawerKey: const Key('cloud115-login-drawer'),
-      heightFactor: 0.9,
-      enableDrag: false,
-      isDismissible: false,
-      builder: buildBody,
-    );
-  }
-  return showDialog<MediaLibraryDto>(
+  return showAppAdaptiveModal<MediaLibraryDto>(
     context: context,
+    modalKey: const Key('cloud115-login-modal'),
     barrierDismissible: false,
-    builder: (dialogContext) => AppDesktopDialog(
-      dialogKey: const Key('cloud115-login-dialog'),
-      width: dialogContext.appLayoutTokens.dialogWidthMd,
-      showCloseButton: false,
-      child: buildBody(dialogContext),
-    ),
+    enableDrag: false,
+    showDesktopCloseButton: false,
+    builder: (_) => _Cloud115LibraryLoginBody(reauthLibrary: reauthLibrary),
   );
 }
 
