@@ -3,6 +3,7 @@ import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.da
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
+import 'package:sakuramedia/widgets/base/interaction/selection/app_selectable_tile.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 
@@ -179,82 +180,60 @@ class _LibraryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
     final spacing = context.appSpacing;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: context.appRadius.mdBorder,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          padding: EdgeInsets.symmetric(
-            horizontal: spacing.md,
-            vertical: spacing.md,
+    return AppSelectableTile(
+      selected: selected,
+      onTap: onTap,
+      child: Row(
+        children: [
+          Radio<int>(
+            key: Key('rapid-upload-target-radio-${library.id}'),
+            value: library.id,
+            groupValue: selected ? library.id : null,
+            onChanged: (_) => onTap(),
           ),
-          decoration: BoxDecoration(
-            color: selected ? colors.selectionSurface : colors.surfaceMuted,
-            borderRadius: context.appRadius.mdBorder,
-            border: Border.all(
-              color: selected ? colors.selectionBorder : colors.borderSubtle,
-              width: selected ? 1.5 : 1,
-            ),
-          ),
-          child: Row(
-            children: [
-              Radio<int>(
-                key: Key('rapid-upload-target-radio-${library.id}'),
-                value: library.id,
-                groupValue: selected ? library.id : null,
-                onChanged: (_) => onTap(),
-              ),
-              SizedBox(width: spacing.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          SizedBox(width: spacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            library.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: resolveAppTextStyle(
-                              context,
-                              size: AppTextSize.s14,
-                              weight: AppTextWeight.semibold,
-                              tone: AppTextTone.primary,
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: spacing.sm),
-                        const AppBadge(
-                          label: '115 网盘',
-                          tone: AppBadgeTone.info,
-                        ),
-                      ],
-                    ),
-                    if (library.rootCid.isNotEmpty) ...[
-                      SizedBox(height: spacing.xs),
-                      Text(
-                        '根目录 CID：${library.rootCid}',
+                    Expanded(
+                      child: Text(
+                        library.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: resolveAppTextStyle(
                           context,
-                          size: AppTextSize.s12,
-                          weight: AppTextWeight.regular,
-                          tone: AppTextTone.muted,
+                          size: AppTextSize.s14,
+                          weight: AppTextWeight.semibold,
+                          tone: AppTextTone.primary,
                         ),
                       ),
-                    ],
+                    ),
+                    SizedBox(width: spacing.sm),
+                    const AppBadge(label: '115 网盘', tone: AppBadgeTone.info),
                   ],
                 ),
-              ),
-            ],
+                if (library.rootCid.isNotEmpty) ...[
+                  SizedBox(height: spacing.xs),
+                  Text(
+                    '根目录 CID：${library.rootCid}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: resolveAppTextStyle(
+                      context,
+                      size: AppTextSize.s12,
+                      weight: AppTextWeight.regular,
+                      tone: AppTextTone.muted,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

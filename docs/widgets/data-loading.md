@@ -50,6 +50,14 @@
 - **required**: `isSelected`
 - **何时用**: 多选模式下,卡片右上角覆盖。已经在 `ClipGridCard` / `ClipCoverCard` / `CollectionMemberCard` 等用了——新增可选卡片直接复用,**别再自己画一个**。
 
+## AppSelectableTile
+- **路径**: `lib/widgets/base/interaction/selection/app_selectable_tile.dart`
+- **用途**: 「可选中卡片」外壳 —— `Material→InkWell→AnimatedContainer(120ms)` 圆角边框卡,选中/未选态自动切换 `selectionSurface/selectionBorder` 与 `surfaceMuted/borderSubtle`。
+- **required**: `selected` · `onTap` · `child`(Checkbox/Radio + 内容 caller 自组装)
+- **可选**: `padding`(默认 `EdgeInsets.all(spacing.md)`)
+- **何时用**: 需要"选中态卡片行/卡片"的多选(Checkbox)或单选(Radio)场景 —— 例如媒体管理页 `_MediaRow`、秒传目标库对话框 `_LibraryTile`。**别再手写 Material→InkWell→AnimatedContainer→selectionSurface 那一坨**。
+- **何时不用**: 不需要选中态、只是普通卡片 → `AppContentCard`;或者已经在网格里而选中标记只需要角标 → 用 `SelectionCheckBadge` 叠在封面上。
+
 ## AppAdaptiveCardGrid&lt;T&gt;
 - **路径**: `lib/widgets/base/layout/grids/app_adaptive_card_grid.dart`
 - **用途**: **四态卡片网格的唯一入口**——按 `((width+spacing)/(target+spacing)).floor()` 算列 + 「骨架 → 错误 → 空 → 内容」四态壳一次封死。消除 movies / actors / rankings / videos 四份网格的 copy-paste,新网格**别再手写 `LayoutBuilder + GridView.builder`**。
