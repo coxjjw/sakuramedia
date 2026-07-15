@@ -45,7 +45,7 @@ class MediaBrowseController extends PagedLoadController<MediaListItemDto> {
   /// 依赖 [reload] 覆写会 `_selectedIds.clear() + notifyListenersSafely()`，
   /// 这里只更新 `_filterState` 就行，避免双通知。
   Future<void> applyFilterState(MediaBrowseFilterState next) {
-    if (identical(next, _filterState) || _filtersEqual(_filterState, next)) {
+    if (next == _filterState) {
       return Future<void>.value();
     }
     _filterState = next;
@@ -131,15 +131,5 @@ class MediaBrowseController extends PagedLoadController<MediaListItemDto> {
     }
     _selectedIds.removeAll(targets);
     notifyListenersSafely();
-  }
-
-  static bool _filtersEqual(
-    MediaBrowseFilterState a,
-    MediaBrowseFilterState b,
-  ) {
-    return a.kind == b.kind &&
-        a.libraryId == b.libraryId &&
-        a.sortField == b.sortField &&
-        a.sortDirection == b.sortDirection;
   }
 }

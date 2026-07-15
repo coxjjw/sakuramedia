@@ -136,9 +136,7 @@ class MediaBrowseFilterSectionGroup extends StatelessWidget {
             for (final library in libraries)
               AppTextButton(
                 key: Key('media-library-filter-${library.id}'),
-                label: library.isCloud115
-                    ? '${library.name}（115）'
-                    : library.name,
+                label: library.displayLabel,
                 size: AppTextButtonSize.xSmall,
                 isSelected: filterState.libraryId == library.id,
                 onPressed: () => onChanged(

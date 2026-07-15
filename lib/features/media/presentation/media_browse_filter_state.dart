@@ -97,6 +97,18 @@ class MediaBrowseFilterState {
       sortDirection: sortDirection ?? this.sortDirection,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MediaBrowseFilterState &&
+          other.kind == kind &&
+          other.libraryId == libraryId &&
+          other.sortField == sortField &&
+          other.sortDirection == sortDirection;
+
+  @override
+  int get hashCode => Object.hash(kind, libraryId, sortField, sortDirection);
 }
 
 const Object _sentinel = Object();

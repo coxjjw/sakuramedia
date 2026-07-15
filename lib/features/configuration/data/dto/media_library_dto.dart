@@ -75,6 +75,9 @@ class MediaLibraryDto {
   bool get isLocal => backend == MediaLibraryBackend.local;
   bool get isCloud115 => backend == MediaLibraryBackend.cloud115;
 
+  /// 下拉选项 / 徽章 / 目标库选择器等展示场景的通用标签：115 库自带后缀。
+  String get displayLabel => isCloud115 ? '$name（115）' : name;
+
   String get rootPath =>
       backendConfig['root_path'] as String? ?? _legacyRootPath ?? '';
 

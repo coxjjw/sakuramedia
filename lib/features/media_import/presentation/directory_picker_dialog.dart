@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:sakuramedia/app/app_platform.dart';
 import 'package:sakuramedia/features/configuration/data/dto/media_library_dto.dart';
 import 'package:sakuramedia/features/media_import/data/import_job_dto.dart';
 import 'package:sakuramedia/features/media_import/data/media_import_source.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/actions/app_button.dart';
+import 'package:sakuramedia/widgets/base/overlays/app_bottom_drawer.dart';
 import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/widgets/domain/media_import/media_import_source_picker.dart';
 import 'package:sakuramedia/widgets/domain/media_import/media_library_selector_field.dart';
@@ -21,14 +24,27 @@ class MediaImportRequest {
 }
 
 Future<MediaImportRequest?> showDirectoryPickerDialog(BuildContext context) {
+  final platform = Provider.of<AppPlatform?>(context, listen: false);
+  if (platform == AppPlatform.mobile) {
+    return showAppBottomDrawer<MediaImportRequest>(
+      context: context,
+      drawerKey: const Key('media-import-directory-picker-drawer'),
+      heightFactor: 0.9,
+      builder: (_) => const _DirectoryPickerDialog(variant: _PickerVariant.drawer),
+    );
+  }
   return showDialog<MediaImportRequest>(
     context: context,
-    builder: (_) => const _DirectoryPickerDialog(),
+    builder: (_) => const _DirectoryPickerDialog(variant: _PickerVariant.dialog),
   );
 }
 
+enum _PickerVariant { dialog, drawer }
+
 class _DirectoryPickerDialog extends StatefulWidget {
-  const _DirectoryPickerDialog();
+  const _DirectoryPickerDialog({required this.variant});
+
+  final _PickerVariant variant;
 
   @override
   State<_DirectoryPickerDialog> createState() => _DirectoryPickerDialogState();
@@ -73,71 +89,76 @@ class _DirectoryPickerDialogState extends State<_DirectoryPickerDialog> {
     final spacing = context.appSpacing;
     final deletingCloudSource =
         _isCloud115 && _transferMode == TransferMode.cleanupSource;
+    final body = SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '新建媒体导入',
+            style: resolveAppTextStyle(
+              context,
+              size: AppTextSize.s18,
+              weight: AppTextWeight.semibold,
+              tone: AppTextTone.primary,
+            ),
+          ),
+          SizedBox(height: spacing.md),
+          MediaLibrarySelectorField(
+            selectedLibraryId: _selectedLibrary?.id,
+            onLibraryChanged: _handleLibraryChanged,
+          ),
+          if (_selectedLibrary != null) ...[
+            SizedBox(height: spacing.md),
+            MediaImportSourcePicker(
+              selectedLibrary: _selectedLibrary,
+              transferMode: _transferMode,
+              onSourceChanged: (source) {
+                if (source == _source) {
+                  return;
+                }
+                setState(() => _source = source);
+              },
+              onTransferModeChanged: (mode) {
+                if (mode == _transferMode) {
+                  return;
+                }
+                setState(() => _transferMode = mode);
+              },
+            ),
+          ],
+          SizedBox(height: spacing.xl),
+          Row(
+            children: [
+              Expanded(
+                child: AppButton(
+                  key: const Key('media-import-picker-cancel-button'),
+                  label: '取消',
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ),
+              SizedBox(width: spacing.md),
+              Expanded(
+                child: AppButton(
+                  key: const Key('media-import-picker-submit-button'),
+                  label: deletingCloudSource ? '导入并删除源文件' : '开始导入',
+                  variant: AppButtonVariant.primary,
+                  onPressed: _canSubmit ? _submit : null,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    if (widget.variant == _PickerVariant.drawer) {
+      return body;
+    }
     return AppDesktopDialog(
       dialogKey: const Key('media-import-directory-picker-dialog'),
       width: context.appLayoutTokens.dialogWidthMd,
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '新建媒体导入',
-              style: resolveAppTextStyle(
-                context,
-                size: AppTextSize.s18,
-                weight: AppTextWeight.semibold,
-                tone: AppTextTone.primary,
-              ),
-            ),
-            SizedBox(height: spacing.md),
-            MediaLibrarySelectorField(
-              selectedLibraryId: _selectedLibrary?.id,
-              onLibraryChanged: _handleLibraryChanged,
-            ),
-            if (_selectedLibrary != null) ...[
-              SizedBox(height: spacing.md),
-              MediaImportSourcePicker(
-                selectedLibrary: _selectedLibrary,
-                transferMode: _transferMode,
-                onSourceChanged: (source) {
-                  if (source == _source) {
-                    return;
-                  }
-                  setState(() => _source = source);
-                },
-                onTransferModeChanged: (mode) {
-                  if (mode == _transferMode) {
-                    return;
-                  }
-                  setState(() => _transferMode = mode);
-                },
-              ),
-            ],
-            SizedBox(height: spacing.xl),
-            Row(
-              children: [
-                Expanded(
-                  child: AppButton(
-                    key: const Key('media-import-picker-cancel-button'),
-                    label: '取消',
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ),
-                SizedBox(width: spacing.md),
-                Expanded(
-                  child: AppButton(
-                    key: const Key('media-import-picker-submit-button'),
-                    label: deletingCloudSource ? '导入并删除源文件' : '开始导入',
-                    variant: AppButtonVariant.primary,
-                    onPressed: _canSubmit ? _submit : null,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+      child: body,
     );
   }
 }
