@@ -92,48 +92,20 @@ class DownloadClientProbeStatusChip extends StatelessWidget {
     BuildContext context,
     DownloadClientProbeChipState state,
   ) {
-    final colors = context.appColors;
     switch (state) {
       case DownloadClientProbeChipState.notTested:
-        return AppStatusChipPalette(
-          background: colors.surfaceMuted,
-          borderColor: colors.borderSubtle,
-          tone: AppTextTone.secondary,
-          foreground: context.appTextPalette.secondary,
-          icon: Icons.radio_button_unchecked,
-        );
+        return AppStatusChipPalette.neutral(context);
       case DownloadClientProbeChipState.probing:
-        return AppStatusChipPalette(
-          background: colors.surfaceMuted,
-          borderColor: colors.borderSubtle,
-          tone: AppTextTone.secondary,
-          foreground: context.appTextPalette.secondary,
+        return AppStatusChipPalette.neutral(
+          context,
           icon: Icons.hourglass_top,
         );
       case DownloadClientProbeChipState.healthy:
-        return AppStatusChipPalette(
-          background: colors.successSurface,
-          borderColor: null,
-          tone: AppTextTone.success,
-          foreground: resolveAppTextToneColor(context, AppTextTone.success),
-          icon: Icons.check_circle_outline,
-        );
+        return AppStatusChipPalette.success(context);
       case DownloadClientProbeChipState.warning:
-        return AppStatusChipPalette(
-          background: colors.warningSurface,
-          borderColor: null,
-          tone: AppTextTone.warning,
-          foreground: resolveAppTextToneColor(context, AppTextTone.warning),
-          icon: Icons.warning_amber_rounded,
-        );
+        return AppStatusChipPalette.warning(context);
       case DownloadClientProbeChipState.unhealthy:
-        return AppStatusChipPalette(
-          background: colors.errorSurface,
-          borderColor: null,
-          tone: AppTextTone.error,
-          foreground: resolveAppTextToneColor(context, AppTextTone.error),
-          icon: Icons.error_outline,
-        );
+        return AppStatusChipPalette.error(context);
     }
   }
 }

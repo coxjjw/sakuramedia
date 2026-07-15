@@ -108,8 +108,9 @@ class IndexerConnectionTestPanel extends StatelessWidget {
   }
 
   AppStatusChipPalette _statusPalette(BuildContext context) {
-    final colors = context.appColors;
     if (isTesting) {
+      // 独有的 "radar 检测中" 态：accent 色（选中面），非标 4 态之一，保留就地构造。
+      final colors = context.appColors;
       return AppStatusChipPalette(
         background: colors.selectionSurface,
         borderColor: colors.selectionBorder,
@@ -119,30 +120,14 @@ class IndexerConnectionTestPanel extends StatelessWidget {
       );
     }
     if (!_hasResult) {
-      return AppStatusChipPalette(
-        background: colors.surfaceMuted,
-        borderColor: colors.borderSubtle,
-        tone: AppTextTone.secondary,
-        foreground: context.appTextPalette.secondary,
+      return AppStatusChipPalette.neutral(
+        context,
         icon: Icons.hourglass_empty_rounded,
       );
     }
-    if (_isHealthy) {
-      return AppStatusChipPalette(
-        background: colors.successSurface,
-        borderColor: null,
-        tone: AppTextTone.success,
-        foreground: resolveAppTextToneColor(context, AppTextTone.success),
-        icon: Icons.check_circle_outline,
-      );
-    }
-    return AppStatusChipPalette(
-      background: colors.errorSurface,
-      borderColor: null,
-      tone: AppTextTone.error,
-      foreground: resolveAppTextToneColor(context, AppTextTone.error),
-      icon: Icons.error_outline,
-    );
+    return _isHealthy
+        ? AppStatusChipPalette.success(context)
+        : AppStatusChipPalette.error(context);
   }
 }
 

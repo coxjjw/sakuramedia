@@ -68,10 +68,11 @@
 ## AppStatusChip
 - **路径**: `lib/widgets/base/feedback/app_status_chip.dart`
 - **用途**: 状态徽章的纯展示层——`[图标或 spinner] 标签 (可选 detail)`，圆角色块底。不含点击/tooltip 交互，业务方按需在外面包一层。
-- **required**: `label` · `palette`(`AppStatusChipPalette`：`background` / `borderColor` / `tone` / `foreground` / `icon`，由调用方把自己的状态枚举映射成这个值对象)
+- **required**: `label` · `palette`(`AppStatusChipPalette`：`background` / `borderColor` / `tone` / `foreground` / `icon`)
 - **可选**: `isBusy`(true 用 spinner 替代 `icon`) · `detail` · `dense`(更紧凑的横条/阵列场景)
-- **何时用**: 任何"探针/诊断类状态指示"——连通性检测、健康检查这类多态徽章。**不要重新手写容器 + 调色板**；各业务方只需维护自己的枚举 → `AppStatusChipPalette` 映射函数。
-- **现有用例**: `DownloadClientProbeStatusChip`（下载器探针，5 态 + 点击/tooltip 交互）、`DiagnosticStatusBadge`（组件诊断，6 态，纯展示）。
+- **配色**: 标准 5 态一律走命名工厂 `AppStatusChipPalette.neutral(context) / .success / .warning / .error / .muted`，图标可覆盖(如 probing 传 `icon: Icons.hourglass_top`)。**不要在业务侧再写 `_xxxPalette(context)` helper** —— 之前 5 处逐字复制已收敛。真的非标 tone(如 accent 色 radar)才就地构造 `AppStatusChipPalette(...)`。
+- **何时用**: 任何"探针/诊断类状态指示"——连通性检测、健康检查这类多态徽章。
+- **现有用例**: `DownloadClientProbeStatusChip`（下载器探针）、`DiagnosticStatusBadge`（组件诊断 6 态）、`Cloud115AuthenticationStatusChips`（115 认证）、`ExternalDataSourceStatusChips`（JavDB/DMM）、`IndexerConnectionTestPanel`（索引器连测）。
 
 ---
 

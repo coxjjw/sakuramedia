@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:sakuramedia/features/system_diagnostics/data/diagnostic_item_status.dart';
-import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_status_chip.dart';
 
 /// 6 态状态徽章 —— 覆盖单项和大类聚合两种使用场景。
@@ -39,56 +38,22 @@ class DiagnosticStatusBadge extends StatelessWidget {
     BuildContext context,
     DiagnosticItemStatus status,
   ) {
-    final colors = context.appColors;
     switch (status) {
       case DiagnosticItemStatus.notTested:
-        return AppStatusChipPalette(
-          background: colors.surfaceMuted,
-          borderColor: colors.borderSubtle,
-          tone: AppTextTone.secondary,
-          foreground: context.appTextPalette.secondary,
-          icon: Icons.radio_button_unchecked,
-        );
+        return AppStatusChipPalette.neutral(context);
       case DiagnosticItemStatus.probing:
-        return AppStatusChipPalette(
-          background: colors.surfaceMuted,
-          borderColor: colors.borderSubtle,
-          tone: AppTextTone.secondary,
-          foreground: context.appTextPalette.secondary,
+        return AppStatusChipPalette.neutral(
+          context,
           icon: Icons.hourglass_top,
         );
       case DiagnosticItemStatus.healthy:
-        return AppStatusChipPalette(
-          background: colors.successSurface,
-          borderColor: null,
-          tone: AppTextTone.success,
-          foreground: resolveAppTextToneColor(context, AppTextTone.success),
-          icon: Icons.check_circle_outline,
-        );
+        return AppStatusChipPalette.success(context);
       case DiagnosticItemStatus.warning:
-        return AppStatusChipPalette(
-          background: colors.warningSurface,
-          borderColor: null,
-          tone: AppTextTone.warning,
-          foreground: resolveAppTextToneColor(context, AppTextTone.warning),
-          icon: Icons.warning_amber_rounded,
-        );
+        return AppStatusChipPalette.warning(context);
       case DiagnosticItemStatus.unhealthy:
-        return AppStatusChipPalette(
-          background: colors.errorSurface,
-          borderColor: null,
-          tone: AppTextTone.error,
-          foreground: resolveAppTextToneColor(context, AppTextTone.error),
-          icon: Icons.error_outline,
-        );
+        return AppStatusChipPalette.error(context);
       case DiagnosticItemStatus.blocked:
-        return AppStatusChipPalette(
-          background: colors.surfaceMuted,
-          borderColor: colors.borderSubtle,
-          tone: AppTextTone.muted,
-          foreground: context.appTextPalette.muted,
-          icon: Icons.block,
-        );
+        return AppStatusChipPalette.muted(context);
     }
   }
 }

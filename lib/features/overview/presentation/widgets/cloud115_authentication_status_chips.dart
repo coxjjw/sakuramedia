@@ -33,7 +33,7 @@ class Cloud115AuthenticationStatusChips extends StatelessWidget {
           context,
           id: 'testing',
           label: '检测中',
-          palette: _neutralPalette(context),
+          palette: AppStatusChipPalette.neutral(context),
           isBusy: true,
         ),
       ];
@@ -44,7 +44,7 @@ class Cloud115AuthenticationStatusChips extends StatelessWidget {
           context,
           id: 'failed',
           label: '检测失败',
-          palette: _errorPalette(context),
+          palette: AppStatusChipPalette.error(context),
         ),
       ];
     }
@@ -56,7 +56,7 @@ class Cloud115AuthenticationStatusChips extends StatelessWidget {
           context,
           id: 'not-tested',
           label: '未检测',
-          palette: _neutralPalette(context),
+          palette: AppStatusChipPalette.neutral(context),
         ),
       ];
     }
@@ -66,7 +66,7 @@ class Cloud115AuthenticationStatusChips extends StatelessWidget {
           context,
           id: 'not-configured',
           label: '未配置',
-          palette: _neutralPalette(context),
+          palette: AppStatusChipPalette.neutral(context),
         ),
       ];
     }
@@ -79,7 +79,7 @@ class Cloud115AuthenticationStatusChips extends StatelessWidget {
           id: 'expired',
           label: '认证失效',
           detail: current.expired.toString(),
-          palette: _errorPalette(context),
+          palette: AppStatusChipPalette.error(context),
         ),
       );
     }
@@ -90,7 +90,7 @@ class Cloud115AuthenticationStatusChips extends StatelessWidget {
           id: 'unavailable',
           label: '暂不可用',
           detail: current.unavailable.toString(),
-          palette: _warningPalette(context),
+          palette: AppStatusChipPalette.warning(context),
         ),
       );
     }
@@ -104,7 +104,7 @@ class Cloud115AuthenticationStatusChips extends StatelessWidget {
         id: 'alive',
         label: '全部正常',
         detail: '${current.alive}/${current.total}',
-        palette: _successPalette(context),
+        palette: AppStatusChipPalette.success(context),
       ),
     ];
   }
@@ -124,46 +124,6 @@ class Cloud115AuthenticationStatusChips extends StatelessWidget {
       palette: palette,
       isBusy: isBusy,
       dense: true,
-    );
-  }
-
-  AppStatusChipPalette _neutralPalette(BuildContext context) {
-    return AppStatusChipPalette(
-      background: context.appColors.surfaceMuted,
-      borderColor: context.appColors.borderSubtle,
-      tone: AppTextTone.secondary,
-      foreground: context.appTextPalette.secondary,
-      icon: Icons.radio_button_unchecked,
-    );
-  }
-
-  AppStatusChipPalette _successPalette(BuildContext context) {
-    return AppStatusChipPalette(
-      background: context.appColors.successSurface,
-      borderColor: null,
-      tone: AppTextTone.success,
-      foreground: resolveAppTextToneColor(context, AppTextTone.success),
-      icon: Icons.check_circle_outline,
-    );
-  }
-
-  AppStatusChipPalette _warningPalette(BuildContext context) {
-    return AppStatusChipPalette(
-      background: context.appColors.warningSurface,
-      borderColor: null,
-      tone: AppTextTone.warning,
-      foreground: resolveAppTextToneColor(context, AppTextTone.warning),
-      icon: Icons.warning_amber_rounded,
-    );
-  }
-
-  AppStatusChipPalette _errorPalette(BuildContext context) {
-    return AppStatusChipPalette(
-      background: context.appColors.errorSurface,
-      borderColor: null,
-      tone: AppTextTone.error,
-      foreground: resolveAppTextToneColor(context, AppTextTone.error),
-      icon: Icons.error_outline,
     );
   }
 }

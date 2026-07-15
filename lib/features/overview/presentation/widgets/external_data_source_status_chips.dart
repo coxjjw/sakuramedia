@@ -49,31 +49,11 @@ class ExternalDataSourceStatusChips extends StatelessWidget {
   }
 
   AppStatusChipPalette _resolvePalette(BuildContext context, bool? healthy) {
-    final colors = context.appColors;
     if (healthy == null) {
-      return AppStatusChipPalette(
-        background: colors.surfaceMuted,
-        borderColor: colors.borderSubtle,
-        tone: AppTextTone.secondary,
-        foreground: context.appTextPalette.secondary,
-        icon: Icons.radio_button_unchecked,
-      );
+      return AppStatusChipPalette.neutral(context);
     }
-    if (healthy) {
-      return AppStatusChipPalette(
-        background: colors.successSurface,
-        borderColor: null,
-        tone: AppTextTone.success,
-        foreground: resolveAppTextToneColor(context, AppTextTone.success),
-        icon: Icons.check_circle_outline,
-      );
-    }
-    return AppStatusChipPalette(
-      background: colors.errorSurface,
-      borderColor: null,
-      tone: AppTextTone.error,
-      foreground: resolveAppTextToneColor(context, AppTextTone.error),
-      icon: Icons.error_outline,
-    );
+    return healthy
+        ? AppStatusChipPalette.success(context)
+        : AppStatusChipPalette.error(context);
   }
 }
