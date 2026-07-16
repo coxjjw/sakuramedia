@@ -94,3 +94,9 @@ flutter:
     - family: NotoSansSC
       fonts:
         - asset: assets/fonts/NotoSansSC-subset.ttf
+    # 劫持 Roboto family 到本地字体：CanvasKit 引擎会预加载默认 Roboto，
+    # 若走 fonts.gstatic.com 拉取，在离线/国内网络下会报 "Failed to load font Roboto"。
+    # 用本地 asset 顶替后引擎命中本地资源，不再发起网络请求。
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/NotoSansSC-subset.ttf
