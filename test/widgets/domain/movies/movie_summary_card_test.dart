@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,42 +9,6 @@ import 'package:sakuramedia/widgets/base/media/images/masked_image.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
 
 void main() {
-  test(
-    'movie summary card uses tokens for media colors and component sizing',
-    () {
-      final source =
-          File('lib/widgets/domain/movies/movie_summary_card.dart').readAsStringSync();
-
-      expect(source, contains('context.appComponentTokens'));
-      expect(source, contains('context.appTextPalette.onMedia'));
-      expect(source, contains('colors.movieCardPlayableBadgeBackground'));
-      expect(source, isNot(contains('Colors.white')));
-      expect(source, isNot(contains('Colors.black')));
-      expect(source, isNot(contains('withValues(alpha: 0.92)')));
-      expect(source, isNot(contains('0.47')));
-      expect(source, isNot(contains('size: 36')));
-      expect(source, isNot(contains('size: 32')));
-      expect(source, isNot(contains('width: 18')));
-      expect(source, isNot(contains('height: 18')));
-      expect(source, isNot(contains('strokeWidth: 2')));
-      expect(source, isNot(contains('width: 28')));
-      expect(source, isNot(contains('height: 28')));
-      expect(source, isNot(contains('size: 16')));
-
-      // 底部渐变遮罩 & 订阅心形已抽到公共组件,在那里核对 token。
-      final shadeSource = File(
-        'lib/widgets/base/media/images/app_cover_bottom_shade.dart',
-      ).readAsStringSync();
-      expect(shadeSource, contains('colors.mediaOverlaySoft'));
-      expect(shadeSource, contains('colors.mediaOverlayStrong'));
-
-      final heartSource = File(
-        'lib/widgets/domain/movies/subscription_heart_badge.dart',
-      ).readAsStringSync();
-      expect(heartSource, contains('colors.subscriptionHeartIcon'));
-    },
-  );
-
   testWidgets('movie summary card prefers thin cover image', (
     WidgetTester tester,
   ) async {

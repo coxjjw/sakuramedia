@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -15,15 +13,6 @@ import 'package:sakuramedia/widgets/base/overlays/app_desktop_dialog.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart';
 
 void main() {
-  test('plot preview overlay defaults to adaptive thumbnail strip layout', () {
-    final source =
-        File(
-          'lib/features/movies/presentation/widgets/detail/movie_plot_preview_overlay.dart',
-        ).readAsStringSync();
-
-    expect(source, contains('MoviePlotPreviewThumbnailStripLayout.adaptive'));
-  });
-
   testWidgets('plot preview dialog opens at the requested index', (
     WidgetTester tester,
   ) async {

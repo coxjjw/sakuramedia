@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -252,8 +251,10 @@ void main() {
         AppTextButtonSize.small,
       );
       // 触发按钮的标签就是当前周期名，默认「本周」。
-      expect(find.descendant(of: triggerFinder, matching: find.text('本周')),
-          findsOneWidget);
+      expect(
+        find.descendant(of: triggerFinder, matching: find.text('本周')),
+        findsOneWidget,
+      );
 
       await tester.tap(triggerFinder);
       await tester.pumpAndSettle();

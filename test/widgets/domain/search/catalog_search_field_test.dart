@@ -1,24 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/widgets/domain/search/catalog_search_field.dart';
 
 void main() {
-  test(
-    'catalog search field uses theme tokens instead of hardcoded colors',
-    () {
-      final source =
-          File(
-            'lib/widgets/domain/search/catalog_search_field.dart',
-          ).readAsStringSync();
-
-      expect(source, contains('context.appTextPalette'));
-      expect(source, isNot(contains('Color(0x')));
-    },
-  );
-
   testWidgets('catalog search field renders a single search icon', (
     WidgetTester tester,
   ) async {

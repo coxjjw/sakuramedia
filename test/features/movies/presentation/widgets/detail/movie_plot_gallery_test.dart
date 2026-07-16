@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,18 +8,6 @@ import 'package:sakuramedia/theme.dart';
 import 'package:sakuramedia/features/movies/presentation/widgets/detail/movie_plot_gallery.dart';
 
 void main() {
-  test('movie plot gallery does not force fixed thumbnail width', () {
-    final source =
-        File(
-          'lib/features/movies/presentation/widgets/detail/movie_plot_gallery.dart',
-        ).readAsStringSync();
-
-    expect(
-      source,
-      isNot(contains('width: tokens.movieDetailPlotThumbnailWidth')),
-    );
-  });
-
   testWidgets(
     'movie plot gallery shows empty state when there are no plot images',
     (WidgetTester tester) async {

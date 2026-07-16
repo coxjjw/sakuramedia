@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -147,9 +145,8 @@ void main() {
         tester.getTopLeft(find.byKey(const Key('sidebar-section-浏览'))).dy;
     final manageHeaderTop =
         tester.getTopLeft(find.byKey(const Key('sidebar-section-管理'))).dy;
-    final configurationTop = tester
-        .getTopLeft(find.byKey(const Key('nav-group-configuration')))
-        .dy;
+    final configurationTop =
+        tester.getTopLeft(find.byKey(const Key('nav-group-configuration'))).dy;
     expect(overviewTop, lessThan(browseHeaderTop));
     expect(browseHeaderTop, lessThan(manageHeaderTop));
     expect(manageHeaderTop, lessThan(configurationTop));

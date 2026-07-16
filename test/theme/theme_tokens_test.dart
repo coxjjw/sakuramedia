@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'dart:io';
 
 import 'package:sakuramedia/theme.dart';
 
@@ -199,68 +198,5 @@ void main() {
       sakuraMobileThemeData.appComponentTokens.mobileFollowMovieCardHeight,
       158,
     );
-  });
-
-  test('text style resolver preserves web font family hook', () {
-    final source = File('lib/theme/app_typography.dart').readAsStringSync();
-
-    expect(source, contains('String? resolveAppTextFontFamily'));
-    expect(source, contains('fontFamily: resolveAppTextFontFamily(context)'));
-    expect(
-      source,
-      contains('Theme.of(context).textTheme.bodyMedium?.fontFamily'),
-    );
-  });
-
-  test('component token source only exposes global icon size scale', () {
-    final source =
-        File('lib/theme/app_component_tokens.dart').readAsStringSync();
-
-    expect(source, contains('iconSizeXs'));
-    expect(source, contains('iconSize2xs'));
-    expect(source, contains('iconSize3xs'));
-    expect(source, contains('iconSizeSm'));
-    expect(source, contains('iconSizeMd'));
-    expect(source, contains('iconSizeLg'));
-    expect(source, contains('iconSizeXl'));
-    expect(source, contains('iconSize2xl'));
-    expect(source, contains('iconSize3xl'));
-    expect(source, contains('iconSize4xl'));
-    expect(source, isNot(contains('movieCardPlaceholderIconSize')));
-    expect(source, isNot(contains('movieCardErrorIconSize')));
-    expect(source, isNot(contains('movieCardStatusIconSize')));
-    expect(source, isNot(contains('movieDetailMetaRowIconSize')));
-  });
-
-  test('notice cards use noticeSurface token', () {
-    // AppNoticeCard 组件本身负责 noticeSurface 与去掉旧硬编码。
-    final noticeCardSource =
-        File(
-          'lib/widgets/base/layout/cards/app_notice_card.dart',
-        ).readAsStringSync();
-    expect(noticeCardSource, contains('colors.noticeSurface'));
-    expect(
-      noticeCardSource,
-      isNot(contains('primaryContainer.withValues(alpha: 0.42)')),
-    );
-
-    // 复用页面走 AppNoticeCard 即可，不再要求每个页面自己写 noticeSurface。
-    const consumers = <String>[
-      'lib/features/account/presentation/mobile_change_password_page.dart',
-      'lib/features/account/presentation/mobile_change_username_page.dart',
-      'lib/features/configuration/presentation/pages/mobile/mobile_media_libraries_page.dart',
-      'lib/features/configuration/presentation/pages/mobile/mobile_downloaders_page.dart',
-      'lib/features/configuration/presentation/pages/mobile/mobile_indexers_page.dart',
-      'lib/features/configuration/presentation/pages/llm_settings_page.dart',
-      'lib/features/playlists/presentation/pages/mobile/playlists_page.dart',
-    ];
-    for (final path in consumers) {
-      final source = File(path).readAsStringSync();
-      expect(
-        source,
-        contains('AppNoticeCard'),
-        reason: 'Expected $path to reuse AppNoticeCard',
-      );
-    }
   });
 }

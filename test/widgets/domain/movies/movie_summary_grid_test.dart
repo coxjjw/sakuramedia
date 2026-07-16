@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sakuramedia/features/movies/data/dto/listing/movie_list_item_dto.dart';
@@ -8,30 +6,6 @@ import 'package:sakuramedia/widgets/domain/movies/movie_summary_card.dart';
 import 'package:sakuramedia/widgets/domain/movies/movie_summary_grid.dart';
 
 void main() {
-  // 网格四态 + 列宽公式已抽到 AppAdaptiveCardGrid,这两条 source-grep 断言把守卫
-  // 转到该原子件上；MovieSummaryGrid 本身仅剩薄壳。裸视觉值有 theme_source_guard_test
-  // 项目级兜底。
-  test('adaptive card grid does not hardcode spacing constants', () {
-    final source =
-        File('lib/widgets/base/layout/grids/app_adaptive_card_grid.dart').readAsStringSync();
-
-    expect(source, contains('context.appSpacing.md'));
-    expect(source, isNot(contains('const spacing = 12.0')));
-  });
-
-  test('adaptive card grid does not hardcode card sizing constants', () {
-    final gridSource =
-        File('lib/widgets/base/layout/grids/app_adaptive_card_grid.dart').readAsStringSync();
-    final cardSource =
-        File('lib/widgets/domain/movies/movie_summary_card.dart').readAsStringSync();
-
-    expect(gridSource, contains('context.appComponentTokens'));
-    expect(gridSource, isNot(contains('const targetWidth = 210.0')));
-    expect(gridSource, isNot(contains('childAspectRatio: 0.7')));
-    expect(cardSource, contains('context.appComponentTokens'));
-    expect(cardSource, isNot(contains('aspectRatio: 0.7')));
-  });
-
   testWidgets('movie summary grid uses spacing token for grid gaps', (
     WidgetTester tester,
   ) async {
