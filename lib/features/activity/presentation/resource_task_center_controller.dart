@@ -31,6 +31,13 @@ class ResourceTaskCenterController extends ChangeNotifier {
 
   static const int _pageSize = 20;
 
+  /// 后端仅 `media_thumbnail_generation` 有批量 reset 端点；同时后端接口的
+  /// task_key 也是硬编码。前端选择模式的可用性由该常量判定。
+  static const String kMediaThumbnailTaskKey = 'media_thumbnail_generation';
+
+  /// 后端 reset 端点 `resource_ids` 的 `max_length`。全选/单选都在此上限内截断。
+  static const int maxBatchResetCount = 200;
+
   final ActivityApi _activityApi;
 
   bool _initialized = false;
@@ -44,6 +51,10 @@ class ResourceTaskCenterController extends ChangeNotifier {
   final Map<String, _RecordsBucket> _buckets = <String, _RecordsBucket>{};
   ResourceTaskRecordDto? _selectedRecord;
   bool _disposed = false;
+
+  bool _selectionMode = false;
+  final Set<int> _selectedResourceIds = <int>{};
+  bool _isResetting = false;
 
   bool get initialized => _initialized;
   bool get isInitialLoading => _isInitialLoading;
@@ -90,6 +101,35 @@ class ResourceTaskCenterController extends ChangeNotifier {
 
   ResourceTaskRecordDto? get selectedRecord => _selectedRecord;
   bool get isDetailOpen => _selectedRecord != null;
+
+  bool get selectionMode => _selectionMode;
+  int get selectedCount => _selectedResourceIds.length;
+  bool get hasSelection => _selectedResourceIds.isNotEmpty;
+  bool get isResetting => _isResetting;
+
+  /// 是否当前 tab 支持批量重置(仅媒体缩略图生成)。
+  bool get supportsBatchReset => _activeTaskKey == kMediaThumbnailTaskKey;
+
+  bool isRecordSelected(int resourceId) =>
+      _selectedResourceIds.contains(resourceId);
+
+  /// 当前 bucket 里 state == 'failed' 的记录数(用于「全选」按钮的禁用/文案)。
+  int get visibleFailedCount {
+    final bucket = _bucketFor(_activeTaskKey);
+    if (bucket == null) {
+      return 0;
+    }
+    return bucket.records.where((record) => record.isFailed).length;
+  }
+
+  /// 当前可见 failed 记录是否已被全部选中(超过 200 时,前 200 全选即视为全选)。
+  bool get isAllVisibleFailedSelected {
+    final visibleFailedIds = _visibleFailedResourceIds();
+    if (visibleFailedIds.isEmpty) {
+      return false;
+    }
+    return visibleFailedIds.every(_selectedResourceIds.contains);
+  }
 
   Future<void> initialize() async {
     if (_initialized || _isInitialLoading) {
@@ -173,6 +213,7 @@ class ResourceTaskCenterController extends ChangeNotifier {
     }
     _activeTaskKey = taskKey;
     final bucket = _ensureBucket(taskKey);
+    _resetSelectionState();
     _notifySafely();
 
     if (!bucket.hasLoadedOnce && !bucket.isLoading) {
@@ -190,8 +231,146 @@ class ResourceTaskCenterController extends ChangeNotifier {
       return;
     }
     bucket.filter = next;
+    _resetSelectionState();
     _notifySafely();
     await _loadFirstPage(key);
+  }
+
+  void enterSelectionMode() {
+    if (!supportsBatchReset || _selectionMode) {
+      return;
+    }
+    _selectionMode = true;
+    _notifySafely();
+  }
+
+  void exitSelectionMode() {
+    if (!_selectionMode && _selectedResourceIds.isEmpty) {
+      return;
+    }
+    _selectionMode = false;
+    _selectedResourceIds.clear();
+    _notifySafely();
+  }
+
+  /// 切换单条选中。达到 [maxBatchResetCount] 上限时新增被拒,返回 `false`;
+  /// 其余成功返回 `true`。UI 可据此提示「最多可选 N 项」。
+  bool toggleRecordSelection(int resourceId) {
+    if (_selectedResourceIds.remove(resourceId)) {
+      _notifySafely();
+      return true;
+    }
+    if (_selectedResourceIds.length >= maxBatchResetCount) {
+      return false;
+    }
+    _selectedResourceIds.add(resourceId);
+    _notifySafely();
+    return true;
+  }
+
+  /// 全选当前可见 failed 记录(截取前 200);已全选时清空。
+  void toggleSelectAllVisibleFailed() {
+    final visibleFailedIds = _visibleFailedResourceIds();
+    if (visibleFailedIds.isEmpty) {
+      return;
+    }
+    final allSelected = visibleFailedIds.every(_selectedResourceIds.contains);
+    if (allSelected) {
+      _selectedResourceIds.removeAll(visibleFailedIds);
+    } else {
+      _selectedResourceIds.addAll(visibleFailedIds);
+    }
+    _notifySafely();
+  }
+
+  /// 触发批量 reset。成功后从当前 bucket 就地移除被 reset 的记录并更新
+  /// definitions 的 counts;失败时保持已选、`rethrow` 让调用方(通常是
+  /// `showAppConfirmDialog(onConfirm:)`)兜底 toast + 保留 dialog。
+  Future<void> resetSelectedFailed() async {
+    if (_isResetting ||
+        _activeTaskKey != kMediaThumbnailTaskKey ||
+        _selectedResourceIds.isEmpty) {
+      return;
+    }
+    final ids = _selectedResourceIds.toList(growable: false);
+    _isResetting = true;
+    _notifySafely();
+    try {
+      final result = await _activityApi.resetFailedMediaThumbnailStates(
+        resourceIds: ids,
+      );
+      if (_disposed) {
+        return;
+      }
+      final resetIds =
+          result.resourceIds.isNotEmpty ? result.resourceIds.toSet() : ids.toSet();
+      _applySuccessfulReset(resetIds, result.resetCount);
+      _isResetting = false;
+      _selectionMode = false;
+      _selectedResourceIds.clear();
+      _notifySafely();
+    } catch (error) {
+      if (_disposed) {
+        return;
+      }
+      _isResetting = false;
+      _notifySafely();
+      rethrow;
+    }
+  }
+
+  void _resetSelectionState() {
+    _selectionMode = false;
+    _selectedResourceIds.clear();
+  }
+
+  List<int> _visibleFailedResourceIds() {
+    final bucket = _bucketFor(_activeTaskKey);
+    if (bucket == null) {
+      return const <int>[];
+    }
+    final ids = <int>[];
+    for (final record in bucket.records) {
+      if (!record.isFailed) {
+        continue;
+      }
+      ids.add(record.resourceId);
+      if (ids.length >= maxBatchResetCount) {
+        break;
+      }
+    }
+    return ids;
+  }
+
+  void _applySuccessfulReset(Set<int> resetIds, int resetCount) {
+    final bucket = _bucketFor(kMediaThumbnailTaskKey);
+    if (bucket != null && resetIds.isNotEmpty) {
+      final remaining = bucket.records
+          .where((record) => !resetIds.contains(record.resourceId))
+          .toList(growable: false);
+      bucket.records = List<ResourceTaskRecordDto>.unmodifiable(remaining);
+    }
+    if (resetCount <= 0) {
+      return;
+    }
+    _definitions = _definitions
+        .map((definition) {
+          if (definition.taskKey != kMediaThumbnailTaskKey) {
+            return definition;
+          }
+          final counts = definition.stateCounts;
+          final delta = resetCount > counts.failed ? counts.failed : resetCount;
+          if (delta <= 0) {
+            return definition;
+          }
+          return definition.copyWith(
+            stateCounts: counts.copyWith(
+              failed: counts.failed - delta,
+              pending: counts.pending + delta,
+            ),
+          );
+        })
+        .toList(growable: false);
   }
 
   Future<void> refreshRecords() async {

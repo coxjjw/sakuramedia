@@ -288,6 +288,48 @@ void main() {
     expect(bundle.adapter.hitCount('POST', '/system/jobs/ranking_sync/run'), 1);
   });
 
+  test(
+    'resetFailedMediaThumbnailStates posts resource ids and maps result',
+    () async {
+      bundle.adapter.enqueueJson(
+        method: 'POST',
+        path: '/system/resource-task-states/media_thumbnail_generation/reset',
+        body: <String, dynamic>{
+          'task_key': 'media_thumbnail_generation',
+          'state': 'pending',
+          'reset_count': 2,
+          'resource_ids': <int>[101, 202],
+        },
+      );
+
+      final result = await bundle.activityApi.resetFailedMediaThumbnailStates(
+        resourceIds: <int>[101, 202],
+      );
+
+      expect(result.taskKey, 'media_thumbnail_generation');
+      expect(result.state, 'pending');
+      expect(result.resetCount, 2);
+      expect(result.resourceIds, <int>[101, 202]);
+
+      final request = bundle.adapter.requests.single;
+      expect(request.method.toUpperCase(), 'POST');
+      expect(
+        request.path,
+        '/system/resource-task-states/media_thumbnail_generation/reset',
+      );
+      expect(request.body, <String, dynamic>{
+        'resource_ids': <int>[101, 202],
+      });
+      expect(
+        bundle.adapter.hitCount(
+          'POST',
+          '/system/resource-task-states/media_thumbnail_generation/reset',
+        ),
+        1,
+      );
+    },
+  );
+
   test('streamEvents maps notification, task and read payloads', () async {
     bundle.adapter.enqueueSse(
       method: 'GET',

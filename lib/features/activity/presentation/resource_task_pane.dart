@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:oktoast/oktoast.dart';
 import 'package:sakuramedia/core/format/updated_at_label.dart';
 import 'package:sakuramedia/features/activity/data/resource_task_definition_dto.dart';
 import 'package:sakuramedia/features/activity/data/resource_task_record_dto.dart';
 import 'package:sakuramedia/features/activity/presentation/resource_task_center_controller.dart';
 import 'package:sakuramedia/features/activity/presentation/resource_task_filter_state.dart';
 import 'package:sakuramedia/theme.dart';
+import 'package:sakuramedia/widgets/base/actions/app_button.dart';
 import 'package:sakuramedia/widgets/base/actions/app_icon_button.dart';
+import 'package:sakuramedia/widgets/base/actions/app_text_button.dart';
+import 'package:sakuramedia/widgets/base/feedback/app_confirm_dialog.dart';
 import 'package:sakuramedia/widgets/base/layout/scrolling/app_paged_load_more_footer.dart';
 import 'package:sakuramedia/widgets/base/layout/cards/app_badge.dart';
 import 'package:sakuramedia/widgets/base/feedback/app_empty_state.dart';
@@ -57,6 +61,10 @@ List<Widget> buildResourceTaskSlivers({
           _ResourceTaskSubTabBar(controller: controller),
           SizedBox(height: context.appSpacing.lg),
           _ResourceTaskFilterBar(controller: controller),
+          if (controller.supportsBatchReset) ...[
+            SizedBox(height: context.appSpacing.md),
+            _ResourceTaskSelectionBar(controller: controller),
+          ],
           if (controller.recordsLoadErrorMessage != null &&
               controller.activeRecords.isNotEmpty) ...[
             SizedBox(height: context.appSpacing.md),
@@ -102,14 +110,36 @@ List<Widget> buildResourceTaskSlivers({
       delegate: SliverChildBuilderDelegate((context, index) {
         final record = controller.activeRecords[index];
         final isLast = index == controller.activeRecords.length - 1;
+        final inSelectionMode = controller.selectionMode;
+        final isBatchSelectable = record.isFailed;
+        final isBatchSelected = controller.isRecordSelected(record.resourceId);
         return Padding(
           padding: EdgeInsets.only(bottom: isLast ? 0 : context.appSpacing.md),
           child: RepaintBoundary(
             child: _ResourceTaskRecordTile(
               record: record,
               isSelected:
+                  !inSelectionMode &&
                   controller.selectedRecord?.recordKey == record.recordKey,
-              onTap: () => controller.openDetail(record),
+              inSelectionMode: inSelectionMode,
+              isBatchSelectable: isBatchSelectable,
+              isBatchSelected: isBatchSelected,
+              onTap: () {
+                if (inSelectionMode) {
+                  if (!isBatchSelectable) {
+                    showToast('仅可重置失败的任务');
+                    return;
+                  }
+                  final ok = controller.toggleRecordSelection(record.resourceId);
+                  if (!ok) {
+                    showToast(
+                      '最多可选 ${ResourceTaskCenterController.maxBatchResetCount} 项',
+                    );
+                  }
+                  return;
+                }
+                controller.openDetail(record);
+              },
             ),
           ),
         );
@@ -450,16 +480,152 @@ class _FilterLoadingDot extends StatelessWidget {
   }
 }
 
+class _ResourceTaskSelectionBar extends StatelessWidget {
+  const _ResourceTaskSelectionBar({required this.controller});
+
+  final ResourceTaskCenterController controller;
+
+  Future<void> _handleConfirmReset(BuildContext context) async {
+    final selectedCount = controller.selectedCount;
+    if (selectedCount == 0) {
+      return;
+    }
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: '重置生成状态',
+      message: '将把选中的 $selectedCount 条媒体缩略图生成任务重置为待处理，后台会重新排队生成。',
+      confirmLabel: '重置',
+      dialogKey: const Key('resource-task-batch-reset-dialog'),
+      confirmKey: const Key('resource-task-batch-reset-confirm'),
+      failureFallback: '重置失败，请稍后重试',
+      onConfirm: () async {
+        await controller.resetSelectedFailed();
+      },
+    );
+    if (confirmed) {
+      showToast('已重置 $selectedCount 条');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!controller.selectionMode) {
+      return _ResourceTaskSelectionEntryRow(controller: controller);
+    }
+    final spacing = context.appSpacing;
+    final failedCount = controller.visibleFailedCount;
+    final allSelected = controller.isAllVisibleFailedSelected;
+    final hasSelection = controller.hasSelection;
+    final isBusy = controller.isResetting;
+
+    return Row(
+      children: [
+        Text(
+          '已选 ${controller.selectedCount} 个',
+          style: resolveAppTextStyle(
+            context,
+            size: AppTextSize.s12,
+            weight: AppTextWeight.medium,
+            tone: AppTextTone.primary,
+          ),
+        ),
+        const Spacer(),
+        AppTextButton(
+          key: const Key('resource-task-select-all-button'),
+          label: allSelected ? '取消全选' : '全选',
+          size: AppTextButtonSize.small,
+          onPressed:
+              (isBusy || failedCount == 0)
+                  ? null
+                  : controller.toggleSelectAllVisibleFailed,
+        ),
+        SizedBox(width: spacing.sm),
+        AppButton(
+          key: const Key('resource-task-batch-reset-button'),
+          label: '重置生成状态',
+          variant: AppButtonVariant.primary,
+          size: AppButtonSize.small,
+          isLoading: isBusy,
+          onPressed:
+              (!hasSelection || isBusy) ? null : () => _handleConfirmReset(context),
+        ),
+        SizedBox(width: spacing.sm),
+        AppTextButton(
+          key: const Key('resource-task-exit-selection-button'),
+          label: '取消',
+          size: AppTextButtonSize.small,
+          onPressed: isBusy ? null : controller.exitSelectionMode,
+        ),
+      ],
+    );
+  }
+}
+
+class _ResourceTaskSelectionEntryRow extends StatelessWidget {
+  const _ResourceTaskSelectionEntryRow({required this.controller});
+
+  final ResourceTaskCenterController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final canEnter = controller.visibleFailedCount > 0;
+    return Row(
+      children: [
+        const Spacer(),
+        AppTextButton(
+          key: const Key('resource-task-enter-selection-button'),
+          label: '选择',
+          size: AppTextButtonSize.small,
+          icon: const Icon(Icons.check_circle_outline, size: 16),
+          onPressed: canEnter ? controller.enterSelectionMode : null,
+        ),
+      ],
+    );
+  }
+}
+
+/// 与 [SelectionCheckBadge] 同尺寸，但用 sakura 品牌 `appTextPalette.accent`
+/// 而非历史 `selectionBorder`(Ant 蓝)。仅本文件用。
+class _AccentCheckBadge extends StatelessWidget {
+  const _AccentCheckBadge({required this.isSelected});
+
+  final bool isSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 22,
+      height: 22,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isSelected
+            ? context.appTextPalette.accent
+            : Colors.black.withValues(alpha: 0.35),
+        border: Border.all(color: Colors.white, width: 1.5),
+      ),
+      child: isSelected
+          ? const Icon(Icons.check, color: Colors.white, size: 14)
+          : null,
+    );
+  }
+}
+
 class _ResourceTaskRecordTile extends StatelessWidget {
   const _ResourceTaskRecordTile({
     required this.record,
     required this.isSelected,
     required this.onTap,
+    this.inSelectionMode = false,
+    this.isBatchSelectable = false,
+    this.isBatchSelected = false,
   });
 
   final ResourceTaskRecordDto record;
   final bool isSelected;
   final VoidCallback onTap;
+  final bool inSelectionMode;
+  final bool isBatchSelectable;
+  final bool isBatchSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -480,47 +646,63 @@ class _ResourceTaskRecordTile extends StatelessWidget {
     final lastAttemptedLabel = formatUpdatedAtLabel(lastAttempted);
     final timeLabel =
         lastAttemptedLabel != null ? '最近尝试 $lastAttemptedLabel' : '尚未执行';
+    final showAsBatchSelected = inSelectionMode && isBatchSelected;
+    final dimmed = inSelectionMode && !isBatchSelectable;
+    // sakura 品牌选中色统一走 palette accent（0xFF6B2D2A 樱酒红），
+    // 不复用 selectionBorder(Ant 蓝)——参考 AppLeftCoverCard 里的说明。
+    final borderColor = (showAsBatchSelected || isSelected)
+        ? context.appTextPalette.accent
+        : colors.borderSubtle;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: context.appRadius.mdBorder,
-        child: Container(
-          key: Key('resource-task-record-${record.recordKey}'),
-          width: double.infinity,
-          padding: EdgeInsets.all(context.appSpacing.lg),
-          decoration: BoxDecoration(
-            color: colors.surfaceCard,
-            borderRadius: context.appRadius.mdBorder,
-            border: Border.all(
-              color:
-                  isSelected
-                      ? context.appTextPalette.accent
-                      : colors.borderSubtle,
+        child: Opacity(
+          opacity: dimmed ? 0.55 : 1,
+          child: Container(
+            key: Key('resource-task-record-${record.recordKey}'),
+            width: double.infinity,
+            padding: EdgeInsets.all(context.appSpacing.lg),
+            decoration: BoxDecoration(
+              color: colors.surfaceCard,
+              borderRadius: context.appRadius.mdBorder,
+              border: Border.all(
+                color: borderColor,
+                width: showAsBatchSelected ? 2 : 1,
+              ),
             ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          titleText,
-                          style: resolveAppTextStyle(
-                            context,
-                            size: AppTextSize.s14,
-                            weight: AppTextWeight.regular,
-                            tone: AppTextTone.secondary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (inSelectionMode) ...[
+                      Padding(
+                        padding: EdgeInsets.only(
+                          top: 2,
+                          right: context.appSpacing.md,
                         ),
+                        child: _AccentCheckBadge(isSelected: isBatchSelected),
+                      ),
+                    ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            titleText,
+                            style: resolveAppTextStyle(
+                              context,
+                              size: AppTextSize.s14,
+                              weight: AppTextWeight.regular,
+                              tone: AppTextTone.secondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         if (subtitleText != null) ...[
                           SizedBox(height: context.appSpacing.xs),
                           Text(
@@ -606,6 +788,7 @@ class _ResourceTaskRecordTile extends StatelessWidget {
                 ),
               ],
             ],
+          ),
           ),
         ),
       ),

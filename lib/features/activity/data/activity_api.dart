@@ -7,6 +7,7 @@ import 'package:sakuramedia/features/activity/data/activity_event_stream_client.
 import 'package:sakuramedia/features/activity/data/job_metadata_dto.dart';
 import 'package:sakuramedia/features/activity/data/activity_notification_dto.dart';
 import 'package:sakuramedia/features/activity/data/activity_stream_event.dart';
+import 'package:sakuramedia/features/activity/data/media_thumbnail_reset_result_dto.dart';
 import 'package:sakuramedia/features/activity/data/notification_read_result_dto.dart';
 import 'package:sakuramedia/features/activity/data/resource_task_definition_dto.dart';
 import 'package:sakuramedia/features/activity/data/resource_task_record_dto.dart';
@@ -159,6 +160,16 @@ class ActivityApi {
       response,
       ResourceTaskRecordDto.fromJson,
     );
+  }
+
+  Future<MediaThumbnailResetResultDto> resetFailedMediaThumbnailStates({
+    required List<int> resourceIds,
+  }) async {
+    final response = await _apiClient.post(
+      '/system/resource-task-states/media_thumbnail_generation/reset',
+      data: <String, dynamic>{'resource_ids': resourceIds},
+    );
+    return MediaThumbnailResetResultDto.fromJson(response);
   }
 
   Stream<ActivityStreamEvent> streamEvents({required int afterEventId}) {

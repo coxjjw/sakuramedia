@@ -336,6 +336,292 @@ void main() {
     expect(controller.recordsLoadMoreErrorMessage, isNotNull);
     expect(controller.hasMoreRecords, isTrue);
   });
+
+  group('批量重置 (media_thumbnail_generation)', () {
+    Future<ResourceTaskCenterController> initMediaTab(
+      List<Map<String, dynamic>> mediaItems,
+    ) async {
+      _enqueueDefinitions(bundle);
+      _enqueuePage(
+        bundle,
+        taskKey: 'movie_desc_sync',
+        page: 1,
+        total: 0,
+        items: const <Map<String, dynamic>>[],
+      );
+      final controller = ResourceTaskCenterController(
+        activityApi: bundle.activityApi,
+      );
+      addTearDown(controller.dispose);
+      await controller.initialize();
+      _enqueuePage(
+        bundle,
+        taskKey: 'media_thumbnail_generation',
+        page: 1,
+        pageSize: 20,
+        total: mediaItems.length,
+        items: mediaItems,
+      );
+      await controller.selectTaskKey('media_thumbnail_generation');
+      return controller;
+    }
+
+    test('supportsBatchReset 仅在 media_thumbnail_generation 为 true', () async {
+      final controller = await initMediaTab(<Map<String, dynamic>>[]);
+      expect(controller.supportsBatchReset, isTrue);
+      _enqueuePage(
+        bundle,
+        taskKey: 'movie_desc_sync',
+        page: 1,
+        total: 0,
+        items: const <Map<String, dynamic>>[],
+      );
+      await controller.selectTaskKey('movie_desc_sync');
+      expect(controller.supportsBatchReset, isFalse);
+    });
+
+    test('enterSelectionMode 在非 media tab 无效', () async {
+      _enqueueDefinitions(bundle);
+      _enqueuePage(
+        bundle,
+        taskKey: 'movie_desc_sync',
+        page: 1,
+        total: 1,
+        items: <Map<String, dynamic>>[_recordJson(id: 1001, state: 'failed')],
+      );
+      final controller = ResourceTaskCenterController(
+        activityApi: bundle.activityApi,
+      );
+      addTearDown(controller.dispose);
+      await controller.initialize();
+      controller.enterSelectionMode();
+      expect(controller.selectionMode, isFalse);
+    });
+
+    test('toggleRecordSelection 达到 200 上限时拒绝新增', () async {
+      final records = List<Map<String, dynamic>>.generate(
+        205,
+        (i) => _recordJson(
+          id: 3000 + i,
+          taskKey: 'media_thumbnail_generation',
+          state: 'failed',
+        ),
+      );
+      final controller = await initMediaTab(records);
+      controller.enterSelectionMode();
+
+      for (var i = 0; i < 200; i++) {
+        final ok = controller.toggleRecordSelection(3000 + i);
+        expect(ok, isTrue);
+      }
+      expect(controller.selectedCount, 200);
+      final rejected = controller.toggleRecordSelection(3200);
+      expect(rejected, isFalse);
+      expect(controller.selectedCount, 200);
+      // 取消已选的仍可 → true
+      final toggledOff = controller.toggleRecordSelection(3000);
+      expect(toggledOff, isTrue);
+      expect(controller.selectedCount, 199);
+    });
+
+    test('toggleSelectAllVisibleFailed 只勾 failed 并截取前 200', () async {
+      final records = <Map<String, dynamic>>[
+        _recordJson(
+          id: 100,
+          taskKey: 'media_thumbnail_generation',
+          state: 'succeeded',
+        ),
+        ...List<Map<String, dynamic>>.generate(
+          250,
+          (i) => _recordJson(
+            id: 200 + i,
+            taskKey: 'media_thumbnail_generation',
+            state: 'failed',
+          ),
+        ),
+      ];
+      final controller = await initMediaTab(records);
+      controller.enterSelectionMode();
+      controller.toggleSelectAllVisibleFailed();
+
+      expect(controller.selectedCount, 200);
+      expect(controller.isRecordSelected(100), isFalse);
+      expect(controller.isRecordSelected(200), isTrue);
+      expect(controller.isRecordSelected(200 + 199), isTrue);
+      expect(controller.isRecordSelected(200 + 200), isFalse);
+      expect(controller.isAllVisibleFailedSelected, isTrue);
+
+      // 再次调用 → 清空
+      controller.toggleSelectAllVisibleFailed();
+      expect(controller.selectedCount, 0);
+      expect(controller.isAllVisibleFailedSelected, isFalse);
+    });
+
+    test('切换 tab 自动退出多选并清空已选', () async {
+      final controller = await initMediaTab(<Map<String, dynamic>>[
+        _recordJson(
+          id: 501,
+          taskKey: 'media_thumbnail_generation',
+          state: 'failed',
+        ),
+      ]);
+      controller.enterSelectionMode();
+      controller.toggleRecordSelection(501);
+      expect(controller.selectionMode, isTrue);
+      expect(controller.selectedCount, 1);
+
+      _enqueuePage(
+        bundle,
+        taskKey: 'movie_desc_sync',
+        page: 1,
+        total: 0,
+        items: const <Map<String, dynamic>>[],
+      );
+      await controller.selectTaskKey('movie_desc_sync');
+      expect(controller.selectionMode, isFalse);
+      expect(controller.selectedCount, 0);
+    });
+
+    test('applyFilter 自动退出多选', () async {
+      final controller = await initMediaTab(<Map<String, dynamic>>[
+        _recordJson(
+          id: 601,
+          taskKey: 'media_thumbnail_generation',
+          state: 'failed',
+        ),
+      ]);
+      controller.enterSelectionMode();
+      controller.toggleRecordSelection(601);
+
+      _enqueuePage(
+        bundle,
+        taskKey: 'media_thumbnail_generation',
+        page: 1,
+        total: 0,
+        items: const <Map<String, dynamic>>[],
+      );
+      await controller.applyFilter(
+        const ResourceTaskRecordFilterState(
+          stateFilter: ResourceTaskRecordStateFilter.all,
+        ),
+      );
+      expect(controller.selectionMode, isFalse);
+      expect(controller.selectedCount, 0);
+    });
+
+    test('resetSelectedFailed 成功：移除记录 + counts 补丁 + 退出选择', () async {
+      final controller = await initMediaTab(<Map<String, dynamic>>[
+        _recordJson(
+          id: 701,
+          taskKey: 'media_thumbnail_generation',
+          state: 'failed',
+        ),
+        _recordJson(
+          id: 702,
+          taskKey: 'media_thumbnail_generation',
+          state: 'failed',
+        ),
+        _recordJson(
+          id: 703,
+          taskKey: 'media_thumbnail_generation',
+          state: 'failed',
+        ),
+      ]);
+      // 让 definition 的 failed 计数有个已知值，方便断言补丁。
+      // definitions helper 里 media 是 failed=0, 但我们下面 refreshDefinitions
+      // 一次自定义响应把它改成 failed=5 更贴近真实场景。
+      bundle.adapter.enqueueJson(
+        method: 'GET',
+        path: '/system/resource-task-states/definitions',
+        body: <Map<String, dynamic>>[
+          <String, dynamic>{
+            'task_key': 'movie_desc_sync',
+            'resource_type': 'movie',
+            'display_name': '影片描述回填',
+            'default_sort': 'last_attempted_at:desc',
+            'allow_reset': true,
+            'state_counts': <String, dynamic>{
+              'pending': 5,
+              'running': 1,
+              'succeeded': 100,
+              'failed': 2,
+            },
+          },
+          <String, dynamic>{
+            'task_key': 'media_thumbnail_generation',
+            'resource_type': 'media',
+            'display_name': '媒体缩略图生成',
+            'default_sort': 'updated_at:desc',
+            'allow_reset': true,
+            'state_counts': <String, dynamic>{
+              'pending': 1,
+              'running': 0,
+              'succeeded': 50,
+              'failed': 5,
+            },
+          },
+        ],
+      );
+      await controller.refreshDefinitions();
+
+      controller.enterSelectionMode();
+      controller.toggleRecordSelection(701);
+      controller.toggleRecordSelection(702);
+
+      bundle.adapter.enqueueJson(
+        method: 'POST',
+        path: '/system/resource-task-states/media_thumbnail_generation/reset',
+        body: <String, dynamic>{
+          'task_key': 'media_thumbnail_generation',
+          'state': 'pending',
+          'reset_count': 2,
+          'resource_ids': <int>[701, 702],
+        },
+      );
+
+      await controller.resetSelectedFailed();
+
+      expect(controller.selectionMode, isFalse);
+      expect(controller.selectedCount, 0);
+      expect(controller.isResetting, isFalse);
+      expect(
+        controller.activeRecords.map((r) => r.resourceId),
+        <int>[703],
+      );
+      final mediaDef = controller.definitions.firstWhere(
+        (d) => d.taskKey == 'media_thumbnail_generation',
+      );
+      expect(mediaDef.stateCounts.failed, 3);
+      expect(mediaDef.stateCounts.pending, 3);
+    });
+
+    test('resetSelectedFailed 失败：保留已选 + rethrow', () async {
+      final controller = await initMediaTab(<Map<String, dynamic>>[
+        _recordJson(
+          id: 801,
+          taskKey: 'media_thumbnail_generation',
+          state: 'failed',
+        ),
+      ]);
+      controller.enterSelectionMode();
+      controller.toggleRecordSelection(801);
+
+      bundle.adapter.enqueueJson(
+        method: 'POST',
+        path: '/system/resource-task-states/media_thumbnail_generation/reset',
+        statusCode: 422,
+        body: <String, dynamic>{'message': '仅允许重置失败的媒体缩略图任务'},
+      );
+
+      await expectLater(controller.resetSelectedFailed(), throwsA(anything));
+
+      expect(controller.isResetting, isFalse);
+      expect(controller.selectionMode, isTrue);
+      expect(controller.selectedCount, 1);
+      expect(controller.isRecordSelected(801), isTrue);
+      expect(controller.activeRecords, hasLength(1));
+    });
+  });
 }
 
 void _enqueueDefinitions(TestApiBundle bundle) {

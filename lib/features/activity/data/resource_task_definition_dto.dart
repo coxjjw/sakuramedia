@@ -30,6 +30,20 @@ class ResourceTaskStateCountsDto {
       failed: asInt(json['failed']),
     );
   }
+
+  ResourceTaskStateCountsDto copyWith({
+    int? pending,
+    int? running,
+    int? succeeded,
+    int? failed,
+  }) {
+    return ResourceTaskStateCountsDto(
+      pending: pending ?? this.pending,
+      running: running ?? this.running,
+      succeeded: succeeded ?? this.succeeded,
+      failed: failed ?? this.failed,
+    );
+  }
 }
 
 class ResourceTaskDefinitionDto {
@@ -66,6 +80,17 @@ class ResourceTaskDefinitionDto {
                 ),
               )
               : ResourceTaskStateCountsDto.empty,
+    );
+  }
+
+  ResourceTaskDefinitionDto copyWith({ResourceTaskStateCountsDto? stateCounts}) {
+    return ResourceTaskDefinitionDto(
+      taskKey: taskKey,
+      resourceType: resourceType,
+      displayName: displayName,
+      defaultSort: defaultSort,
+      allowReset: allowReset,
+      stateCounts: stateCounts ?? this.stateCounts,
     );
   }
 }
