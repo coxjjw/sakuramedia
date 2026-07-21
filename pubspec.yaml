@@ -76,6 +76,10 @@ dev_dependencies:
 
 dependency_overrides:
   volume_controller: 3.4.0
+  # screen_brightness_ios 2.1.4 引入 FlutterSceneLifeCycleDelegate / addSceneDelegate
+  # (Flutter 3.32+ 才有的 Scene API)，CI 用的是 3.29.3 会编译失败；
+  # 钉回 2.1.2（v0.4.2 及以前一直在用的版本）。升级 Flutter 后可移除此行。
+  screen_brightness_ios: 2.1.2
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
